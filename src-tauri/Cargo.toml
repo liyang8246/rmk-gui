@@ -1,6 +1,6 @@
 [package]
 name = "rmk-gui"
-version = "0.0.1"
+version = "0.1.0"
 description = "Gui configuration for RMK based on Tauri and Nuxt"
 authors = ["LiYang"]
 license = "MIT OR Apache-2.0"
