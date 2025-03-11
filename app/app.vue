@@ -1,10 +1,20 @@
 <script lang="ts" setup>
-const hidDevicesStore = useHidDevicesStore();
-hidDevicesStore.devices = await invoke('get_vial_devices');
+import { ref } from 'vue';
+const appStarted = ref(false);
+
+async function launchApp() {
+  appStarted.value = true;
+  const hidDevicesStore = useHidDevicesStore();
+  hidDevicesStore.devices = await invoke('get_vial_devices');
+}
 </script>
 
 <template>
-  <main class="flex h-screen bg-base-200">
+  <!-- Security Policy -->
+  <main v-if="!appStarted">
+    <button @click="launchApp()">Launch</button>
+  </main>
+  <main v-if="appStarted" class="flex h-screen bg-base-200">
     <Sidebar />
     <div class="flex-grow flex flex-col">
       <Header />
