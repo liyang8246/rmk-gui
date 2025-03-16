@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/liyang8246/rmk-gui/compare/v0.2.0...v0.3.0) (2025-03-16)
+
+
+### Features
+
+* **nuxt:** add color mode module and configure color mode ([d2e7036](https://github.com/liyang8246/rmk-gui/commit/d2e7036238d7c89daf9e7224b47029aa28b60e8a))
+
 ## [0.2.0](https://github.com/liyang8246/rmk-gui/compare/v0.1.0...v0.2.0) (2025-03-15)
 
 
