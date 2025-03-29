@@ -1,12 +1,12 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "RMK-GUI",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "identifier": "com.rmk.gui",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "pnpm nuxt dev",
     "beforeBuildCommand": "pnpm generate"
   },
   "app": {

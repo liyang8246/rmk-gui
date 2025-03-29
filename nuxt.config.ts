@@ -30,6 +30,18 @@ export default defineNuxtConfig({
     typeCheck: true,
   },
 
+  css: ['~/assets/main.css'],
+  tailwindcss: {
+    cssPath: '~/assets/main.css',
+  },
+  shadcn: {
+    prefix: '',
+    componentDir: './app/components/ui',
+  },
+  colorMode: {
+    classSuffix: '',
+  },
+
   vite: {
     clearScreen: false,
     envPrefix: ['VITE_', 'TAURI_'],
@@ -39,5 +51,5 @@ export default defineNuxtConfig({
     plugins: [wasm(), topLevelAwait()],
   },
 
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode', '@pinia/nuxt', 'shadcn-nuxt', '@nuxt/icon'],
 });

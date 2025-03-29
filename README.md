@@ -41,11 +41,11 @@ Make sure you have Rust and Node.js installed on your system.
    ```
 3. Start the development server:
    ```bash
-   pnpm tauri dev
+   pnpm dev
    ```
 4. Build the application:
    ```bash
-   pnpm tauri build
+   pnpm build
    ```
 
 ## Roadmap

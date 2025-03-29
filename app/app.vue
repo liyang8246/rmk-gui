@@ -12,9 +12,11 @@ async function launchApp() {
 <template>
   <!-- Security Policy -->
   <main v-if="!appStarted">
-    <button @click="launchApp()">Launch</button>
+    <div @click="launchApp()" class="w-screen h-screen cursor-pointer">
+      <p class="absolute inset-x-0 bottom-24 text-4xl w-screen text-center font-bold">CLICK TO START...</p>
+    </div>
   </main>
-  <main v-if="appStarted" class="flex h-screen bg-base-200">
+  <main v-else="appStarted" class="flex h-screen bg-base-200">
     <Sidebar />
     <div class="flex-grow flex flex-col">
       <Header />

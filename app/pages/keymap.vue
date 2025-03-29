@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const keyboard = useKeyboard();
+const keyboard = useKeyboardStore();
 const pageKeymap = usePageKeymap();
 keyboard.keyboard.keys = await invoke<Key[]>('get_layout_keymap');
 let keycode: Key[] = await invoke('get_keycode_list');

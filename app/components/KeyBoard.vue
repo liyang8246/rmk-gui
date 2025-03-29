@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const keyboard = useKeyboard();
+const keyboard = useKeyboardStore();
 const pageKeymap = usePageKeymap();
 const selectedLyrRowCol = ref<[number, number, number]>([0, 1, 1]);
 
@@ -50,7 +50,7 @@ const containerSize = computed(() => {
     >
       <template v-for="(key, index) in keyboard.keyboard.keys" :key="index">
         <Key
-          v-if="key.lyr_row_col[0] === 0"
+          v-if="key.lyr_row_col[0] === pageKeymap.selectedLayer"
           :keyProp="key"
           :border="key.lyr_row_col.toString() === pageKeymap.selectedLyrRowCol.toString()"
           @click="selectKey(key)"

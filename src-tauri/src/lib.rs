@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use tauri::{AppHandle, Manager, async_runtime::Mutex, generate_handler};
 
-mod commands;
+mod cmds;
 mod models;
 mod utils;
 
@@ -24,17 +24,17 @@ pub fn run() {
         })
         .manage(state)
         .invoke_handler(generate_handler![
-            commands::connect_vial_device,
-            commands::get_gui_version,
-            commands::get_vial_devices,
-            commands::get_layer_count,
-            commands::get_macro_count,
-            commands::get_layout,
-            commands::get_key_count,
-            commands::update_keymap,
-            commands::get_layout_keymap,
-            commands::get_keycode_list,
-            commands::set_keycode,
+            cmds::connect_vial_device,
+            cmds::get_gui_version,
+            cmds::get_vial_devices,
+            cmds::get_layer_count,
+            cmds::get_macro_count,
+            cmds::get_layout,
+            cmds::get_key_count,
+            cmds::update_keymap,
+            cmds::get_layout_keymap,
+            cmds::get_keycode_list,
+            cmds::set_keycode,
         ]);
     builder
         .run(tauri::generate_context!())

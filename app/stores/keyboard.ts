@@ -1,4 +1,4 @@
-export const useKeyboard = defineStore('Keyboard', () => {
+export const useKeyboardStore = defineStore('Keyboard', () => {
   const keyboard = ref<Keyboard>({
     name: '',
     layer: 0,

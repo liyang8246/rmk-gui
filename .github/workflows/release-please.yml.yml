@@ -2,6 +2,9 @@
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions: {}
 
@@ -27,5 +30,5 @@ jobs:
         run: |
           git fetch origin main
           git pull --ff-only origin main
-          git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git remote set-url origin "https://x-access-token:${{ secrets.RMK_GUI_RELEASE_TOKEN }}@github.com/${{ github.repository }}.git"
           git push

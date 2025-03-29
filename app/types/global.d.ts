@@ -7,7 +7,7 @@ interface Key {
   height: [number, number]; // (f64, f64) -> [number, number]
   rotation: [number, number, number]; // (f64, f64, f64) -> [number, number, number]
   keycode: number; // KeyCode (u16) -> number
-  display: [string, string] | [string]; // Comma -> [',', '<'], F1 -> ['F1']
+  display: [string, string] | [string]; // Comma -> [',', '<'] or F1 -> ['F1']
 }
 
 // src-tauri/src/models/vial_device.rs
