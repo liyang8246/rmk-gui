@@ -104,7 +104,7 @@ struct SetKeycodeArgs {
 pub async fn set_keycode(state: &AppState, args: JsValue) -> Result<JsValue, JsValue> {
     let SetKeycodeArgs { lyr_row_col, keycode } =
         serde_wasm_bindgen::from_value(args.clone()).expect("Argument parsing failed");
-    let state = state.lock().expect("Failed to get the lock");
+    let _state = state.lock().expect("Failed to get the lock");
     let device = current_device().await;
     let mut msg = [0u8; 6];
     msg[0] = VialCommand::SetKeycode.into();

@@ -1,12 +1,11 @@
 use crate::models::{AppState, VIAL_USAGE_MAGIC, VIAL_USAGE_PAGE_MAGIC, VialDevice};
-use futures::future;
 use wasm_bindgen::prelude::*;
 use web_sys::{HidDevice, HidInputReportEvent};
 
 use crate::models::*;
 use crate::utils::*;
 use lazy_static::lazy_static;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 lazy_static! {
     pub static ref READ_PIPE: (

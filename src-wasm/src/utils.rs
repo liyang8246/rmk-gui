@@ -3,7 +3,6 @@ use futures::StreamExt;
 use liblzma::read::XzDecoder;
 use serde_json::Value;
 use std::io::Read;
-use wasm_bindgen::prelude::*;
 use web_sys::HidDevice;
 
 use crate::models::*;
