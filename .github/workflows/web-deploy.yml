@@ -14,7 +14,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       # Pick your own package manager and build script
       - run: pnpm install
-      - run: pnpm wasm-build --preset github_pages
+      - run: NUXT_APP_BASE_URL=/rmk-gui/ pnpm wasm-build --preset github_pages
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
