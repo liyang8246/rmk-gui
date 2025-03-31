@@ -35,6 +35,8 @@ onUnmounted(() => {
 });
 
 const setKeycode = async (key: Key) => {
+  console.log(Number.isSafeInteger(key.keycode));
+  console.log(pageKeymap.selectedLyrRowCol);
   await invoke('set_keycode', {
     lyrRowCol: pageKeymap.selectedLyrRowCol,
     keycode: key.keycode,

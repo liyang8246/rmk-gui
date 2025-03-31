@@ -13,12 +13,10 @@ export default defineNuxtConfig({
 
   imports: {
     presets: [
-      process.env.WASM_BACKEND
-        ? { from: 'rmk-gui-web-backend', imports: ['invoke'] }
-        : {
-            from: '@tauri-apps/api/core',
-            imports: ['invoke'],
-          },
+      {
+        from: process.env.WASM_BACKEND === undefined ? '@tauri-apps/api/core' : 'rmk-gui-web-backend',
+        imports: ['invoke'],
+      },
     ],
   },
 
@@ -48,7 +46,7 @@ export default defineNuxtConfig({
     server: {
       strictPort: true,
     },
-    plugins: [wasm(), topLevelAwait()],
+    plugins: process.env.WASM_BACKEND === undefined ? [] : [wasm(), topLevelAwait()],
   },
 
   modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode', '@pinia/nuxt', 'shadcn-nuxt', '@nuxt/icon'],
