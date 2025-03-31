@@ -8,8 +8,10 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "wasm-build": "wasm-pack build src-wasm --target bundler && pnpm link ./src-wasm/pkg && WASM_BACKEND=true nuxt build",
+    "wasm-dev": "WASM_BACKEND=true nuxt dev",
     "fmt": "prettier --write ./app nuxt.config.ts package.json README.md src-tauri/tauri.conf.json && cd src-tauri && cargo +nightly fmt",
-    "clean": "rimraf .nuxt .output node_modules dist src-tauri/target || true",
+    "clean": "rimraf .nuxt .output node_modules dist src-tauri/target src-wasm/target || true",
     "prepare": "husky"
   },
   "dependencies": {
@@ -37,8 +39,11 @@
     "husky": "^9.1.7",
     "prettier": "3.4.2",
     "rimraf": "^6.0.1",
-    "typescript": "^5.8.2",
-    "vue-tsc": "^2.2.8"
+    "typescript": "^5.7.3",
+    "vue-tsc": "^2.2.0",
+    "vite-plugin-top-level-await": "^1.5.0",
+    "vite-plugin-wasm": "^3.4.1",
+    "wasm-pack": "^0.13.1"
   },
   "version": "0.2.0"
 }

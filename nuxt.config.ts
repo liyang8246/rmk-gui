@@ -1,4 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import wasm from 'vite-plugin-wasm';
+import topLevelAwait from 'vite-plugin-top-level-await';
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   future: {
@@ -11,7 +14,7 @@ export default defineNuxtConfig({
   imports: {
     presets: [
       {
-        from: '@tauri-apps/api/core',
+        from: process.env.WASM_BACKEND === undefined ? '@tauri-apps/api/core' : 'rmk-gui-web-backend',
         imports: ['invoke'],
       },
     ],
@@ -43,6 +46,7 @@ export default defineNuxtConfig({
     server: {
       strictPort: true,
     },
+    plugins: process.env.WASM_BACKEND === undefined ? [] : [wasm(), topLevelAwait()],
   },
 
   modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode', '@pinia/nuxt', 'shadcn-nuxt', '@nuxt/icon'],

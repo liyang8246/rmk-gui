@@ -7,7 +7,7 @@ const selectedDevicePath = ref();
 const selectedLayer = ref(0);
 
 watch(selectedDevicePath, async (newValue: string) => {
-  await invoke('connect_vial_device', { path: eval('[' + newValue + ']') });
+  await invoke('connect_vial_device', { path: newValue });
   await invoke('update_keymap');
 });
 
