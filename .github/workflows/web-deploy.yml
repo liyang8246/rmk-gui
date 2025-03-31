@@ -13,7 +13,7 @@ jobs:
       - run: corepack enable
       - uses: pnpm/action-setup@v4
         with:
-          version: 9.12.3
+          version: latest
       # Pick your own package manager and build script
       - run: pnpm install
       - run: pnpm wasm-build --preset github_pages
