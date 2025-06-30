@@ -1,7 +1,6 @@
-import type { Config } from "tailwindcss";
 import PrimeUI from "tailwindcss-primeui";
 
-export default <Config>{
+export default {
   plugins: [PrimeUI],
   darkMode: ["class", ".dark-mode"],
   content: [],
