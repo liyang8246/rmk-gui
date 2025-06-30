@@ -1,49 +1,53 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import Aura from "@primeuix/themes/aura";
+
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
+  css: ["primeicons/primeicons.css"],
+  // Development Config
   future: {
     compatibilityVersion: 4,
   },
+  compatibilityDate: "2025-06-23",
   devtools: { enabled: true },
   ssr: false,
-  devServer: { host: process.env.TAURI_DEV_HOST || 'localhost' },
-
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        types: ["@types/w3c-web-hid"],
+      },
+    },
+  },
   imports: {
+    dirs: ["types"],
     presets: [
       {
-        from: '@tauri-apps/api/core',
-        imports: ['invoke'],
+        from: "@tauri-apps/api/core",
+        imports: ["invoke"],
+      },
+      {
+        from: "xz-decompress",
+        imports: ["XzReadableStream"],
+      },
+      {
+        from: "@ijprest/kle-serial",
+        imports: [["Serial", "KLESerial"], "Keyboard"],
       },
     ],
   },
-
-  app: {
-    pageTransition: { name: 'page', mode: 'out-in' },
-  },
-
-  typescript: {
-    typeCheck: true,
-  },
-
-  css: ['~/assets/main.css'],
+  // Module Configurations
+  modules: ["@nuxtjs/tailwindcss", "@primevue/nuxt-module", "@pinia/nuxt", "@nuxt/icon", "@nuxtjs/color-mode"],
   tailwindcss: {
-    cssPath: '~/assets/main.css',
+    configPath: "tailwind.config.ts",
   },
-  shadcn: {
-    prefix: '',
-    componentDir: './app/components/ui',
-  },
-  colorMode: {
-    classSuffix: '',
-  },
-
-  vite: {
-    clearScreen: false,
-    envPrefix: ['VITE_', 'TAURI_'],
-    server: {
-      strictPort: true,
+  primevue: {
+    options: {
+      theme: {
+        preset: Aura,
+        options: {
+          darkModeSelector: ".dark-mode",
+        },
+      },
+      ripple: true,
     },
+    autoImport: true,
   },
-
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode', '@pinia/nuxt', 'shadcn-nuxt', '@nuxt/icon'],
 });
