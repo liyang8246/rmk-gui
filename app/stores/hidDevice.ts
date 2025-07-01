@@ -48,6 +48,22 @@ export const useDeviceStore = defineStore("device", () => {
     kleDefinition.value = vialDevice.value.kleDefinition(vialJson.value);
   }
 
+  const keymap = ref<number[] | null>(null);
+  async function fetchKeymap() {
+    if (!vialDevice.value) {
+      throw new Error("Device not connected");
+    }
+    if (!layerCount.value) {
+      throw new Error("Layer count not available");
+    }
+    if (!vialJson.value) {
+      throw new Error("Vial JSON not available");
+    }
+    const layer = layerCount.value;
+    const { rows, cols } = vialJson.value.matrix;
+    keymap.value = await vialDevice.value.keymap(layer, rows, cols);
+  }
+
   async function fetchAll() {
     // 并行会报错
     await fetchProductName();
@@ -55,6 +71,7 @@ export const useDeviceStore = defineStore("device", () => {
     await fetchMacroCount();
     await fetchVialJson();
     fetchKleDefinition();
+    await fetchKeymap();
   }
 
   function initializeApi() {
@@ -102,6 +119,8 @@ export const useDeviceStore = defineStore("device", () => {
     fetchVialJson,
     kleDefinition,
     fetchKleDefinition,
+    keymap,
+    fetchKeymap,
     fetchAll,
     list,
     connect,

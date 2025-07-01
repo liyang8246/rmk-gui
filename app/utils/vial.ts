@@ -21,12 +21,25 @@ export class VialDevice implements VialInterface {
     return await response.text();
   }
 
-  private async readChunk(size: number, cmd: number): Promise<number[]> {
+  private async readChunk(cmd: number, size: number): Promise<number[]> {
     let chunk: number[] = [];
     const blockNum = Math.ceil(size / VialConstants.BUFFER_CHUNK_SIZE);
     for (let block = 0; block < blockNum; block++) {
       const data = await this.device.writeRead([VialConstants.Command.VialPrefix, cmd, block]);
       chunk.push(...data);
+    }
+    return chunk.slice(0, size);
+  }
+
+  private async readOffset(cmd: number, size: number, offset: number): Promise<number[]> {
+    let chunk: number[] = [];
+
+    for (let x = 0; x < size; x += VialConstants.BUFFER_CHUNK_SIZE) {
+      const currentReadOffset = offset + x;
+      const sz = Math.min(size - x, VialConstants.BUFFER_CHUNK_SIZE);
+
+      const data = await this.device.writeRead([cmd, (currentReadOffset >> 8) & 0xff, currentReadOffset & 0xff, sz]);
+      chunk.push(...data.slice(VialConstants.HEADER_SIZE, VialConstants.HEADER_SIZE + sz));
     }
     return chunk.slice(0, size);
   }
@@ -45,10 +58,15 @@ export class VialDevice implements VialInterface {
     return data[1]!;
   }
 
+  async keymap(layer: number, rows: number, cols: number): Promise<number[]> {
+    const size = layer * rows * cols * 2;
+    return await this.readOffset(VialConstants.Command.GetKeymapBuffer, size, 0);
+  }
+
   async vialJson(): Promise<VialJson> {
     const sizeData = await this.device.writeRead([VialConstants.Command.VialPrefix, VialConstants.Command.GetSize]);
     const size = this.readUint32LE(sizeData);
-    const data = await this.readChunk(size, VialConstants.Command.GetDefinition);
+    const data = await this.readChunk(VialConstants.Command.GetDefinition, size);
     const rawText = await this.decompressToString(data);
     return JSON.parse(rawText) as VialJson;
   }

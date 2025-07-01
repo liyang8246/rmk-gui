@@ -19,4 +19,8 @@ const deviceStore = useDeviceStore();
     <span> KleDefinition: </span>
     <span> {{ deviceStore.kleDefinition }} </span>
   </div>
+  <div>
+    <span> Keymap: </span>
+    <span> {{ deviceStore.keymap }} </span>
+  </div>
 </template>

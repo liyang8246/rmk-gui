@@ -4,6 +4,7 @@ export interface VialInterface {
   marcoCount(): Promise<number>;
   vialJson(): Promise<VialJson>;
   kleDefinition(vialJson: VialJson): InstanceType<typeof Keyboard>;
+  keymap(layer: number, rows: number, cols: number): Promise<number[]>;
 }
 
 export interface Matrix {
