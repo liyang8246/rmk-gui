@@ -49,7 +49,11 @@ export const useDeviceStore = defineStore("device", () => {
   }
 
   async function fetchAll() {
-    await Promise.all([fetchProductName(), fetchLayerCount(), fetchMacroCount(), fetchVialJson()]);
+    // 并行会报错
+    await fetchProductName();
+    await fetchLayerCount();
+    await fetchMacroCount();
+    await fetchVialJson();
     fetchKleDefinition();
   }
 

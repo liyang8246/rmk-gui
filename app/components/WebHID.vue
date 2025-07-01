@@ -6,17 +6,14 @@ const connect = async () => {
   await deviceStore.connect(device[0]);
   await deviceStore.fetchAll();
 };
+const displayName = computed(() => deviceStore.productName ?? deviceStore.vialJson?.name ?? "Unknown Device");
 </script>
 
 <template>
   <InputGroup>
-    <InputText
-      :placeholder="deviceStore.productName ? deviceStore.productName : '等待连接键盘'"
-      class="cursor-default"
-      readonly
-    />
+    <InputText :placeholder="deviceStore.isConnected ? displayName : '等待设备连接'" class="cursor-default" readonly />
     <InputGroupAddon>
-      <Button :severity="deviceStore.productName ? 'secondary' : 'primary'" class="h-full w-full !p-0" @click="connect">
+      <Button :severity="deviceStore.isConnected ? 'secondary' : 'primary'" class="h-full w-full !p-0" @click="connect">
         <Icon name="tabler:plug" class="text-xl" />
       </Button>
     </InputGroupAddon>
