@@ -1,4 +1,3 @@
-import {} from "@ijprest/kle-serial";
 export class VialDevice implements VialInterface {
   constructor(private device: HIDInterface) {}
 
