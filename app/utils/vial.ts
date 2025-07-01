@@ -24,7 +24,7 @@ export class VialDevice implements VialInterface {
 
   private async readChunk(size: number, cmd: number): Promise<number[]> {
     let chunk: number[] = [];
-    const blockNum = Math.ceil(size / VialConstants.MESSAGE_LENGTH);
+    const blockNum = Math.ceil(size / VialConstants.BUFFER_CHUNK_SIZE);
     for (let block = 0; block < blockNum; block++) {
       const data = await this.device.writeRead([VialConstants.Command.VialPrefix, cmd, block]);
       chunk.push(...data);
