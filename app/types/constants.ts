@@ -1,11 +1,12 @@
-export const VIAL_SERIAL_NUMBER_MAGIC = "vial:f64c2b3c";
-export const VIAL_USAGE_PAGE_MAGIC = 0xff60;
-export const VIAL_USAGE_MAGIC = 0x61;
+const VIAL_SERIAL_NUMBER_MAGIC = "vial:f64c2b3c";
+const VIAL_USAGE_PAGE_MAGIC = 0xff60;
+const VIAL_USAGE_MAGIC = 0x61;
 
-export const MSG_LENGTH = 32;
-export const BUFFER_FETCH_CHUNK_SIZE = 28;
+const MSG_LENGTH = 32;
+const BUFFER_FETCH_CHUNK_SIZE = 28;
+const HEADER_SIZE = 4;
 
-export enum VialCommand {
+enum VialCommand {
   GetSize = 0x01,
   GetDefinition = 0x02,
   SetKeycode = 0x05,
@@ -21,6 +22,7 @@ export const VialConstants = {
   SERIAL_NUMBER_MAGIC: VIAL_SERIAL_NUMBER_MAGIC,
   MESSAGE_LENGTH: MSG_LENGTH,
   BUFFER_CHUNK_SIZE: BUFFER_FETCH_CHUNK_SIZE,
+  HEADER_SIZE: HEADER_SIZE,
   Command: VialCommand,
   HIDFilter: {
     usagePage: VIAL_USAGE_PAGE_MAGIC,
