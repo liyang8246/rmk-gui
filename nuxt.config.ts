@@ -1,6 +1,17 @@
 import Aura from "@primeuix/themes/aura";
 
 export default defineNuxtConfig({
+  app: {
+    head: {
+      title: "RMK-GUI",
+      meta: [
+        {
+          name: "description",
+          content: "A gui configuration for RMK based on Tauri and Nuxt",
+        },
+      ],
+    },
+  },
   css: ["primeicons/primeicons.css"],
   // Development Config
   future: {
