@@ -76,6 +76,22 @@ export class VialDevice implements VialInterface {
     return JSON.parse(rawText) as VialJson;
   }
 
+  layoutKeymap(
+    layout: InstanceType<typeof Keyboard>,
+    keymap: [string | null, string | null][],
+    layerCount: number
+  ): Map<[number, number, number], [string | null, string | null]> {
+    let layoutKeymap = new Map<[number, number, number], [string | null, string | null]>();
+    for (const key of layout.keys) {
+      const [row, col] = key.labels[0]!.split(",").map(parseInt);
+      for (let layer = 0; layer < layerCount; layer++) {
+        const keycode = keymap[layer * row! * col!]!;
+        layoutKeymap.set([row!, col!, layer], keycode);
+      }
+    }
+    return layoutKeymap;
+  }
+
   kleDefinition(vialJson: VialJson): InstanceType<typeof Keyboard> {
     return KLESerial.parse(JSON.stringify(vialJson.layouts.keymap));
   }

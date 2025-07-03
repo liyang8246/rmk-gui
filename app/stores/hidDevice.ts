@@ -64,6 +64,23 @@ export const useDeviceStore = defineStore("device", () => {
     keymap.value = await vialDevice.value.keymap(layer, rows, cols);
   }
 
+  const layoutKeymap = ref<Map<[number, number, number], [string | null, string | null]> | null>(null);
+  function fetchLayoutKeymap() {
+    if (!vialDevice.value) {
+      throw new Error("Vial device not available");
+    }
+    if (!kleDefinition.value) {
+      throw new Error("KLE definition not available");
+    }
+    if (!keymap.value) {
+      throw new Error("Keymap not available");
+    }
+    if (!layerCount.value) {
+      throw new Error("Layer count not available");
+    }
+    layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value, layerCount.value);
+  }
+
   async function fetchAll() {
     // 并行会报错
     await fetchProductName();
@@ -72,6 +89,7 @@ export const useDeviceStore = defineStore("device", () => {
     await fetchVialJson();
     fetchKleDefinition();
     await fetchKeymap();
+    fetchLayoutKeymap();
   }
 
   function initializeApi() {
@@ -121,6 +139,8 @@ export const useDeviceStore = defineStore("device", () => {
     fetchKleDefinition,
     keymap,
     fetchKeymap,
+    layoutKeymap,
+    fetchLayoutKeymap,
     fetchAll,
     list,
     connect,

@@ -5,6 +5,11 @@ export interface VialInterface {
   vialJson(): Promise<VialJson>;
   kleDefinition(vialJson: VialJson): InstanceType<typeof Keyboard>;
   keymap(layer: number, rows: number, cols: number): Promise<[string | null, string | null][]>;
+  layoutKeymap(
+    layout: InstanceType<typeof Keyboard>,
+    keymap: [string | null, string | null][],
+    layerCount: number
+  ): Map<[number, number, number], [string | null, string | null]>;
 }
 
 export interface Matrix {
