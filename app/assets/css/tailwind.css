@@ -12,3 +12,7 @@
 .rounded-prime-xl {
   border-radius: var(--p-border-radius-xl);
 }
+
+.rounded-prime-md {
+  border-radius: var(--p-border-radius-md);
+}
