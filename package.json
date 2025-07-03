@@ -32,7 +32,7 @@
     "pinia": "3.0.3",
     "primeicons": "7.0.0",
     "primevue": "4.3.6",
-    "rmk-keycode": "^0.7.3",
+    "vial-keycode": "^0.7.3",
     "tailwindcss-primeui": "0.6.1",
     "xz-decompress": "0.2.2"
   }

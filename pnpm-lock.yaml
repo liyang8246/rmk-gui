@@ -32,12 +32,12 @@ importers:
       primevue:
         specifier: 4.3.6
         version: 4.3.6(vue@3.5.17(typescript@5.8.3))
-      rmk-keycode:
-        specifier: ^0.7.3
-        version: 0.7.3
       tailwindcss-primeui:
         specifier: 0.6.1
         version: 0.6.1(tailwindcss@3.4.17)
+      vial-keycode:
+        specifier: ^0.7.3
+        version: 0.7.3
       xz-decompress:
         specifier: 0.2.2
         version: 0.2.2
@@ -3386,9 +3386,6 @@ packages:
   rfdc@1.4.1:
     resolution: {integrity: sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==}
 
-  rmk-keycode@0.7.3:
-    resolution: {integrity: sha512-tacSLD0kpD+B9aBDKGFRfrj4UHibA1/2qEjw/1FRTYPi/k8q1yfkNRKs53YnmWOvrqXX2qXPGf+xrWQa55AzUg==}
-
   rollup-plugin-visualizer@6.0.3:
     resolution: {integrity: sha512-ZU41GwrkDcCpVoffviuM9Clwjy5fcUxlz0oMoTXTYsK+tcIFzbdacnrr2n8TXcHxbGKKXtOdjxM2HUS4HjkwIw==}
     engines: {node: '>=18'}
@@ -3925,6 +3922,9 @@ packages:
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
+
+  vial-keycode@0.7.3:
+    resolution: {integrity: sha512-SmvjUlXViBKM5PHuGWJ1IlvogX3lcgUq510NHJTDBHfxRJzmoZqQdFCW7GLPpOBUqZRjmudtHL51p3Iy1ZLZvA==}
 
   vite-dev-rpc@1.1.0:
     resolution: {integrity: sha512-pKXZlgoXGoE8sEKiKJSng4hI1sQ4wi5YT24FCrwrLt6opmkjlqPPVmiPWWJn8M8byMxRGzp1CrFuqQs4M/Z39A==}
@@ -7865,8 +7865,6 @@ snapshots:
 
   rfdc@1.4.1: {}
 
-  rmk-keycode@0.7.3: {}
-
   rollup-plugin-visualizer@6.0.3(rollup@4.44.1):
     dependencies:
       open: 8.4.2
@@ -8449,6 +8447,8 @@ snapshots:
       spdx-expression-parse: 3.0.1
 
   vary@1.1.2: {}
+
+  vial-keycode@0.7.3: {}
 
   vite-dev-rpc@1.1.0(vite@6.3.5(@types/node@24.0.7)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0)):
     dependencies:
