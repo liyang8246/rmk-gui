@@ -83,7 +83,7 @@ export class VialDevice implements VialInterface {
   ): Map<[number, number, number], [string | null, string | null]> {
     let layoutKeymap = new Map<[number, number, number], [string | null, string | null]>();
     for (const key of layout.keys) {
-      const [row, col] = key.labels[0]!.split(",").map(parseInt);
+      const [row, col] = key.labels[0]!.split(",").map(n => parseInt(n, 10));
       for (let layer = 0; layer < layerCount; layer++) {
         const keycode = keymap[layer * row! * col!]!;
         layoutKeymap.set([row!, col!, layer], keycode);
