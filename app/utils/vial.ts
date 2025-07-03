@@ -60,12 +60,12 @@ export class VialDevice implements VialInterface {
     return data[1]!;
   }
 
-  async keymap(layer: number, rows: number, cols: number): Promise<String[]> {
+  async keymap(layer: number, rows: number, cols: number): Promise<[string, string][]> {
     const size = layer * rows * cols * 2;
     const rawData = await this.readOffset(VialConstants.Command.GetKeymapBuffer, size, 0);
-    const result: String[] = [];
+    const result: [string, string][] = [];
     for (let i = 0; i < rawData.length; i += 2) {
-      result.push(KeyCode[rawData[i + 1]!]!);
+      result.push([KeyCode[rawData[i]!]!, KeyCode[rawData[i + 1]!]!]);
     }
     return result;
   }
