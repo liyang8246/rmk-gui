@@ -4,7 +4,7 @@ use std::ffi::CString;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VialDevice {
     pub product_string: String,
-    pub path:           CString,
+    pub path: CString,
 }
 
 impl VialDevice {

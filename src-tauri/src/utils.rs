@@ -8,8 +8,7 @@ pub fn is_rawhid(device_info: &DeviceInfo) -> bool {
 
 pub fn is_vial_device(device_info: &DeviceInfo) -> bool {
     let serial_number = device_info.serial_number().unwrap_or("");
-    serial_number.contains(VIAL_SERIAL_NUMBER_MAGIC) && is_rawhid(device_info)
-        || device_info.usage_page() == 0xFF60
+    serial_number.contains(VIAL_SERIAL_NUMBER_MAGIC) && is_rawhid(device_info) || device_info.usage_page() == 0xFF60
 }
 
 pub fn hid_write_read(device: &HidDevice, data: &[u8]) -> Result<[u8; 32], String> {

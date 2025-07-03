@@ -18,10 +18,7 @@ pub async fn list(state: tauri::State<'_, AppState>) -> Result<Vec<VialDevice>, 
         .filter(|device_info| is_vial_device(device_info))
         .map(|device_info| {
             VialDevice::new(
-                device_info
-                    .product_string()
-                    .unwrap_or("Unknown Device")
-                    .to_string(),
+                device_info.product_string().unwrap_or("Unknown Device").to_string(),
                 device_info.path().to_owned(),
             )
         })
@@ -56,10 +53,7 @@ pub async fn product_name(state: tauri::State<'_, AppState>) -> Result<String, S
 }
 
 #[tauri::command]
-pub async fn write_read(
-    state: tauri::State<'_, AppState>,
-    data: Vec<u8>,
-) -> Result<[u8; 32], String> {
+pub async fn write_read(state: tauri::State<'_, AppState>, data: Vec<u8>) -> Result<[u8; 32], String> {
     let state = state.lock().await;
     let device = state.current_device.as_ref().unwrap();
 
