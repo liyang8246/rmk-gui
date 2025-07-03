@@ -40,7 +40,7 @@ export default defineNuxtConfig({
       },
       {
         from: "@ijprest/kle-serial",
-        imports: [["Serial", "KLESerial"], "Keyboard"],
+        imports: [["Serial", "KLESerial"], ["Key", "KLEKey"], "Keyboard"],
       },
       {
         from: "vial-keycode",

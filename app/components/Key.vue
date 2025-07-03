@@ -3,6 +3,7 @@ const { k1, k2, select } = defineProps<{
   k1: string | null;
   k2: string | null;
   select?: false | 1 | 2;
+  kleProps?: typeof KLEKey;
 }>();
 </script>
 
