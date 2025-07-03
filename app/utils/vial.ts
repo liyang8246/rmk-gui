@@ -1,5 +1,3 @@
-import { KeyCode } from "vial-keycode";
-
 export class VialDevice implements VialInterface {
   constructor(private device: HIDInterface) {}
 
