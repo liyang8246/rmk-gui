@@ -16,11 +16,11 @@ const deviceStore = useDeviceStore();
     <span> {{ deviceStore.vialJson }} </span>
   </div>
   <div>
-    <span> KleDefinition: </span>
-    <span> {{ deviceStore.kleDefinition }} </span>
-  </div>
-  <div>
     <span> Keymap: </span>
     <span> {{ deviceStore.keymap }} </span>
+  </div>
+  <div>
+    <span> KleDefinition: </span>
+    <span> {{ deviceStore.kleDefinition }} </span>
   </div>
 </template>

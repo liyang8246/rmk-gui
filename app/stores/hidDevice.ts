@@ -48,7 +48,7 @@ export const useDeviceStore = defineStore("device", () => {
     kleDefinition.value = vialDevice.value.kleDefinition(vialJson.value);
   }
 
-  const keymap = ref<number[] | null>(null);
+  const keymap = ref<String[] | null>(null);
   async function fetchKeymap() {
     if (!vialDevice.value) {
       throw new Error("Device not connected");

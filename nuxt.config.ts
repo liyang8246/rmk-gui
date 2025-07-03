@@ -42,6 +42,10 @@ export default defineNuxtConfig({
         from: "@ijprest/kle-serial",
         imports: [["Serial", "KLESerial"], "Keyboard"],
       },
+      {
+        from: "vial-keycode",
+        imports: ["KeyCode"],
+      },
     ],
   },
   // Module Configurations

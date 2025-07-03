@@ -1,3 +1,5 @@
+import { KeyCode } from "vial-keycode";
+
 export class VialDevice implements VialInterface {
   constructor(private device: HIDInterface) {}
 
@@ -58,9 +60,14 @@ export class VialDevice implements VialInterface {
     return data[1]!;
   }
 
-  async keymap(layer: number, rows: number, cols: number): Promise<number[]> {
+  async keymap(layer: number, rows: number, cols: number): Promise<String[]> {
     const size = layer * rows * cols * 2;
-    return await this.readOffset(VialConstants.Command.GetKeymapBuffer, size, 0);
+    const rawData = await this.readOffset(VialConstants.Command.GetKeymapBuffer, size, 0);
+    const result: String[] = [];
+    for (let i = 0; i < rawData.length; i += 2) {
+      result.push(KeyCode[rawData[i + 1]!]!);
+    }
+    return result;
   }
 
   async vialJson(): Promise<VialJson> {
