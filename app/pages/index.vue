@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const deviceStore = useDeviceStore();
+const deviceStore = useKeyboardStore();
 </script>
 
 <template>

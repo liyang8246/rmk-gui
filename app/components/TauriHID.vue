@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const deviceStore = useDeviceStore();
+const deviceStore = useKeyboardStore();
 const devices = ref<any[]>([]);
 const selected = ref<any>(null);
 

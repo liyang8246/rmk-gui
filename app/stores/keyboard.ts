@@ -1,4 +1,4 @@
-export const useDeviceStore = defineStore("device", () => {
+export const useKeyboardStore = defineStore("keyboard", () => {
   const hidDevice = ref<HIDInterface | null>(null);
   const vialDevice = ref<VialInterface | null>(null);
   const api = ref<HIDApi | null>(null);

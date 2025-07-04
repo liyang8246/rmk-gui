@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const deviceStore = useDeviceStore();
+const deviceStore = useKeyboardStore();
 const connect = async () => {
   const device = (await deviceStore.list()) as HIDDevice[];
   if (!device[0]) return;
