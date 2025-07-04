@@ -4,12 +4,12 @@ export interface VialInterface {
   marcoCount(): Promise<number>;
   vialJson(): Promise<VialJson>;
   kleDefinition(vialJson: VialJson): InstanceType<typeof Keyboard>;
-  keymap(layer: number, rows: number, cols: number): Promise<[string | null, string | null][]>;
+  keymap(layer: number, rows: number, cols: number): Promise<number[]>;
   layoutKeymap(
     layout: InstanceType<typeof Keyboard>,
-    keymap: [string | null, string | null][],
+    keymap: number[],
     layerCount: number
-  ): Map<[number, number, number], [string | null, string | null]>;
+  ): Map<[number, number, number], number>;
 }
 
 export interface Matrix {

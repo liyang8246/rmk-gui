@@ -58,13 +58,11 @@ export class VialDevice implements VialInterface {
     return data[1]!;
   }
 
-  async keymap(layer: number, rows: number, cols: number): Promise<[string | null, string | null][]> {
+  async keymap(layer: number, rows: number, cols: number): Promise<number[]> {
     const size = layer * rows * cols * 2;
     const rawData = await this.readOffset(VialConstants.Command.GetKeymapBuffer, size, 0);
     return Array.from({ length: rawData.length / 2 }, (_, i) => {
-      const k1 = KeyCode[rawData[i * 2]!]!;
-      const k2 = KeyCode[rawData[i * 2 + 1]!]!;
-      return [k1 === "No" ? null : k1, k2 === "No" ? null : k2];
+      return 256 * rawData[i * 2]! + rawData[i * 2 + 1]!;
     });
   }
 
@@ -78,10 +76,10 @@ export class VialDevice implements VialInterface {
 
   layoutKeymap(
     layout: InstanceType<typeof Keyboard>,
-    keymap: [string | null, string | null][],
+    keymap: number[],
     layerCount: number
-  ): Map<[number, number, number], [string | null, string | null]> {
-    let layoutKeymap = new Map<[number, number, number], [string | null, string | null]>();
+  ): Map<[number, number, number], number> {
+    let layoutKeymap = new Map<[number, number, number], number>();
     for (const key of layout.keys) {
       const [row, col] = key.labels[0]!.split(",").map(n => parseInt(n, 10));
       for (let layer = 0; layer < layerCount; layer++) {
