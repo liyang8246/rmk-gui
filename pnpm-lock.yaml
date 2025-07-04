@@ -35,9 +35,6 @@ importers:
       tailwindcss-primeui:
         specifier: 0.6.1
         version: 0.6.1(tailwindcss@3.4.17)
-      vial-keycode:
-        specifier: ^0.7.3
-        version: 0.7.3
       xz-decompress:
         specifier: 0.2.2
         version: 0.2.2
@@ -3906,9 +3903,6 @@ packages:
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
-
-  vial-keycode@0.7.3:
-    resolution: {integrity: sha512-SmvjUlXViBKM5PHuGWJ1IlvogX3lcgUq510NHJTDBHfxRJzmoZqQdFCW7GLPpOBUqZRjmudtHL51p3Iy1ZLZvA==}
 
   vite-dev-rpc@1.1.0:
     resolution: {integrity: sha512-pKXZlgoXGoE8sEKiKJSng4hI1sQ4wi5YT24FCrwrLt6opmkjlqPPVmiPWWJn8M8byMxRGzp1CrFuqQs4M/Z39A==}
@@ -8381,8 +8375,6 @@ snapshots:
       spdx-expression-parse: 3.0.1
 
   vary@1.1.2: {}
-
-  vial-keycode@0.7.3: {}
 
   vite-dev-rpc@1.1.0(vite@6.3.5(@types/node@24.0.10)(jiti@2.4.2)(terser@5.43.1)(yaml@2.8.0)):
     dependencies:
