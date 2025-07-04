@@ -1,19 +1,27 @@
 <script lang="ts" setup>
-const deviceStore = useKeyboardStore();
+const keyboardStore = useKeyboardStore();
 const connect = async () => {
-  const device = (await deviceStore.list()) as HIDDevice[];
+  const device = (await keyboardStore.list()) as HIDDevice[];
   if (!device[0]) return;
-  await deviceStore.connect(device[0]);
-  await deviceStore.fetchAll();
+  await keyboardStore.connect(device[0]);
+  await keyboardStore.fetchAll();
 };
-const displayName = computed(() => deviceStore.productName ?? deviceStore.vialJson?.name ?? "Unknown Device");
+const displayName = computed(() => keyboardStore.productName ?? keyboardStore.vialJson?.name ?? "Unknown Device");
 </script>
 
 <template>
   <InputGroup>
-    <InputText :placeholder="deviceStore.isConnected ? displayName : '等待设备连接'" class="cursor-default" readonly />
+    <InputText
+      :placeholder="keyboardStore.isConnected ? displayName : '等待设备连接'"
+      class="cursor-default"
+      readonly
+    />
     <InputGroupAddon>
-      <Button :severity="deviceStore.isConnected ? 'secondary' : 'primary'" class="h-full w-full !p-0" @click="connect">
+      <Button
+        :severity="keyboardStore.isConnected ? 'secondary' : 'primary'"
+        class="h-full w-full !p-0"
+        @click="connect"
+      >
         <Icon name="tabler:plug" class="text-xl" />
       </Button>
     </InputGroupAddon>

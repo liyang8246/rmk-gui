@@ -1,26 +1,26 @@
 <script lang="ts" setup>
-const deviceStore = useKeyboardStore();
+const keyboardStore = useKeyboardStore();
 </script>
 
 <template>
   <div>
     <span> LayerCount: </span>
-    <span> {{ deviceStore.layerCount }} </span>
+    <span> {{ keyboardStore.layerCount }} </span>
   </div>
   <div>
     <span> MacroCount: </span>
-    <span> {{ deviceStore.macroCount }} </span>
+    <span> {{ keyboardStore.macroCount }} </span>
   </div>
   <div>
     <span> VialJson: </span>
-    <span> {{ deviceStore.vialJson }} </span>
+    <span> {{ keyboardStore.vialJson }} </span>
   </div>
   <div>
     <span> Keymap: </span>
-    <span> {{ deviceStore.keymap }} </span>
+    <span> {{ keyboardStore.keymap }} </span>
   </div>
   <div>
     <span> KleDefinition: </span>
-    <span> {{ deviceStore.kleDefinition }} </span>
+    <span> {{ keyboardStore.kleDefinition }} </span>
   </div>
 </template>

@@ -1,17 +1,17 @@
 <script lang="ts" setup>
-const deviceStore = useKeyboardStore();
+const keyboardStore = useKeyboardStore();
 const devices = ref<any[]>([]);
 const selected = ref<any>(null);
 
 const connectDevice = async () => {
   if (selected.value) {
-    await deviceStore.connect(selected.value.path);
+    await keyboardStore.connect(selected.value.path);
   }
-  await deviceStore.fetchAll();
+  await keyboardStore.fetchAll();
 };
 
 onMounted(async () => {
-  devices.value = (await deviceStore.list()) as any[];
+  devices.value = (await keyboardStore.list()) as any[];
   if (devices.value.length > 0) {
     selected.value = devices.value[0];
     await connectDevice();
@@ -24,13 +24,13 @@ onMounted(async () => {
     <Select
       v-model="selected"
       :options="devices"
-      :disabled="deviceStore.isConnected"
+      :disabled="keyboardStore.isConnected"
       optionLabel="product_string"
       placeholder="等待连接键盘"
     />
     <InputGroupAddon>
       <Button
-        :severity="deviceStore.isConnected ? 'secondary' : 'primary'"
+        :severity="keyboardStore.isConnected ? 'secondary' : 'primary'"
         class="h-full w-full !p-0"
         @click="connectDevice"
       >
