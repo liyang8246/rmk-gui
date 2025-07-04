@@ -710,6 +710,18 @@ export function keyToDisplay(key: number): [string | null, string | null] {
   return [k1, k2];
 }
 
+export function keyToConfig(key: number): string {
+  const k1Code = key & 0xff00;
+  const k2Code = key & 0x00ff;
+  const k2 = k2Code ? KeyCode[k2Code]! : "No";
+
+  if (isLT(k1Code)) {
+    return `LT(${(k1Code - 0x4000) >> 8}, ${k2})`;
+  }
+
+  return `${k2}`;
+}
+
 function isLT(key: number): boolean {
   return key >= 0x0400 && key <= 0x04f00;
 }
