@@ -12,6 +12,10 @@ const connectDevice = async () => {
 
 onMounted(async () => {
   devices.value = (await deviceStore.list()) as any[];
+  if (devices.value.length > 0) {
+    selected.value = devices.value[0];
+    await connectDevice();
+  }
 });
 </script>
 
