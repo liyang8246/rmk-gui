@@ -6,6 +6,7 @@ const pages = [
   { name: "Keymap", icon: "tabler:keyboard-filled", to: "/keymap" },
   { name: "Marcos", icon: "tabler:circle-letter-a-filled", to: "/marco" },
   { name: "Settings", icon: "tabler:settings-filled", to: "/settings" },
+  { name: "Export", icon: "tabler:file-export", to: "/export" },
 ];
 
 const isActive = (path: string) => {
