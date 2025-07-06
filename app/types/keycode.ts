@@ -706,8 +706,8 @@ export function keyToDisplay(key: number): [string | null, string | null] {
   if (isLT(k1Code)) {
     k1 = `LT(${(k1Code - 0x4000) >> 8})`;
   }
-  if (isMO(k1Code)) {
-    k1 = `MO(${k1Code - 0x5220})`;
+  if (isMO(key)) {
+    return [null, `MO(${key - 0x5220})`];
   }
 
   return [k1, k2];
@@ -721,8 +721,8 @@ export function keyToConfig(key: number): string {
   if (isLT(k1Code)) {
     return `LT(${(k1Code - 0x4000) >> 8}, ${k2})`;
   }
-  if (isMO(k1Code)) {
-    return `MO(${k1Code - 0x5220})`;
+  if (isMO(key)) {
+    return `MO(${key - 0x5220})`;
   }
 
   return `${k2}`;
