@@ -58,12 +58,28 @@ export class VialDevice implements VialInterface {
     return data[1]!;
   }
 
-  async keymap(layer: number, rows: number, cols: number): Promise<number[]> {
-    const size = layer * rows * cols * 2;
+  async keymap(layerCount: number, rowCount: number, colCount: number): Promise<Map<string, number>> {
+    const size = layerCount * rowCount * colCount * 2;
     const rawData = await this.readOffset(VialConstants.Command.GetKeymapBuffer, size, 0);
-    return Array.from({ length: rawData.length / 2 }, (_, i) => {
-      return 256 * rawData[i * 2]! + rawData[i * 2 + 1]!;
-    });
+
+    const keymapResult = new Map<string, number>();
+
+    for (let layer = 0; layer < layerCount; layer++) {
+      for (let row = 0; row < rowCount; row++) {
+        for (let col = 0; col < colCount; col++) {
+          const offset = (layer * rowCount * colCount + row * colCount + col) * 2;
+          if (offset + 1 < rawData.length) {
+            const keycode = 256 * rawData[offset]! + rawData[offset + 1]!;
+            keymapResult.set([layer, row, col].toString(), keycode);
+          } else {
+            console.warn(
+              `Keymap data out of bounds for layer ${layer}, row ${row}, col ${col}. Raw data length: ${rawData.length}`
+            );
+          }
+        }
+      }
+    }
+    return keymapResult;
   }
 
   async vialJson(): Promise<VialJson> {
@@ -76,15 +92,17 @@ export class VialDevice implements VialInterface {
 
   layoutKeymap(
     layout: InstanceType<typeof Keyboard>,
-    keymap: number[],
+    keymap: Map<string, number>,
     layerCount: number
-  ): Map<[number, number, number], number> {
-    let layoutKeymap = new Map<[number, number, number], number>();
+  ): Map<string, number> {
+    let layoutKeymap = new Map<string, number>();
     for (const key of layout.keys) {
       const [row, col] = key.labels[0]!.split(",").map(n => parseInt(n, 10));
       for (let layer = 0; layer < layerCount; layer++) {
-        const keycode = keymap[layer * row! * col!]!;
-        layoutKeymap.set([row!, col!, layer], keycode);
+        const keycode = keymap.get([layer, row!, col!].toString());
+        if (keycode !== undefined) {
+          layoutKeymap.set([row!, col!, layer].toString(), keycode);
+        }
       }
     }
     return layoutKeymap;

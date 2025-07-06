@@ -3,11 +3,14 @@ const keyboardStore = useKeyboardStore();
 
 const matrix = ref("");
 const keys = computed(() => {
-  let ans = matrix.value;
-  const layer = 1;
-  for (const [[row, col], origin] of parseCoordinateString(matrix.value)) {
-    const key = keyToConfig(keyboardStore.keymap![layer * (row + 1) * (col + 1)]!);
-    ans = ans.replace(origin, key);
+  let ans = [];
+  for (let layer = 0; layer < keyboardStore.layerCount!; layer++) {
+    let keys = matrix.value;
+    for (const [[row, col], origin] of parseCoordinateString(matrix.value)) {
+      const key = keyToConfig(keyboardStore.keymap!.get([layer, row, col].toString())!);
+      keys = keys.replace(origin, key);
+    }
+    ans.push(keys);
   }
   return ans;
 });
@@ -29,6 +32,8 @@ function parseCoordinateString(input: string): [[number, number], string][] {
 </script>
 
 <template>
+  <p>matrix</p>
   <Textarea v-model="matrix" autoResize class="w-full" />
-  <Textarea :value="keys" autoResize class="w-full" />
+  <p>keymap</p>
+  <Textarea :value="k" v-for="k in keys" autoResize class="w-full" />
 </template>

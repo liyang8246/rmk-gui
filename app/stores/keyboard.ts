@@ -48,7 +48,7 @@ export const useKeyboardStore = defineStore("keyboard", () => {
     kleDefinition.value = vialDevice.value.kleDefinition(vialJson.value);
   }
 
-  const keymap = ref<number[] | null>(null);
+  const keymap = ref<Map<string, number> | null>(null);
   async function fetchKeymap() {
     if (!vialDevice.value) {
       throw new Error("Device not connected");
@@ -64,7 +64,7 @@ export const useKeyboardStore = defineStore("keyboard", () => {
     keymap.value = await vialDevice.value.keymap(layer, rows, cols);
   }
 
-  const layoutKeymap = ref<Map<[number, number, number], number> | null>(null);
+  const layoutKeymap = ref<Map<string, number> | null>(null);
   function fetchLayoutKeymap() {
     if (!vialDevice.value) {
       throw new Error("Vial device not available");
