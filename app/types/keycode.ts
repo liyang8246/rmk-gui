@@ -729,7 +729,7 @@ export function keyToConfig(key: number): string {
 }
 
 function isLT(key: number): boolean {
-  return key >= 0x0400 && key <= 0x04f00;
+  return key >= 0x400 && key <= 0x4f00;
 }
 
 function isMO(key: number): boolean {
