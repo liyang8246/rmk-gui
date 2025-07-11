@@ -3,11 +3,12 @@ const keyboardStore = useKeyboardStore();
 </script>
 
 <template>
-  <div class="grid grid-cols-[repeat(14,minmax(0,1fr))] gap-1">
+  <div class="w-full h-full p-3 flex flex-wrap gap-1">
     <template v-for="[coords, keycode] in keyboardStore.keymap">
       <Key :keys="keyToDisplay(keycode)" />
     </template>
   </div>
 </template>
 
-<style></style>
+<style scoped>
+</style>
