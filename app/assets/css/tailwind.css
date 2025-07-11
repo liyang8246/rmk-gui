@@ -16,6 +16,6 @@
 .rounded-prime-md {
   border-radius: var(--p-border-radius-md);
 }
-.flex-center{
+.flex-center {
   @apply flex items-center justify-center;
 }
