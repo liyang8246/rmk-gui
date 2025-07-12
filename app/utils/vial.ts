@@ -91,7 +91,7 @@ export class VialDevice implements VialInterface {
   }
 
   layoutKeymap(
-    layout: InstanceType<typeof Keyboard>,
+    layout: InstanceType<typeof KleBoard>,
     keymap: Map<string, number>,
     layerCount: number
   ): Map<string, number> {
@@ -108,7 +108,7 @@ export class VialDevice implements VialInterface {
     return layoutKeymap;
   }
 
-  kleDefinition(vialJson: VialJson): InstanceType<typeof Keyboard> {
+  kleDefinition(vialJson: VialJson): InstanceType<typeof KleBoard> {
     return deserialize(vialJson.layouts.keymap);
   }
 }

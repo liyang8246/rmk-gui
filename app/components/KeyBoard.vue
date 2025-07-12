@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { Key } from "@kcf-hub/kle-serial/dist/interfaces";
 const { keys, select } = defineProps<{
   keys: [string | null, string | null];
   select?: false | 1 | 2;
-  kleProps?: Key;
+  kleProps?: InstanceType<typeof KleKey>;
 }>();
 
 const insertLineBreaks = (str: string, maxLength: number) => {

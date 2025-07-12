@@ -37,7 +37,7 @@ export const useKeyboardStore = defineStore("keyboard", () => {
     vialJson.value = await vialDevice.value.vialJson();
   }
 
-  const kleDefinition = ref<InstanceType<typeof Keyboard> | null>(null);
+  const kleDefinition = ref<InstanceType<typeof KleBoard> | null>(null);
   function fetchKleDefinition() {
     if (!vialDevice.value) {
       throw new Error("Device not connected");
