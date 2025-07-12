@@ -109,6 +109,6 @@ export class VialDevice implements VialInterface {
   }
 
   kleDefinition(vialJson: VialJson): InstanceType<typeof Keyboard> {
-    return KLESerial.parse(JSON.stringify(vialJson.layouts.keymap));
+    return deserialize(vialJson.layouts.keymap);
   }
 }

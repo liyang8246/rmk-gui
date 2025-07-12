@@ -39,8 +39,12 @@ export default defineNuxtConfig({
         imports: ["XzReadableStream"],
       },
       {
-        from: "@ijprest/kle-serial",
-        imports: [["Serial", "KLESerial"], ["Key", "KLEKey"], "Keyboard"],
+        from: "@kcf-hub/kle-serial",
+        imports: ["deserialize"],
+      },
+      {
+        from: "@kcf-hub/kle-serial/dist/interfaces",
+        imports: ["Keyboard"],
       },
     ],
   },
