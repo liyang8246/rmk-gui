@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 const { keys, kleProps } = defineProps<{
-  keys?: [string | null, string | null];
+  keys: [string | null, string | null];
   select?: false | 1 | 2;
   kleProps: InstanceType<typeof KleKey>;
 }>();
@@ -96,7 +96,7 @@ const translate = computed(() => {
             height: keyMaxInnerHeight,
           }"
         >
-          <span>key[1]</span>
+          <span>{{ keys![1] }}</span>
         </div>
         <!-- <div class="cursor-pointer text-center text-xs font-bold">
           <div v-if="keys[0]" class="relative">

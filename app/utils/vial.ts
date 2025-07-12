@@ -101,7 +101,7 @@ export class VialDevice implements VialInterface {
       for (let layer = 0; layer < layerCount; layer++) {
         const keycode = keymap.get([layer, row!, col!].toString());
         if (keycode !== undefined) {
-          layoutKeymap.set([row!, col!, layer].toString(), keycode);
+          layoutKeymap.set([layer, row!, col!].toString(), keycode);
         }
       }
     }

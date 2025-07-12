@@ -42,6 +42,4 @@ const keyBreaks = (key: string | null) => {
   </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

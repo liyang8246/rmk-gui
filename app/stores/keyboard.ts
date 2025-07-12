@@ -80,6 +80,16 @@ export const useKeyboardStore = defineStore("keyboard", () => {
     }
     layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value, layerCount.value);
   }
+  function indexToDisplay(index: [number, number, number]) {
+    if (!layoutKeymap.value) {
+      throw new Error("Layout keymap not available");
+    }
+    const keyValue = layoutKeymap.value.get(index.toString());
+    if (keyValue == undefined) {
+      throw new Error(`Keymap value for index ${index.toString()} not found`);
+    }
+    return keyToDisplay(keyValue);
+  }
 
   async function fetchAll() {
     // 并行会报错
@@ -141,6 +151,7 @@ export const useKeyboardStore = defineStore("keyboard", () => {
     fetchKeymap,
     layoutKeymap,
     fetchLayoutKeymap,
+    indexToDisplay,
     fetchAll,
     list,
     connect,

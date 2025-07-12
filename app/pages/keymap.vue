@@ -1,5 +1,9 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore();
+function labelToDisplay(label: string): [string | null, string | null] {
+  const [row, col] = label.split(",").map(n => parseInt(n, 10));
+  return keyboardStore.indexToDisplay([0, row!, col!]);
+}
 </script>
 
 <template>
@@ -7,7 +11,7 @@ const keyboardStore = useKeyboardStore();
     <div class="flex-center my-8">
       <div class="rounded-prime-md relative h-96 w-11/12 overflow-hidden border border-black bg-surface-300">
         <template v-for="keys in keyboardStore.kleDefinition?.keys">
-          <Key :kleProps="keys" />
+          <Key :keys="labelToDisplay(keys.labels[0]!)" :kleProps="keys" />
         </template>
       </div>
     </div>
