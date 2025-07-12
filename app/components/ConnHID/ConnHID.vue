@@ -3,6 +3,6 @@ const tauri = isTauri();
 </script>
 
 <template>
-  <TauriHID v-if="tauri" />
-  <WebHID v-else />
+  <ConnHIDTauri v-if="tauri" />
+  <ConnHIDWeb v-else />
 </template>
