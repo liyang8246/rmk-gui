@@ -37,7 +37,7 @@ export const useKeyboardStore = defineStore("keyboard", () => {
     vialJson.value = await vialDevice.value.vialJson();
   }
 
-  const kleDefinition = ref<InstanceType<typeof Keyboard> | null>(null);
+  const kleDefinition = ref<InstanceType<typeof KleBoard> | null>(null);
   function fetchKleDefinition() {
     if (!vialDevice.value) {
       throw new Error("Device not connected");
@@ -79,6 +79,16 @@ export const useKeyboardStore = defineStore("keyboard", () => {
       throw new Error("Layer count not available");
     }
     layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value, layerCount.value);
+  }
+  function indexToDisplay(index: [number, number, number]) {
+    if (!layoutKeymap.value) {
+      throw new Error("Layout keymap not available");
+    }
+    const keyValue = layoutKeymap.value.get(index.toString());
+    if (keyValue == undefined) {
+      throw new Error(`Keymap value for index ${index.toString()} not found`);
+    }
+    return keyToDisplay(keyValue);
   }
 
   async function fetchAll() {
@@ -141,6 +151,7 @@ export const useKeyboardStore = defineStore("keyboard", () => {
     fetchKeymap,
     layoutKeymap,
     fetchLayoutKeymap,
+    indexToDisplay,
     fetchAll,
     list,
     connect,

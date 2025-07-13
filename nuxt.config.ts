@@ -44,7 +44,10 @@ export default defineNuxtConfig({
       },
       {
         from: "@kcf-hub/kle-serial/dist/interfaces",
-        imports: ["Keyboard"],
+        imports: [
+          ["Keyboard", "KleBoard"],
+          ["Key", "KleKey"],
+        ],
       },
     ],
   },

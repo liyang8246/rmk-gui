@@ -3,10 +3,10 @@ export interface VialInterface {
   layerCount(): Promise<number>;
   marcoCount(): Promise<number>;
   vialJson(): Promise<VialJson>;
-  kleDefinition(vialJson: VialJson): InstanceType<typeof Keyboard>;
+  kleDefinition(vialJson: VialJson): InstanceType<typeof KleBoard>;
   keymap(layer: number, rows: number, cols: number): Promise<Map<string, number>>;
   layoutKeymap(
-    layout: InstanceType<typeof Keyboard>,
+    layout: InstanceType<typeof KleBoard>,
     keymap: Map<string, number>,
     layerCount: number
   ): Map<string, number>;
