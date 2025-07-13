@@ -5,30 +5,13 @@ const { keys, kleProps } = defineProps<{
   kleProps: InstanceType<typeof KleKey>;
 }>();
 
-const keyWidth1 = computed(() => {
-  return `calc(56px * ${kleProps.width} - 8px)`;
-});
-const keyWidth2 = computed(() => {
-  return `calc(56px * ${kleProps.width2} - 8px)`;
-});
-const keyHeight1 = computed(() => {
-  return `calc(56px * ${kleProps.height} - 8px)`;
-});
-const keyHeight2 = computed(() => {
-  return `calc(56px * ${kleProps.height2} - 8px)`;
-});
-const maxWhith = computed(() => {
-  return kleProps.width > kleProps.width2 ? kleProps.width : kleProps.width2;
-});
-const maxHeight = computed(() => {
-  return kleProps.height > kleProps.height2 ? kleProps.height : kleProps.height2;
-});
-const keyMaxWidth = computed(() => {
-  return `calc(56px * ${maxWhith.value} - 8px)`;
-});
-const keyMaxHeight = computed(() => {
-  return `calc(56px * ${maxHeight.value} - 8px)`;
-});
+function fixSize(size: number): string {
+  return `calc(56px * ${size} - 8px)`;
+}
+function maxSize(size1: number, size2: number): number {
+  return size1 > size2 ? size1 : size2;
+}
+
 const translate = computed(() => {
   return (
     `calc((-${kleProps.x} + ${kleProps.rotation_x}) * 56px)` + `calc((-${kleProps.y} + ${kleProps.rotation_y}) * 56px)`
@@ -42,8 +25,8 @@ const keyBreaks = (key: string | null) => {
   if (key === null) {
     return "";
   }
-  if (key.length >= 7 * maxWhith.value) {
-    return insertLineBreaks(key, 6 * maxWhith.value);
+  if (key.length >= Math.round(7 * maxSize(kleProps.width, kleProps.width2)) - 1) {
+    return insertLineBreaks(key, Math.round(6 * maxSize(kleProps.width, kleProps.width2)));
   }
   return key;
 };
@@ -52,34 +35,20 @@ const keyBreaks = (key: string | null) => {
   <div
     class="rounded-prime-md absolute h-14 w-14 cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300"
     :style="{
-      top: Number(kleProps.y) * 56 + 'px',
-      left: Number(kleProps.x) * 56 + 'px',
+      top: kleProps.y * 56 + 'px',
+      left: kleProps.x * 56 + 'px',
       transform: `rotate(${kleProps.rotation_angle}deg)`,
       transformOrigin: translate,
-      width: keyMaxWidth,
-      height: keyMaxHeight,
+      width: fixSize(maxSize(kleProps.width, kleProps.width2)),
+      height: fixSize(maxSize(kleProps.height, kleProps.height2)),
     }"
   >
     <label>
       <div
         class="rounded-prime-md absolute bg-surface-300 dark:bg-surface-600"
         :style="{
-          width: keyWidth1,
-          height: keyHeight1,
-        }"
-      ></div>
-      <div
-        class="rounded-prime-md absolute bg-surface-300 dark:bg-surface-600"
-        :style="{
-          width: keyWidth2,
-          height: keyHeight2,
-        }"
-      ></div>
-      <div
-        class="rounded-prime-md absolute bg-surface-300 dark:bg-surface-600"
-        :style="{
-          width: keyWidth2,
-          height: keyHeight2,
+          width: fixSize(kleProps.width2),
+          height: fixSize(kleProps.height2),
         }"
       ></div>
       <!-- kc -->
@@ -87,17 +56,18 @@ const keyBreaks = (key: string | null) => {
         <div
           class="rounded-prime-md absolute flex justify-center bg-surface-300 pt-[2px] dark:bg-surface-600"
           :style="{
-            width: keyWidth1,
-            height: keyHeight1,
+            width: fixSize(kleProps.width),
+            height: fixSize(kleProps.height),
           }"
         >
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
 
         <div
-          class="rounded-prime-md absolute left-[4px] flex items-center justify-center border-t-2 border-surface-800 bg-surface-300 dark:border-surface-200 dark:bg-surface-600"
+          class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 bg-surface-300 dark:border-surface-200 dark:bg-surface-600"
           :style="{
             top: '17px',
+            left: '4px',
             width: kleProps.width * 56 - 8 * 2 + 'px',
             height: kleProps.height * 56 - 8 - 4 - 17 + 'px',
           }"
@@ -110,8 +80,8 @@ const keyBreaks = (key: string | null) => {
         v-else
         class="rounded-prime-md absolute flex items-center justify-center bg-surface-300 dark:bg-surface-600"
         :style="{
-          width: keyWidth1,
-          height: keyHeight1,
+          width: fixSize(kleProps.width),
+          height: fixSize(kleProps.height),
         }"
       >
         <span>{{ keyBreaks(keys![1]) }}</span>
