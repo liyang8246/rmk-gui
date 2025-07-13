@@ -16,22 +16,3 @@
 .rounded-prime-md {
   border-radius: var(--p-border-radius-md);
 }
-
-.flex-center {
-  @apply flex items-center justify-center;
-}
-.flex-top {
-  @apply flex items-start justify-center;
-}
-.flex-start {
-  @apply flex items-start justify-start;
-}
-.out-frame {
-  @apply box-border border border-surface-400 bg-surface-400 px-1 pt-[2px] hover:border-black;
-}
-.in-frame {
-  @apply bg-surface-300;
-}
-.kc-frame {
-  @apply absolute border border-surface-100 bg-surface-200 hover:border-black;
-}
