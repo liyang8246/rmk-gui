@@ -1,15 +1,10 @@
 <script lang="ts" setup>
-import LevelSelected from '~/components/LevelSelected.vue';
-
 const keyboardStore = useKeyboardStore();
+const pageKeymapStore = usePageKeymapStore();
 
-const level = ref(0);
-const changeFloor = (f: number) => {
-  level.value = f;
-};
-function labelToDisplay(label: string, level: number): [string | null, string | null] {
+function labelToDisplay(label: string, layer: number): [string | null, string | null] {
   const [row, col] = label.split(",").map(n => parseInt(n, 10));
-  return keyboardStore.indexToDisplay([level, row!, col!]);
+  return keyboardStore.indexToDisplay([layer, row!, col!]);
 }
 </script>
 
@@ -17,12 +12,12 @@ function labelToDisplay(label: string, level: number): [string | null, string | 
   <div class="flex flex-col">
     <div class="m-8 flex flex-col items-center justify-center">
       <div class="flex w-full items-center justify-start">
-        <LevelSelected @level="changeFloor" :selected-number="level" />
+        <LayerSelected  />
       </div>
       <div class="rounded-prime-md relative h-96 w-full overflow-hidden">
         <div>
           <template v-for="keys in keyboardStore.kleDefinition?.keys">
-            <Key :keys="labelToDisplay(keys.labels[0]!, level)" :kleProps="keys" />
+            <Key :keys="labelToDisplay(keys.labels[0]!, pageKeymapStore.currLayer)" :kleProps="keys" />
           </template>
         </div>
       </div>
