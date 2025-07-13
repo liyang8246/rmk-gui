@@ -12,7 +12,7 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
   <div class="flex flex-col">
     <div class="m-8 flex flex-col items-center justify-center">
       <div class="flex w-full items-center justify-start">
-        <LayerSelected  />
+        <LayerSelected />
       </div>
       <div class="rounded-prime-md relative h-96 w-full overflow-hidden">
         <div>
