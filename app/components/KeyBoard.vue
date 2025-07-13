@@ -5,18 +5,28 @@ const { keys, select } = defineProps<{
   kleProps?: InstanceType<typeof KleKey>;
 }>();
 
-const insertLineBreaks = (str: string, maxLength: number) => {
+function insertLineBreaks(str: string, maxLength: number): string {
   return str.replace(new RegExp(`(.{${maxLength}})`, "g"), "$1\n");
-};
-const keyBreaks = (key: string | null) => {
+}
+function insertLineBigSize(text: string): string {
+  return text.replace(/([A-Z])/g, "\n$1");
+}
+function keyBreaks(key: string | null) {
   if (key === null) {
     return "";
   }
-  if (key.length > 8) {
-    return insertLineBreaks(key, 6);
+  if (key.length < 8) {
+    return key;
   }
-  return key;
-};
+  let keys = insertLineBigSize(key).split("\n");
+  let maxSize = 7;
+  for (let i = 0; i < keys.length; i++) {
+    if (keys[i]!.length > maxSize + 1) {
+      keys[i] = insertLineBreaks(keys[i]!, maxSize);
+    }
+  }
+  return keys.join("\n");
+}
 </script>
 
 <template>

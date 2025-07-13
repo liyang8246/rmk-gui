@@ -18,18 +18,27 @@ const translate = computed(() => {
   );
 });
 
-const insertLineBreaks = (str: string, maxLength: number) => {
+function insertLineBreaks(str: string, maxLength: number): string {
   return str.replace(new RegExp(`(.{${maxLength}})`, "g"), "$1\n");
-};
-const keyBreaks = (key: string | null) => {
+}
+function insertLineBigSize(text: string): string {
+  return text.replace(/([A-Z])/g, "\n$1");
+}
+function keyBreaks(key: string | null) {
   if (key === null) {
     return "";
   }
-  if (key.length >= Math.round(7 * maxSize(kleProps.width, kleProps.width2)) - 1) {
-    return insertLineBreaks(key, Math.round(6 * maxSize(kleProps.width, kleProps.width2)));
+  if (key.length < Math.round(7 * maxSize(kleProps.width, kleProps.width2))) {
+    return key;
   }
-  return key;
-};
+  let keys = insertLineBigSize(key).split("\n");
+  for (let i = 0; i < keys.length; i++) {
+    if (keys[i]!.length > Math.round(7 * maxSize(kleProps.width, kleProps.width2))) {
+      keys[i] = insertLineBreaks(keys[i]!, Math.round(6 * maxSize(kleProps.width, kleProps.width2)));
+    }
+  }
+  return keys.join("\n");
+}
 </script>
 <template>
   <div
