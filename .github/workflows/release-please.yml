@@ -17,6 +17,11 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - uses: actions/checkout@v4
+      - name: Update Cargo.lock
+        run: |
+          cd src-tauri
+          cargo check
       - uses: googleapis/release-please-action@v4
         id: release
         with:
