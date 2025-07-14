@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-const { keys, kleProps } = defineProps<{
-  keys: [string | null, string | null]
-  select?: false | 1 | 2
-  kleProps: InstanceType<typeof KleKey>
-}>()
+const pageKeymapStore = usePageKeymapStore();
 
+const { keys, kleProps } = defineProps<{
+  keys: [string | null, string | null];
+  kleProps: InstanceType<typeof KleKey>;
+}>();
 function fixSize(size: number): string {
   return `calc(56px * ${size} - 8px)`
 }
@@ -39,6 +39,21 @@ function keyBreaks(key: string | null) {
   }
   return keys.join('\n')
 }
+
+const KeyProp = computed(() => {
+  return [pageKeymapStore.currLayer, ...kleProps.labels[0]?.split(",").map(n => parseInt(n, 10))!] as [
+    number,
+    number,
+    number,
+  ];
+});
+function setSelectedProp(zone: "outer" | "inner" | null) {
+  pageKeymapStore.keyZone = zone;
+  pageKeymapStore.currKey = KeyProp.value;
+}
+function compareKeys(zone: "outer" | "inner" | null) {
+  return KeyProp.value.join(",") === pageKeymapStore.currKey.join(",") && pageKeymapStore.keyZone === zone;
+}
 </script>
 
 <template>
@@ -65,16 +80,17 @@ function keyBreaks(key: string | null) {
       <div v-if="keys[0]" class="relative">
         <div
           class="rounded-prime-md absolute flex justify-center bg-surface-300 pt-[2px] dark:bg-surface-600"
+          :class="compareKeys('outer') ? 'border-2 border-surface-800' : ''"
           :style="{
             width: fixSize(kleProps.width),
             height: fixSize(kleProps.height),
           }"
         >
-          <span>{{ keyBreaks(keys[0]) }}</span>
+          <span class="h-full w-full" @click="setSelectedProp('outer')">{{ keyBreaks(keys[0]) }}</span>
         </div>
-
         <div
           class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 bg-surface-300 dark:border-surface-200 dark:bg-surface-600"
+          :class="compareKeys('inner') ? 'border-2 border-surface-800' : ''"
           :style="{
             top: '17px',
             left: '4px',
@@ -82,19 +98,20 @@ function keyBreaks(key: string | null) {
             height: `${kleProps.height * 56 - 8 - 4 - 17}px`,
           }"
         >
-          <span>{{ keyBreaks(keys[1]) }}</span>
+          <span class="h-full w-full" @click="setSelectedProp('inner')">{{ keyBreaks(keys[1]) }}</span>
         </div>
       </div>
       <!-- key -->
       <div
         v-else
         class="rounded-prime-md absolute flex items-center justify-center bg-surface-300 dark:bg-surface-600"
+        :class="compareKeys('inner') ? 'border-2 border-surface-800' : ''"
         :style="{
           width: fixSize(kleProps.width),
           height: fixSize(kleProps.height),
         }"
       >
-        <span>{{ keyBreaks(keys![1]) }}</span>
+        <span class="h-full w-full" @click="setSelectedProp('outer')">{{ keyBreaks(keys![1]) }}</span>
       </div>
     </label>
   </div>
