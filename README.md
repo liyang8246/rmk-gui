@@ -64,6 +64,7 @@ RMK-GUI was based on or inspired by these projects and so on:
 - [Tauri](https://github.com/tauri-apps/tauri) A framework for building tiny, fast binaries for all major desktop and
   mobile platforms.
 - [Nuxt](https://github.com/nuxt/nuxt) An open source framework that makes web development intuitive and powerful.
+- [PrimeVue](https://github.com/primefaces/primevue) A free open-source Vue 3 UI component library with rich features.
 - [Vial-gui](https://github.com/vial-kb/vial-gui) An open-source cross-platform (Windows, Linux and Mac) GUI and a QMK
   fork for configuring your keyboard in real time.
 - [RMK](https://github.com/HaoboGu/rmk) Rust keyboard firmware library with layers, macros, real-time keymap editing,
