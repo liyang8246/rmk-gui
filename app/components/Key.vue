@@ -105,7 +105,7 @@ function compareKeys(zone: "outer" | "inner" | null) {
       <div
         v-else
         class="rounded-prime-md absolute flex items-center justify-center bg-surface-300 dark:bg-surface-600"
-        :class="compareKeys('inner') ? 'border-2 border-surface-800' : ''"
+        :class="compareKeys('outer') ? 'border-2 border-surface-800' : ''"
         :style="{
           width: fixSize(kleProps.width),
           height: fixSize(kleProps.height),
