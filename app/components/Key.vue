@@ -5,8 +5,10 @@ const { keys, kleProps } = defineProps<{
   keys: [string | null, string | null];
   kleProps: InstanceType<typeof KleKey>;
 }>();
+
+const keyMargin = 6;
 function fixSize(size: number): string {
-  return `calc(56px * ${size} - 8px)`
+  return `calc(56px * ${size} - ${keyMargin}px)`;
 }
 function maxSize(size1: number, size2: number): number {
   return size1 > size2 ? size1 : size2
@@ -52,13 +54,15 @@ function setSelectedProp(zone: "outer" | "inner" | null) {
   pageKeymapStore.currKey = KeyProp.value;
 }
 function compareKeys(zone: "outer" | "inner" | null) {
-  return KeyProp.value.join(",") === pageKeymapStore.currKey.join(",") && pageKeymapStore.keyZone === zone;
+  return KeyProp.value.join(",") === pageKeymapStore.currKey.join(",") && pageKeymapStore.keyZone === zone
+    ? "bg-surface-400 dark:bg-surface-500 shadow-sm shadow-surface-600 dark:shadow-surface-300 text-surface-800 dark:text-surface-200"
+    : "bg-surface-300 dark:bg-surface-600 shadow-sm shadow-surface-400 dark:shadow-surface-400 text-surface-700 dark:text-surface-300";
 }
 </script>
 
 <template>
   <div
-    class="rounded-prime-md absolute h-14 w-14 cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300"
+    class="rounded-prime-md absolute h-14 w-14 cursor-pointer select-none text-center text-xs font-bold"
     :style="{
       top: `${kleProps.y * 56}px`,
       left: `${kleProps.x * 56}px`,
@@ -79,39 +83,42 @@ function compareKeys(zone: "outer" | "inner" | null) {
       <!-- kc -->
       <div v-if="keys[0]" class="relative">
         <div
-          class="rounded-prime-md absolute flex justify-center bg-surface-300 pt-[2px] dark:bg-surface-600"
-          :class="compareKeys('outer') ? 'border-2 border-surface-800' : ''"
+          class="rounded-prime-md absolute flex justify-center pt-[2px] transition-all duration-300"
+          :class="compareKeys('outer')"
           :style="{
             width: fixSize(kleProps.width),
             height: fixSize(kleProps.height),
           }"
+          @click="setSelectedProp('outer')"
         >
-          <span class="h-full w-full" @click="setSelectedProp('outer')">{{ keyBreaks(keys[0]) }}</span>
+          <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
         <div
-          class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 bg-surface-300 dark:border-surface-200 dark:bg-surface-600"
-          :class="compareKeys('inner') ? 'border-2 border-surface-800' : ''"
+          class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 transition-all duration-300 dark:border-surface-200"
+          :class="compareKeys('inner')"
           :style="{
-            top: '17px',
-            left: '4px',
-            width: `${kleProps.width * 56 - 8 * 2}px`,
-            height: `${kleProps.height * 56 - 8 - 4 - 17}px`,
+            top: '18px',
+            left: keyMargin / 2 + 'px',
+            width: kleProps.width * 56 - keyMargin * 2 + 'px',
+            height: kleProps.height * 56 - keyMargin * 1.5 - 18 + 'px',
           }"
+          @click="setSelectedProp('inner')"
         >
-          <span class="h-full w-full" @click="setSelectedProp('inner')">{{ keyBreaks(keys[1]) }}</span>
+          <span>{{ keyBreaks(keys[1]) }}</span>
         </div>
       </div>
       <!-- key -->
       <div
         v-else
-        class="rounded-prime-md absolute flex items-center justify-center bg-surface-300 dark:bg-surface-600"
-        :class="compareKeys('outer') ? 'border-2 border-surface-800' : ''"
+        class="rounded-prime-md absolute flex items-center justify-center transition-all duration-300"
+        :class="compareKeys('outer')"
         :style="{
           width: fixSize(kleProps.width),
           height: fixSize(kleProps.height),
         }"
+        @click="setSelectedProp('outer')"
       >
-        <span class="h-full w-full" @click="setSelectedProp('outer')">{{ keyBreaks(keys![1]) }}</span>
+        <span>{{ keyBreaks(keys![1]) }}</span>
       </div>
     </label>
   </div>
