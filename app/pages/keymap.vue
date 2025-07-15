@@ -22,10 +22,10 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
         </div>
       </div>
     </div>
-    <div class="mx-8">
-      <div class="flex flex-wrap items-start justify-start gap-1">
-        <template v-for="[_coords, keycode] in keyboardStore.keymap" :key="_coords">
-          <KeyBoard :keys="keyToLable(keycode)" />
+    <div class="">
+      <div class="flex flex-wrap items-start justify-center gap-1">
+        <template v-for="i in Object.keys(KeyCode).filter(key => !isNaN(Number(key)))">
+          <KeyBoard :keyValue="keyToLable(Number(i))"/>
         </template>
       </div>
     </div>
