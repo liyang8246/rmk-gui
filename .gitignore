@@ -1,3 +1,7 @@
+# Tauri
+src-tauri/target/
+src-tauri/gen/schemas
+
 # Nuxt dev/build outputs
 .output
 .data

@@ -20,9 +20,11 @@
     "@tauri-apps/cli": "2.6.2",
     "@types/w3c-web-hid": "1.0.6",
     "nuxt": "3.17.6",
-    "prettier": "3.6.2",
     "prettier-plugin-tailwindcss": "0.6.13",
-    "vue-router": "4.5.1"
+    "vue-router": "4.5.1",
+    "@antfu/eslint-config": "^4.17.0",
+    "eslint": "^9.31.0",
+    "eslint-plugin-format": "^1.0.1"
   },
   "dependencies": {
     "@kcf-hub/kle-serial": "0.17.0",
