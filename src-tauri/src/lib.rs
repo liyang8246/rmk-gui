@@ -18,7 +18,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(state)
-        .invoke_handler(tauri::generate_handler![list, connect, product_name, write_read])
+        .invoke_handler(tauri::generate_handler![
+            list,
+            connect,
+            disconnect,
+            product_name,
+            write_read
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

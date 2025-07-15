@@ -3,18 +3,20 @@ const keyboardStore = useKeyboardStore();
 const devices = ref<any[]>([]);
 const selected = ref<any>(null);
 
-const connectDevice = async () => {
-  if (selected.value) {
+const toggleConnection = async () => {
+  if (keyboardStore.isConnected) {
+    await keyboardStore.disconnect();
+  } else if (selected.value) {
     await keyboardStore.connect(selected.value.path);
+    await keyboardStore.fetchAll();
   }
-  await keyboardStore.fetchAll();
 };
 
 onMounted(async () => {
   devices.value = (await keyboardStore.list()) as any[];
   if (devices.value.length > 0) {
     selected.value = devices.value[0];
-    await connectDevice();
+    await toggleConnection();
   }
 });
 </script>
@@ -32,7 +34,7 @@ onMounted(async () => {
       <Button
         :severity="keyboardStore.isConnected ? 'secondary' : 'primary'"
         class="h-full w-full !p-0"
-        @click="connectDevice"
+        @click="toggleConnection"
       >
         <Icon name="tabler:plug" class="text-xl" />
       </Button>

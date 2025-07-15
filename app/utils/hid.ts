@@ -71,10 +71,10 @@ export class TauriHIDApi implements HIDApi {
 }
 
 export class TauriHIDDevice implements HIDInterface {
-  private _connected = true;
+  private connected = true;
 
   isConnected(): boolean {
-    return this._connected;
+    return this.connected;
   }
 
   async productName(): Promise<string> {
@@ -82,7 +82,7 @@ export class TauriHIDDevice implements HIDInterface {
   }
 
   async writeRead(data: number[]): Promise<Uint8Array> {
-    if (!this._connected) throw new Error("Device not connected");
+    if (!this.connected) throw new Error("Device not connected");
 
     const result: number[] = await invoke("write_read", {
       data: Array.from(data),
@@ -91,9 +91,9 @@ export class TauriHIDDevice implements HIDInterface {
   }
 
   async disconnect(): Promise<void> {
-    if (this._connected) {
+    if (this.connected) {
       await invoke("disconnect");
-      this._connected = false;
+      this.connected = false;
     }
   }
 }
