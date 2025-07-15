@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use tauri::async_runtime::Mutex;
+use tauri::{async_runtime::Mutex, Manager, RunEvent};
 
 use crate::{
     cmds::*,
@@ -15,7 +15,7 @@ mod utils;
 pub fn run() {
     let state: AppState = Arc::new(Mutex::new(State::new()));
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(state)
         .invoke_handler(tauri::generate_handler![
@@ -25,6 +25,13 @@ pub fn run() {
             product_name,
             write_read
         ])
-        .run(tauri::generate_context!())
+        .build(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    app.run(|ctx, event| {
+        if let RunEvent::Exit = event {
+            let state = ctx.state::<AppState>();
+            state.blocking_lock().current_device.take();
+        }
+    });
 }
