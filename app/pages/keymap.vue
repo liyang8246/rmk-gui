@@ -24,8 +24,8 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
     </div>
     <div class="">
       <div class="flex flex-wrap items-start justify-center gap-1">
-        <template v-for="[coords, keycode] in keyboardStore.keymap">
-          <KeyBoard :keys="keyToDisplay(keycode)" />
+        <template v-for="i in Object.keys(KeyCode).filter(key => !isNaN(Number(key)))">
+          <KeyBoard :keyValue="keyToConfig(Number(i))"/>
         </template>
       </div>
     </div>
