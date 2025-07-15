@@ -21,13 +21,13 @@ pub fn hid_write_read(device: &HidDevice, data: &[u8]) -> Result<[u8; 32], Strin
 
     device
         .write(&write_buffer)
-        .map_err(|e| format!("Device write failed: {}", e))?;
+        .map_err(|e| format!("Device write failed: {e}"))?;
 
     let mut read_buffer = [0u8; MSG_LEN];
 
     device
         .read(&mut read_buffer)
-        .map_err(|e| format!("Device read failed: {}", e))?;
+        .map_err(|e| format!("Device read failed: {e}"))?;
 
     Ok(read_buffer)
 }

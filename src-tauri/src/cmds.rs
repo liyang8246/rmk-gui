@@ -11,7 +11,7 @@ pub async fn list(state: tauri::State<'_, AppState>) -> Result<Vec<VialDevice>, 
     state
         .hid_api
         .refresh_devices()
-        .map_err(|e| format!("Failed to refresh HID devices: {}", e))?;
+        .map_err(|e| format!("Failed to refresh HID devices: {e}"))?;
     let devices = state
         .hid_api
         .device_list()
@@ -32,7 +32,7 @@ pub async fn connect(state: tauri::State<'_, AppState>, path: CString) -> Result
 
     let device = match state.hid_api.open_path(&path) {
         Ok(device) => device,
-        Err(e) => return Err(format!("Failed to connect to selected device: {}", e)),
+        Err(e) => return Err(format!("Failed to connect to selected device: {e}")),
     };
     state.current_device = Some(device);
     Ok(())
@@ -48,7 +48,7 @@ pub async fn disconnect(state: tauri::State<'_, AppState>) -> Result<(), String>
 #[tauri::command]
 pub async fn product_name(state: tauri::State<'_, AppState>) -> Result<String, String> {
     let state = state.lock().await;
-    return Ok(state
+    Ok(state
         .current_device
         .as_ref()
         .unwrap()
@@ -56,7 +56,7 @@ pub async fn product_name(state: tauri::State<'_, AppState>) -> Result<String, S
         .unwrap()
         .product_string()
         .unwrap()
-        .to_string());
+        .to_string())
 }
 
 #[tauri::command]
