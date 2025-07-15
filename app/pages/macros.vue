@@ -1,7 +1,7 @@
 <script lang="ts" setup></script>
 
 <template>
-  <div>marco</div>
+  <div>macros</div>
 </template>
 
 <style></style>
