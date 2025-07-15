@@ -1,24 +1,25 @@
 <script lang="ts" setup>
-const keyboardStore = useKeyboardStore();
-const devices = ref<any[]>([]);
-const selected = ref<any>(null);
+const keyboardStore = useKeyboardStore()
+const devices = ref<any[]>([])
+const selected = ref<any>(null)
 
-const toggleConnection = async () => {
+async function toggleConnection() {
   if (keyboardStore.isConnected) {
-    await keyboardStore.disconnect();
-  } else if (selected.value) {
-    await keyboardStore.connect(selected.value.path);
-    await keyboardStore.fetchAll();
+    await keyboardStore.disconnect()
   }
-};
+  else if (selected.value) {
+    await keyboardStore.connect(selected.value.path)
+    await keyboardStore.fetchAll()
+  }
+}
 
 onMounted(async () => {
-  devices.value = (await keyboardStore.list()) as any[];
+  devices.value = (await keyboardStore.list()) as any[]
   if (devices.value.length > 0) {
-    selected.value = devices.value[0];
-    await toggleConnection();
+    selected.value = devices.value[0]
+    await toggleConnection()
   }
-});
+})
 </script>
 
 <template>
@@ -27,7 +28,7 @@ onMounted(async () => {
       v-model="selected"
       :options="devices"
       :disabled="keyboardStore.isConnected"
-      optionLabel="product_string"
+      option-label="product_string"
       placeholder="等待连接键盘"
     />
     <InputGroupAddon>

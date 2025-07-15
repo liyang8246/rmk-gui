@@ -1,31 +1,31 @@
 <script lang="ts" setup>
-const { keys, select } = defineProps<{
-  keys: [string | null, string | null];
-  select?: false | 1 | 2;
-  kleProps?: InstanceType<typeof KleKey>;
-}>();
+const { keys } = defineProps<{
+  keys: [string | null, string | null]
+  select?: false | 1 | 2
+  kleProps?: InstanceType<typeof KleKey>
+}>()
 
 function insertLineBreaks(str: string, maxLength: number): string {
-  return str.replace(new RegExp(`(.{${maxLength}})`, "g"), "$1\n");
+  return str.replace(new RegExp(`(.{${maxLength}})`, 'g'), '$1\n')
 }
 function insertLineBigSize(text: string): string {
-  return text.replace(/([A-Z])/g, "\n$1");
+  return text.replace(/([A-Z])/g, '\n$1')
 }
 function keyBreaks(key: string | null) {
   if (key === null) {
-    return "";
+    return ''
   }
   if (key.length < 8) {
-    return key;
+    return key
   }
-  let keys = insertLineBigSize(key).split("\n");
-  let maxSize = 7;
+  const keys = insertLineBigSize(key).split('\n')
+  const maxSize = 7
   for (let i = 0; i < keys.length; i++) {
     if (keys[i]!.length > maxSize + 1) {
-      keys[i] = insertLineBreaks(keys[i]!, maxSize);
+      keys[i] = insertLineBreaks(keys[i]!, maxSize)
     }
   }
-  return keys.join("\n");
+  return keys.join('\n')
 }
 </script>
 

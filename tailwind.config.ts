@@ -1,10 +1,10 @@
-import PrimeUI from "tailwindcss-primeui";
+import PrimeUI from 'tailwindcss-primeui'
 
 export default {
   plugins: [PrimeUI],
-  darkMode: ["class", ".dark-mode"],
+  darkMode: ['class', '.dark-mode'],
   content: [],
   theme: {
     extend: {},
   },
-};
+}

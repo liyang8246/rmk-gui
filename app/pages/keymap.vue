@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-const keyboardStore = useKeyboardStore();
-const pageKeymapStore = usePageKeymapStore();
+const keyboardStore = useKeyboardStore()
+const pageKeymapStore = usePageKeymapStore()
 
 function labelToDisplay(label: string, layer: number): [string | null, string | null] {
-  const [row, col] = label.split(",").map(n => parseInt(n, 10));
-  return keyboardStore.indexToDisplay([layer, row!, col!]);
+  const [row, col] = label.split(',').map(n => Number.parseInt(n, 10))
+  return keyboardStore.indexToDisplay([layer, row!, col!])
 }
 </script>
 
@@ -16,15 +16,15 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
       </div>
       <div class="rounded-prime-md relative h-96 w-full overflow-hidden">
         <div>
-          <template v-for="keys in keyboardStore.kleDefinition?.keys">
-            <Key :keys="labelToDisplay(keys.labels[0]!, pageKeymapStore.currLayer)" :kleProps="keys" />
+          <template v-for="keys in keyboardStore.kleDefinition?.keys" :key="keys.labels[0]">
+            <Key :keys="labelToDisplay(keys.labels[0]!, pageKeymapStore.currLayer)" :kle-props="keys" />
           </template>
         </div>
       </div>
     </div>
     <div class="mx-8">
       <div class="flex flex-wrap items-start justify-start gap-1">
-        <template v-for="[coords, keycode] in keyboardStore.keymap">
+        <template v-for="[_coords, keycode] in keyboardStore.keymap" :key="_coords">
           <KeyBoard :keys="keyToDisplay(keycode)" />
         </template>
       </div>

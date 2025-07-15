@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const tauri = isTauri();
+const tauri = isTauri()
 </script>
 
 <template>

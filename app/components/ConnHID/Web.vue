@@ -1,12 +1,13 @@
 <script lang="ts" setup>
-const keyboardStore = useKeyboardStore();
-const connect = async () => {
-  const device = (await keyboardStore.list()) as HIDDevice[];
-  if (!device[0]) return;
-  await keyboardStore.connect(device[0]);
-  await keyboardStore.fetchAll();
-};
-const displayName = computed(() => keyboardStore.productName ?? keyboardStore.vialJson?.name ?? "Unknown Device");
+const keyboardStore = useKeyboardStore()
+async function connect() {
+  const device = (await keyboardStore.list()) as HIDDevice[]
+  if (!device[0])
+    return
+  await keyboardStore.connect(device[0])
+  await keyboardStore.fetchAll()
+}
+const displayName = computed(() => keyboardStore.productName ?? keyboardStore.vialJson?.name ?? 'Unknown Device')
 </script>
 
 <template>
