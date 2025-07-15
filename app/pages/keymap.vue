@@ -9,9 +9,9 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
 </script>
 
 <template>
-  <div class="flex flex-col">
-    <div class="m-8 flex flex-col items-center justify-center">
-      <div class="flex w-full items-center justify-start">
+  <div class="m-8 flex flex-col">
+    <div class="justify-cente flex flex-col items-center" @click="pageKeymapStore.clearSelectedProps">
+      <div class="flex w-full items-center justify-start p-2">
         <LayerSelected />
       </div>
       <div class="rounded-prime-md relative h-96 w-full overflow-hidden">
@@ -22,9 +22,9 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
         </div>
       </div>
     </div>
-    <div class="mx-8">
-      <div class="flex flex-wrap items-start justify-start gap-1">
-        <template v-for="[_coords, keycode] in keyboardStore.keymap" :key="_coords">
+    <div class="">
+      <div class="flex flex-wrap items-start justify-center gap-1">
+        <template v-for="[coords, keycode] in keyboardStore.keymap">
           <KeyBoard :keys="keyToDisplay(keycode)" />
         </template>
       </div>

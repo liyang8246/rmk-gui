@@ -49,7 +49,7 @@ const KeyProp = computed(() => {
     number,
   ];
 });
-function setSelectedProp(zone: "outer" | "inner" | null) {
+function setSelectedProps(zone: "outer" | "inner" | null) {
   pageKeymapStore.keyZone = zone;
   pageKeymapStore.currKey = KeyProp.value;
 }
@@ -62,7 +62,7 @@ function compareKeys(zone: "outer" | "inner" | null) {
 
 <template>
   <div
-    class="rounded-prime-md absolute h-14 w-14 cursor-pointer select-none text-center text-xs font-bold"
+    class="rounded-prime-md absolute z-10 h-14 w-14 cursor-pointer select-none text-center text-xs font-bold"
     :style="{
       top: `${kleProps.y * 56}px`,
       left: `${kleProps.x * 56}px`,
@@ -89,7 +89,7 @@ function compareKeys(zone: "outer" | "inner" | null) {
             width: fixSize(kleProps.width),
             height: fixSize(kleProps.height),
           }"
-          @click="setSelectedProp('outer')"
+          @click.stop="setSelectedProps('outer')"
         >
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
@@ -102,7 +102,7 @@ function compareKeys(zone: "outer" | "inner" | null) {
             width: kleProps.width * 56 - keyMargin * 2 + 'px',
             height: kleProps.height * 56 - keyMargin * 1.5 - 18 + 'px',
           }"
-          @click="setSelectedProp('inner')"
+          @click.stop="setSelectedProps('inner')"
         >
           <span>{{ keyBreaks(keys[1]) }}</span>
         </div>
@@ -116,7 +116,7 @@ function compareKeys(zone: "outer" | "inner" | null) {
           width: fixSize(kleProps.width),
           height: fixSize(kleProps.height),
         }"
-        @click="setSelectedProp('outer')"
+        @click.stop="setSelectedProps('outer')"
       >
         <span>{{ keyBreaks(keys![1]) }}</span>
       </div>
