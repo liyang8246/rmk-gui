@@ -5,7 +5,7 @@
     <Aside />
     <div class="flex flex-1 flex-col overflow-hidden">
       <Header />
-      <ScrollPanel class="flex-1 overflow-hidden">
+      <ScrollPanel class="flex-1 overflow-hidden p-3">
         <NuxtPage />
       </ScrollPanel>
     </div>

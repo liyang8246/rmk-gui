@@ -9,7 +9,7 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
 </script>
 
 <template>
-  <div class="m-8 flex flex-col">
+  <div class="flex flex-col">
     <div class="justify-cente flex flex-col items-center" @click="pageKeymapStore.clearSelectedProps">
       <div class="flex w-full items-center justify-start p-2">
         <LayerSelected />
