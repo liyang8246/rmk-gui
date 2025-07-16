@@ -15,12 +15,12 @@ const layerIndices = computed(() => {
         <li
           class="ripple-box cardClasses rounded-prime-xl flex h-8 w-8 cursor-pointer items-center justify-center border-0 text-surface-700 transition-all duration-200 dark:text-surface-300"
           :class="
-            pageMacrosStore.selectedMacro === index
+            pageMacrosStore.currMacro === index
               ? 'bg-surface-50 shadow shadow-surface-400 dark:bg-surface-600 dark:shadow-inner dark:shadow-surface-500'
               : 'bg-surface-200 shadow-inner shadow-surface-400 hover:bg-surface-100 dark:bg-surface-800 dark:shadow-sm dark:shadow-surface-600 dark:hover:bg-surface-700'
           "
         >
-          <button class="font-medium" @click="pageMacrosStore.selectedMacro = index">{{ index }}</button>
+          <button class="font-medium" @click="pageMacrosStore.currMacro = index">{{ index }}</button>
         </li></label>
     </ul>
   </div>
