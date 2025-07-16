@@ -8,7 +8,8 @@ const layerIndices = computed(() => {
 </script>
 
 <template>
-  <div class="rounded-prime-xl flex gap-1 bg-surface-300/50 p-2 dark:bg-surface-700/50">
+  <div class="rounded-prime-xl flex items-center gap-1 text-surface-700 dark:text-surface-300 bg-surface-300/50 p-2 dark:bg-surface-700/50">
+    <span class="font-bold text-xl"> Layer: </span>
     <ul v-for="index in layerIndices" :key="index">
       <label>
         <li
