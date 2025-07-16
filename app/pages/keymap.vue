@@ -2,7 +2,10 @@
 const keyboardStore = useKeyboardStore()
 const pageKeymapStore = usePageKeymapStore()
 
-function labelToDisplay(label: string, layer: number): [string | null, string | null] {
+function labelToDisplay(
+  label: string,
+  layer: number,
+): [string | null, string | null] {
   const [row, col] = label.split(',').map(n => Number.parseInt(n, 10))
   return keyboardStore.indexToDisplay([layer, row!, col!])
 }
@@ -24,8 +27,8 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
     </div>
     <div class="">
       <div class="flex flex-wrap items-start justify-center gap-1">
-        <template v-for="i in Object.keys(KeyCode).filter(key => !isNaN(Number(key)))">
-          <KeyBoard :keyValue="keyToLable(Number(i))"/>
+        <template v-for="(i, index) in Object.keys(KeyCode).filter(key => !isNaN(Number(key)))" :key="index">
+          <KeyBoard :key-value="keyToLable(Number(i))" />
         </template>
       </div>
     </div>
