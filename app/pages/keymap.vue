@@ -1,18 +1,17 @@
 <script lang="ts" setup>
-
+const pageKeymapStore = usePageKeymapStore()
 </script>
 
 <template>
   <div class="flex flex-col">
-    <KeyMap />
+    <div
+      class="justify-cente flex flex-col items-center"
+      @click="pageKeymapStore.clearSelectedProps"
+    >
+      <KeyMap />
+    </div>
     <div class="flex flex-wrap items-start justify-center gap-1">
-      <template
-        v-for="(i, index) in Object.keys(KeyCode).filter(
-          (key) => !isNaN(Number(key)),
-        )" :key="index"
-      >
-        <KeyMapKeyBoard :key-value="keyToLable(Number(i))" />
-      </template>
+      <KeyMapMapperPanel />
     </div>
   </div>
 </template>
