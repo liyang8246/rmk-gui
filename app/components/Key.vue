@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-const pageKeymapStore = usePageKeymapStore();
-
 const { keys, kleProps } = defineProps<{
-  keys: [string | null, string | null];
-  kleProps: InstanceType<typeof KleKey>;
-}>();
+  keys: [string | null, string | null]
+  kleProps: InstanceType<typeof KleKey>
+}>()
 
-const keyMargin = 6;
+const pageKeymapStore = usePageKeymapStore()
+
+const keyMargin = 6
 function fixSize(size: number): string {
-  return `calc(56px * ${size} - ${keyMargin}px)`;
+  return `calc(56px * ${size} - ${keyMargin}px)`
 }
 function maxSize(size1: number, size2: number): number {
   return size1 > size2 ? size1 : size2
@@ -43,20 +43,20 @@ function keyBreaks(key: string | null) {
 }
 
 const KeyProp = computed(() => {
-  return [pageKeymapStore.currLayer, ...kleProps.labels[0]?.split(",").map(n => parseInt(n, 10))!] as [
+  return [pageKeymapStore.currLayer, ...kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as number[]] as [
     number,
     number,
     number,
-  ];
-});
-function setSelectedProps(zone: "outer" | "inner" | null) {
-  pageKeymapStore.keyZone = zone;
-  pageKeymapStore.currKey = KeyProp.value;
+  ]
+})
+function setSelectedProps(zone: 'outer' | 'inner' | null) {
+  pageKeymapStore.keyZone = zone
+  pageKeymapStore.currKey = KeyProp.value
 }
-function compareKeys(zone: "outer" | "inner" | null) {
-  return KeyProp.value.join(",") === pageKeymapStore.currKey.join(",") && pageKeymapStore.keyZone === zone
-    ? "bg-surface-400 dark:bg-surface-500 shadow-sm shadow-surface-600 dark:shadow-surface-300 text-surface-800 dark:text-surface-200"
-    : "bg-surface-300 dark:bg-surface-600 shadow-sm shadow-surface-400 dark:shadow-surface-400 text-surface-700 dark:text-surface-300";
+function compareKeys(zone: 'outer' | 'inner' | null) {
+  return KeyProp.value.join(',') === pageKeymapStore.currKey.join(',') && pageKeymapStore.keyZone === zone
+    ? 'bg-surface-400 dark:bg-surface-500 shadow-sm shadow-surface-600 dark:shadow-surface-300 text-surface-800 dark:text-surface-200'
+    : 'bg-surface-300 dark:bg-surface-600 shadow-sm shadow-surface-400 dark:shadow-surface-400 text-surface-700 dark:text-surface-300'
 }
 </script>
 
@@ -98,9 +98,9 @@ function compareKeys(zone: "outer" | "inner" | null) {
           :class="compareKeys('inner')"
           :style="{
             top: '18px',
-            left: keyMargin / 2 + 'px',
-            width: kleProps.width * 56 - keyMargin * 2 + 'px',
-            height: kleProps.height * 56 - keyMargin * 1.5 - 18 + 'px',
+            left: `${keyMargin / 2}px`,
+            width: `${kleProps.width * 56 - keyMargin * 2}px`,
+            height: `${kleProps.height * 56 - keyMargin * 1.5 - 18}px`,
           }"
           @click.stop="setSelectedProps('inner')"
         >
