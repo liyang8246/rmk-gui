@@ -4,7 +4,7 @@ const route = useRoute()
 const pages = [
   { name: 'Home', icon: 'tabler:home-filled', to: '/' },
   { name: 'Keymap', icon: 'tabler:keyboard-filled', to: '/keymap' },
-  { name: 'Marcos', icon: 'tabler:circle-letter-a-filled', to: '/marco' },
+  { name: 'Macros', icon: 'tabler:circle-letter-a-filled', to: '/macros' },
   { name: 'Settings', icon: 'tabler:settings-filled', to: '/settings' },
   { name: 'Export', icon: 'tabler:file-export', to: '/export' },
 ]
