@@ -1,4 +1,4 @@
 export const usePageMacrosStore = defineStore('PageMacros', () => {
-  const selectedMacro = ref(0)
-  return { selectedMacro }
+  const currMacro = ref(0)
+  return { currMacro }
 })
