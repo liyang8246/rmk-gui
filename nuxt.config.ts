@@ -75,4 +75,36 @@ export default defineNuxtConfig({
     },
     autoImport: true,
   },
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/lodash')) {
+              return 'lodash'
+            }
+            if (id.includes('node_modules/vue')
+              || id.includes('node_modules/vue-router')
+              || id.includes('node_modules/pinia')) {
+              return 'vue'
+            }
+            if (!id.includes('nuxt/dist')) {
+              if (id.includes('components/Aside/')) {
+                return 'Aside'
+              }
+              if (id.includes('components/ConnHID/')) {
+                return 'ConnHID'
+              }
+              if (id.includes('components/KeyMap/')) {
+                return 'KeyMap'
+              }
+              if (id.includes('components/Macros/')) {
+                return 'Macros'
+              }
+            }
+          },
+        },
+      },
+    },
+  },
 })
