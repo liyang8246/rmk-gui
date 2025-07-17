@@ -21,6 +21,7 @@ export enum MacroCode {
 
 export interface MacroAction {
   type: MacroCode
+  name: string
   keyCodes?: KeyCode[]
   delay?: number | null
   text?: string
@@ -52,17 +53,17 @@ export function fromU8(value: number): MacroCode {
 export function fromMacroCode(value: MacroCode): MacroAction {
   switch (value) {
     case MacroCode.Prefix:
-      return { type: value, keyCodes: [] }
+      return { type: value, name: MacroCode[value], keyCodes: [] }
     case MacroCode.Tap:
-      return { type: value, keyCodes: [] }
+      return { type: value, name: MacroCode[value], keyCodes: [] }
     case MacroCode.Down:
-      return { type: value, keyCodes: [] }
+      return { type: value, name: MacroCode[value], keyCodes: [] }
     case MacroCode.Up:
-      return { type: value, keyCodes: [] }
+      return { type: value, name: MacroCode[value], keyCodes: [] }
     case MacroCode.Delay:
-      return { type: value, delay: null }
+      return { type: value, name: MacroCode[value], delay: null }
     case MacroCode.Text:
-      return { type: value, text: '' }
+      return { type: value, name: MacroCode[value], text: '' }
     default:
       throw new Error('not support')
   }
