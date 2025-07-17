@@ -3,8 +3,8 @@
 </script>
 
 <template>
-  <div class="flex w-full items-center justify-start p-2">
-    <KeyMapLayerSelected />
+  <div class="flex w-full items-center justify-start pb-4">
+    <KeyMapLayerSwitcher />
   </div>
   <div class="rounded-prime-md relative h-96 w-full overflow-hidden">
     <KeyMapKeyboardCanvas />
