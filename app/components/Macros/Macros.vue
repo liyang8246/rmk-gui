@@ -1,15 +1,14 @@
 <script lang="ts" setup>
+const pageMacrosStore = usePageMacrosStore()
 const fake = ref(['data', 'data', 'data'])
-const operation = ref(['', '', ''])
-const operationData = Object.keys(MacroCode).filter(key => !Number.isNaN(Number(key))).map(key => fromMacroCode(fromU8(Number(key))))
 
 function delMacro(index: number) {
   fake.value.splice(index, 1)
-  operation.value.splice(index, 1)
+  pageMacrosStore.operation.splice(index, 1)
 }
 function addMacro() {
   fake.value.push('data')
-  operation.value.push('')
+  pageMacrosStore.operation.push('')
 }
 </script>
 
@@ -20,17 +19,10 @@ function addMacro() {
         <div class="flex items-center justify-start gap-2 w-full h-full">
           <span><i class="pi pi-caret-up w-4 h-4 text-2xl" /></span>
           <span><i class="pi pi-caret-down w-4 h-4 text-2xl" /></span>
-          <select v-model="operation[index]">
-            <option value="">
-              请选择
-            </option>
-            <template v-for="Data, index2 in operationData" :key="index2">
-              <option :value="Data.type">
-                {{ MacroCode[Data.type] }}
-              </option>
-            </template>
-          </select>
-          <div>{{ operationData.find(data => data.type === fromU8(Number(operation[index]))) }}三种情况(text)(up,down,tap)(delay)下的不同获取数据的方式</div>
+          <MacrosSelect :index="index" />
+          <div>
+            {{ pageMacrosStore.operation[index] }}三种情况(text)(up,down,tap)(delay)下的不同获取数据的方式
+          </div>
         </div>
         <span
           class="rounded-prime-md w-6 h-6 flex justify-center items-center cursor-pointer transition-colors duration-200 hover:text-surface-400"
