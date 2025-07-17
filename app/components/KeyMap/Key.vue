@@ -55,8 +55,8 @@ function setSelectedProps(zone: 'outer' | 'inner' | null) {
 }
 function compareKeys(zone: 'outer' | 'inner' | null) {
   return KeyProp.value.join(',') === pageKeymapStore.currKey.join(',') && pageKeymapStore.keyZone === zone
-    ? 'bg-surface-400 dark:bg-surface-500 shadow-sm shadow-surface-600 dark:shadow-surface-300 text-surface-800 dark:text-surface-200'
-    : 'bg-surface-300 dark:bg-surface-600 shadow-sm shadow-surface-400 dark:shadow-surface-400 text-surface-700 dark:text-surface-300'
+    ? 'bg-surface-400 dark:bg-surface-500 shadow-sm shadow-surface-600 dark:shadow-surface-800 text-surface-900 dark:text-surface-100'
+    : 'bg-surface-300 dark:bg-surface-600 shadow-sm shadow-surface-400 dark:shadow-surface-900 text-surface-700 dark:text-surface-300'
 }
 </script>
 
@@ -83,7 +83,7 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
       <!-- kc -->
       <div v-if="keys[0]" class="relative">
         <div
-          class="rounded-prime-md absolute flex justify-center pt-[2px] transition-all duration-300"
+          class="rounded-prime-md absolute flex justify-center pt-[2px] transition-all duration-200"
           :class="compareKeys('outer')"
           :style="{
             width: fixSize(kleProps.width),
@@ -94,7 +94,7 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
         <div
-          class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 transition-all duration-300 dark:border-surface-200"
+          class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 transition-all duration-200 dark:border-surface-200"
           :class="compareKeys('inner')"
           :style="{
             top: '18px',
@@ -110,7 +110,7 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
       <!-- key -->
       <div
         v-else
-        class="rounded-prime-md absolute flex items-center justify-center transition-all duration-300"
+        class="rounded-prime-md absolute flex items-center justify-center transition-all duration-200"
         :class="compareKeys('outer')"
         :style="{
           width: fixSize(kleProps.width),
