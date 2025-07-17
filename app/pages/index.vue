@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore()
-
 const value = ref('LayerCount')
 </script>
 
@@ -21,6 +20,9 @@ const value = ref('LayerCount')
       </option>
       <option value="KleDefinition">
         KleDefinition
+      </option>
+      <option value="getMacros">
+        getMacros
       </option>
     </select>
   </div>
@@ -43,5 +45,9 @@ const value = ref('LayerCount')
   <div v-else-if="value === 'KleDefinition'">
     <span> KleDefinition: </span>
     <pre> {{ keyboardStore.kleDefinition }} </pre>
+  </div>
+  <div v-else-if="value === 'getMacros'">
+    <span> getMacros: </span>
+    <pre> {{ keyboardStore.keyMacros }} </pre>
   </div>
 </template>
