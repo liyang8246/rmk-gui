@@ -52,7 +52,14 @@ export default defineNuxtConfig({
     ],
   },
   // Module Configurations
-  modules: ['@nuxtjs/tailwindcss', '@primevue/nuxt-module', '@pinia/nuxt', '@nuxt/icon', '@nuxtjs/color-mode'],
+  modules: [
+    '@nuxtjs/tailwindcss',
+    '@primevue/nuxt-module',
+    '@pinia/nuxt',
+    '@nuxt/icon',
+    '@nuxtjs/color-mode',
+    '@vueuse/nuxt',
+  ],
   tailwindcss: {
     configPath: 'tailwind.config.ts',
   },
