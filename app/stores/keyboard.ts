@@ -120,7 +120,6 @@ export const useKeyboardStore = defineStore('keyboard', () => {
       for (let j = 0; j < readSize; j++) {
         macroMemory.push(data[4 + j]!)
       }
-
       const zeroCount = macroMemory.filter(x => x === 0).length
       if (zeroCount > macroCount.value) {
         break

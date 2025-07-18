@@ -102,6 +102,8 @@ export function macroDeserializeV2(rawMacros: number[][], count: number): Array<
     const macroActions: Array<MacroAction> = []
     let action: MacroAction | null = null
 
+    let prevCode: number | null = null
+
     while (rawMacro.length > 0) {
       let code = rawMacro[0]
       let macroCode = code as MacroCode
@@ -115,20 +117,24 @@ export function macroDeserializeV2(rawMacros: number[][], count: number): Array<
         }
 
         code = rawMacro.shift() as number
+
         macroCode = code as MacroCode
 
         if (!action) {
           action = fromMacroCode(macroCode)
         }
-
         const newAction = fromMacroCode(macroCode)
-        if (action && JSON.stringify(action) !== JSON.stringify(newAction)) {
+
+        if (action && code !== prevCode) {
+          prevCode = code
           if (action) {
             macroActions.push(action)
           }
           action = newAction
         }
-
+        if (!prevCode) {
+          prevCode = code
+        }
         // 处理不同类型的动作
         if (action && (action.type === MacroCode.Down || action.type === MacroCode.Up || action.type === MacroCode.Tap)) {
           if (rawMacro.length === 0) {
@@ -140,13 +146,13 @@ export function macroDeserializeV2(rawMacros: number[][], count: number): Array<
           const key = keyCodeFromBytes(keyCodeData)
 
           if (action.type === MacroCode.Down && 'keyCodes' in action) {
-            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+            action.keyCodes!.push(key)
           }
           else if (action.type === MacroCode.Up && 'keyCodes' in action) {
-            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+            action.keyCodes!.push(key)
           }
           else if (action.type === MacroCode.Tap && 'keyCodes' in action) {
-            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+            action.keyCodes!.push(key)
           }
         }
         else if (action && action.type === MacroCode.Delay) {
