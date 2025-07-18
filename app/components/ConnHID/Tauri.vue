@@ -6,6 +6,7 @@ const selected = ref<any>(null)
 async function toggleConnection() {
   if (keyboardStore.isConnected) {
     await keyboardStore.disconnect()
+    keyboardStore.cleanAll()
   }
   else if (selected.value) {
     await keyboardStore.connect(selected.value.path)

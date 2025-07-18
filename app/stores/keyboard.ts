@@ -102,6 +102,16 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     fetchLayoutKeymap()
   }
 
+  function cleanAll() {
+    productName.value = null
+    layerCount.value = null
+    macroCount.value = null
+    vialJson.value = null
+    kleDefinition.value = null
+    keymap.value = null
+    layoutKeymap.value = null
+  }
+
   function initializeApi() {
     isTauri() ? (api.value = new TauriHIDApi()) : (api.value = new WebHIDApi())
   }
@@ -153,6 +163,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     fetchLayoutKeymap,
     indexToDisplay,
     fetchAll,
+    cleanAll,
     list,
     connect,
     disconnect,
