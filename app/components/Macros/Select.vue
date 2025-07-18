@@ -4,11 +4,18 @@ const { index } = defineProps<{
 }>()
 const keyboardStore = useKeyboardStore()
 const pageMacrosStore = usePageMacrosStore()
+
+const originalObject = ref<MacroAction>()
+watch(originalObject, (newValue) => {
+  if (newValue) {
+    keyboardStore.keyMacros[pageMacrosStore.currMacro]![index] = JSON.parse(JSON.stringify(newValue))
+  }
+})
 </script>
 
 <template>
   <Select
-    v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]"
+    v-model="originalObject"
     :placeholder="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.name"
     :options="pageMacrosStore.operationData"
     option-label="name"
