@@ -14,7 +14,27 @@ export class WebHIDApi implements HIDApi {
 }
 
 export class WebHIDDevice implements HIDInterface {
-  constructor(private device: HIDDevice) {}
+  private pendingRequests: Map<number, { resolve: (value: Uint8Array) => void, reject: (reason: any) => void, timeout: ReturnType<typeof setTimeout> }> = new Map()
+  private nextRequestId = 1
+
+  constructor(private device: HIDDevice) {
+    this.device.addEventListener('inputreport', this.handleInputReport.bind(this))
+  }
+
+  private handleInputReport(event: HIDInputReportEvent): void {
+    if (event.reportId === 0) {
+      const data = new Uint8Array(event.data.buffer)
+      if (this.pendingRequests.size > 0) {
+        const requestId = this.pendingRequests.keys().next().value as number
+        const request = this.pendingRequests.get(requestId)
+        if (request) {
+          this.pendingRequests.delete(requestId)
+          clearTimeout(request.timeout)
+          request.resolve(data)
+        }
+      }
+    }
+  }
 
   isConnected(): boolean {
     return this.device?.opened || false
@@ -24,36 +44,39 @@ export class WebHIDDevice implements HIDInterface {
     return this.device.productName || 'Unknown WebHID Device'
   }
 
-  // ai 生成的
   async writeRead(data: number[]): Promise<Uint8Array> {
     if (!this.isConnected())
       throw new Error('Device not connected')
 
     return new Promise<Uint8Array>((resolve, reject) => {
-      let timeout: ReturnType<typeof setTimeout>
-      const handler = (event: HIDInputReportEvent) => {
-        if (event.reportId === 0) {
-          // 根据设备描述匹配报告ID
-          clearTimeout(timeout)
-          this.device.removeEventListener('inputreport', handler)
-          resolve(new Uint8Array(event.data.buffer))
-        }
-      }
-      timeout = setTimeout(() => {
-        this.device.removeEventListener('inputreport', handler)
+      const requestId = this.nextRequestId++
+
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(requestId)
         reject(new Error('Device response timeout'))
       }, 1000)
-      this.device.addEventListener('inputreport', handler)
+
+      this.pendingRequests.set(requestId, { resolve, reject, timeout })
 
       this.device.sendReport(0, new Uint8Array(data)).catch((err) => {
+        this.pendingRequests.delete(requestId)
         clearTimeout(timeout)
-        this.device.removeEventListener('inputreport', handler)
         reject(err)
       })
     })
   }
 
   async disconnect(): Promise<void> {
+    // 清理所有待处理的请求
+    for (const request of this.pendingRequests.values()) {
+      clearTimeout(request.timeout)
+      request.reject(new Error('Device disconnected'))
+    }
+    this.pendingRequests.clear()
+
+    // 移除事件监听器
+    this.device.removeEventListener('inputreport', this.handleInputReport.bind(this))
+
     if (this.device?.opened) {
       await this.device.close()
     }
