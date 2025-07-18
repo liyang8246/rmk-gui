@@ -17,7 +17,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - uses: pnpm/action-setup@v4
-        name: Install pnpm
+        with:
+          version: 10
 
       - name: Install dependencies
         run: pnpm install
@@ -70,7 +71,8 @@ jobs:
           rustup target add aarch64-unknown-linux-gnu
 
       - uses: pnpm/action-setup@v4
-        name: Install pnpm
+        with:
+          version: 10
 
       - name: Install dependencies
         run: pnpm install

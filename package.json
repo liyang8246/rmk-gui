@@ -1,6 +1,7 @@
 {
-  "name": "nuxt-styled-tailwind",
+  "name": "rmk-gui",
   "type": "module",
+  "description": "Gui configuration for RMK based on Tauri and Nuxt",
   "scripts": {
     "postinstall": "nuxt prepare",
     "js:lint": "eslint",
