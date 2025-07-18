@@ -10,5 +10,3 @@
     <KeyMapKeyboardCanvas />
   </div>
 </template>
-
-<style></style>

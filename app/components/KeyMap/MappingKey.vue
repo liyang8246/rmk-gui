@@ -38,5 +38,3 @@ function keyBreaks(key: string | null) {
     </div>
   </div>
 </template>
-
-<style scoped></style>
