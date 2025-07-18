@@ -1,18 +1,24 @@
 <script lang="ts" setup>
+import { useAsyncState } from '@vueuse/core'
+
 const keyboardStore = useKeyboardStore()
 const devices = ref<any[]>([])
 const selected = ref<any>(null)
 
-async function toggleConnection() {
-  if (keyboardStore.isConnected) {
-    await keyboardStore.disconnect()
-    keyboardStore.cleanAll()
-  }
-  else if (selected.value) {
-    await keyboardStore.connect(selected.value.path)
-    await keyboardStore.fetchAll()
-  }
-}
+const { isLoading: isConnecting, execute: toggleConnection } = useAsyncState(
+  async () => {
+    if (keyboardStore.isConnected) {
+      await keyboardStore.disconnect()
+      keyboardStore.cleanAll()
+    }
+    else if (selected.value) {
+      await keyboardStore.connect(selected.value.path)
+      await keyboardStore.fetchAll()
+    }
+  },
+  undefined,
+  { immediate: false },
+)
 
 onMounted(async () => {
   devices.value = (await keyboardStore.list()) as any[]
@@ -36,9 +42,13 @@ onMounted(async () => {
       <Button
         :severity="keyboardStore.isConnected ? 'secondary' : 'primary'"
         class="h-full w-full !p-0"
-        @click="toggleConnection"
+        :loading="isConnecting"
+        @click="toggleConnection()"
       >
-        <Icon name="tabler:plug" class="text-xl" />
+        <Icon
+          :name="isConnecting ? 'line-md:loading-twotone-loop' : 'tabler:plug'"
+          class="text-xl"
+        />
       </Button>
     </InputGroupAddon>
   </InputGroup>
