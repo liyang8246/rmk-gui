@@ -15,7 +15,3 @@ const pageMacrosStore = usePageMacrosStore()
     :index="index"
   />
 </template>
-
-<style scoped>
-
-</style>
