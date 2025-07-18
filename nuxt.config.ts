@@ -88,6 +88,10 @@ export default defineNuxtConfig({
               || id.includes('node_modules/pinia')) {
               return 'vue'
             }
+            if (id.includes('node_modules/@vueuse/core')
+              || id.includes('node_modules/@vueuse/nuxt')) {
+              return 'vueuse'
+            }
             if (!id.includes('nuxt/dist')) {
               if (id.includes('components/Aside/')) {
                 return 'Aside'
