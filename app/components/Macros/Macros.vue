@@ -36,7 +36,3 @@ function addMacro() {
     </div>
   </div>
 </template>
-
-<style>
-
-</style>

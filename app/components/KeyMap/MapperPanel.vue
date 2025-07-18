@@ -10,7 +10,3 @@
     <KeyMapMappingKey :key-value="keyToConfig(Number(i))" />
   </template>
 </template>
-
-<style>
-
-</style>

@@ -22,5 +22,3 @@ function labelToDisplay(
     />
   </template>
 </template>
-
-<style></style>
