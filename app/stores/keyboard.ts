@@ -102,7 +102,6 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     if (!macroCount.value) {
       throw new Error('Macro Count not available')
     }
-
     const sizeData = await hidDevice.value.writeRead([VialConstants.Command.GetMacroBufferSize])
     const macroSize = readU16(sizeData, 1)
 
@@ -129,7 +128,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     }
     let macros = splitArray(macroMemory, x => x === 0)
     macros = macros.slice(0, macroCount.value)
-    const deserializedMacros = macroDeserializeV2(macros)
+    const deserializedMacros = macroDeserializeV2(macros, macroCount.value)
     keyMacros.value = deserializedMacros
   };
 

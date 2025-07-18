@@ -96,7 +96,7 @@ export function keyCodeFromBytes(bytes: number[]): KeyCode {
   const value = bytes[1]
   return value as KeyCode
 }
-export function macroDeserializeV2(rawMacros: number[][]): Array<Array<MacroAction>> {
+export function macroDeserializeV2(rawMacros: number[][], count: number): Array<Array<MacroAction>> {
   const macrosActions: Array<Array<MacroAction>> = []
   rawMacros.forEach((rawMacro, idx) => {
     const macroActions: Array<MacroAction> = []
@@ -186,6 +186,9 @@ export function macroDeserializeV2(rawMacros: number[][]): Array<Array<MacroActi
 
     macrosActions.push(macroActions)
   })
+  while (macrosActions.length < count) {
+    macrosActions.push([])
+  }
 
   return macrosActions
 }
