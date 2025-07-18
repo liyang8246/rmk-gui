@@ -49,11 +49,10 @@ export function fromU8(value: number): MacroCode {
       return MacroCode.Text
   }
 }
-
 export function fromMacroCode(value: MacroCode): MacroAction {
   switch (value) {
     case MacroCode.Prefix:
-      return { type: value, name: MacroCode[value], keyCodes: [] }
+      return { type: MacroCode.Tap, name: MacroCode[MacroCode.Tap], keyCodes: [] }
     case MacroCode.Tap:
       return { type: value, name: MacroCode[value], keyCodes: [] }
     case MacroCode.Down:
@@ -67,4 +66,126 @@ export function fromMacroCode(value: MacroCode): MacroAction {
     default:
       throw new Error('not support')
   }
+}
+export function readU16(data: Uint8Array<ArrayBufferLike>, offset: number): number {
+  return (data[offset]! << 8) | data[offset + 1]!
+}
+export function splitArray(arr: number[], predicate: (value: number) => boolean): number[][] {
+  const result: number[][] = []
+  let current: number[] = []
+
+  for (const item of arr) {
+    if (predicate(item)) {
+      if (current.length > 0) {
+        result.push(current)
+        current = []
+      }
+    }
+    else {
+      current.push(item)
+    }
+  }
+
+  if (current.length > 0) {
+    result.push(current)
+  }
+
+  return result
+}
+export function keyCodeFromBytes(bytes: number[]): KeyCode {
+  const value = bytes[1]
+  return value as KeyCode
+}
+export function macroDeserializeV2(rawMacros: number[][]): Array<Array<MacroAction>> {
+  const macrosActions: Array<Array<MacroAction>> = []
+  rawMacros.forEach((rawMacro, idx) => {
+    const macroActions: Array<MacroAction> = []
+    let action: MacroAction | null = null
+
+    while (rawMacro.length > 0) {
+      let code = rawMacro[0]
+      let macroCode = code as MacroCode
+
+      // 处理前缀类型的动作
+      if (macroCode === MacroCode.Prefix) {
+        rawMacro.shift()
+
+        if (rawMacro.length === 0) {
+          throw new Error(`Macro format error: insufficient data after prefix, index: ${idx}`)
+        }
+
+        code = rawMacro.shift() as number
+        macroCode = code as MacroCode
+
+        if (!action) {
+          action = fromMacroCode(macroCode)
+        }
+
+        const newAction = fromMacroCode(macroCode)
+        if (action && JSON.stringify(action) !== JSON.stringify(newAction)) {
+          if (action) {
+            macroActions.push(action)
+          }
+          action = newAction
+        }
+
+        // 处理不同类型的动作
+        if (action && (action.type === MacroCode.Down || action.type === MacroCode.Up || action.type === MacroCode.Tap)) {
+          if (rawMacro.length === 0) {
+            throw new Error(`Macro format error: missing keycode, index: ${idx}`)
+          }
+
+          // 处理按键动作
+          const keyCodeData = [0, rawMacro.shift() as number]
+          const key = keyCodeFromBytes(keyCodeData)
+
+          if (action.type === MacroCode.Down && 'keyCodes' in action) {
+            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+          }
+          else if (action.type === MacroCode.Up && 'keyCodes' in action) {
+            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+          }
+          else if (action.type === MacroCode.Tap && 'keyCodes' in action) {
+            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+          }
+        }
+        else if (action && action.type === MacroCode.Delay) {
+          if (rawMacro.length < 2) {
+            throw new Error(`Macro format error: incomplete delay data, index: ${idx}`)
+          }
+
+          // 处理延迟动作
+          const delay1 = rawMacro.shift() as number
+          const delay2 = rawMacro.shift() as number
+          const delay = (delay1 - 1) + (delay2 - 1) * 255;
+          (action as { delay: number | null }).delay = delay
+        }
+      }
+      else {
+        // 处理文本动作
+        if (!action) {
+          action = { type: MacroCode.Text, name: MacroCode[MacroCode.Text], text: '' }
+        }
+
+        if (action && action.type !== MacroCode.Text) {
+          if (action) {
+            macroActions.push(action)
+          }
+          action = { type: MacroCode.Text, name: MacroCode[MacroCode.Text], text: '' }
+        }
+
+        if (action && action.type === MacroCode.Text) {
+          action.text += String.fromCharCode(rawMacro.shift() as number)
+        }
+      }
+    }
+
+    if (action) {
+      macroActions.push(action)
+    }
+
+    macrosActions.push(macroActions)
+  })
+
+  return macrosActions
 }
