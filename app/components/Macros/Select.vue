@@ -2,13 +2,14 @@
 const { index } = defineProps<{
   index: number
 }>()
+const keyboardStore = useKeyboardStore()
 const pageMacrosStore = usePageMacrosStore()
 </script>
 
 <template>
   <Select
-    v-model="pageMacrosStore.operation[index]"
-    placeholder="select"
+    v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]"
+    :placeholder="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.name"
     :options="pageMacrosStore.operationData"
     option-label="name"
     class="w-32"
