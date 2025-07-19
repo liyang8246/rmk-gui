@@ -1,7 +1,7 @@
 interface KeyInfo {
   code: number
   enum: string
-  symbol: string
+  symbol: [string | null, string | null]
 }
 
 const keyCodeMap: Record<number, KeyInfo> = {
