@@ -25,7 +25,7 @@ function labelToDisplay(label: string, layer: number): [string | null, string | 
     <div class="mx-8">
       <div class="flex flex-wrap items-start justify-start gap-1">
         <template v-for="[_coords, keycode] in keyboardStore.keymap" :key="_coords">
-          <KeyBoard :keys="keyToDisplay(keycode)" />
+          <KeyBoard :keys="keyToLable(keycode)" />
         </template>
       </div>
     </div>

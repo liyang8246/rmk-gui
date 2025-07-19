@@ -7,7 +7,7 @@ const keys = computed(() => {
   for (let layer = 0; layer < keyboardStore.layerCount!; layer++) {
     let keys = matrix.value
     for (const [[row, col], origin] of parseCoordinateString(matrix.value)) {
-      const key = keyToConfig(keyboardStore.keymap!.get([layer, row, col].toString())!)
+      const key = keyToRmk(keyboardStore.keymap!.get([layer, row, col].toString())!)
       keys = keys.replace(origin, key)
     }
     ans.push(keys)

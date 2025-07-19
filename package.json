@@ -3,7 +3,9 @@
   "type": "module",
   "description": "Gui configuration for RMK based on Tauri and Nuxt",
   "scripts": {
-    "postinstall": "nuxt prepare",
+    "nuxt:prepare": "nuxt prepare",
+    "keycode:gen": "python codegen/gen.py",
+    "postinstall": "run-s keycode:gen nuxt:prepare",
     "js:lint": "eslint",
     "js:fix": "eslint --fix",
     "rust:lint": "cargo clippy --manifest-path src-tauri/Cargo.toml",

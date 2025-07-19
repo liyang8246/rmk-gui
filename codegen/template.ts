@@ -28,3 +28,17 @@ export function keyToInfo(key: number): KeyInfo | undefined {
   }
   return info
 }
+
+export function keyToLable(key: number): [string | null, string | null] {
+  const info = keyToInfo(key)
+  if (!info)
+    return [null, null]
+  return info.symbol
+}
+
+export function keyToRmk(key: number): string {
+  const info = keyToInfo(key)
+  if (!info)
+    return 'No'
+  return info.enum
+}

@@ -16,6 +16,9 @@ node_modules
 # Python cache
 codegen/__pycache__
 
+# Code gen
+app/types/keycode.ts
+
 # Logs
 logs
 *.log
