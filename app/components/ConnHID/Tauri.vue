@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { useAsyncState } from '@vueuse/core'
-
 const keyboardStore = useKeyboardStore()
 const devices = ref<any[]>([])
 const selected = ref<any>(null)

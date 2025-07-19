@@ -1,12 +1,18 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore()
-async function connect() {
-  const device = (await keyboardStore.list()) as HIDDevice[]
-  if (!device[0])
-    return
-  await keyboardStore.connect(device[0])
-  await keyboardStore.fetchAll()
-}
+
+const { isLoading: isConnecting, execute: connect } = useAsyncState(
+  async () => {
+    const device = (await keyboardStore.list()) as HIDDevice[]
+    if (!device[0])
+      return
+    await keyboardStore.connect(device[0])
+    await keyboardStore.fetchAll()
+  },
+  undefined,
+  { immediate: false },
+)
+
 const displayName = computed(() => keyboardStore.productName ?? keyboardStore.vialJson?.name ?? 'Unknown Device')
 </script>
 
@@ -21,9 +27,13 @@ const displayName = computed(() => keyboardStore.productName ?? keyboardStore.vi
       <Button
         :severity="keyboardStore.isConnected ? 'secondary' : 'primary'"
         class="h-full w-full !p-0"
-        @click="connect"
+        :loading="isConnecting"
+        @click="connect()"
       >
-        <Icon name="tabler:plug" class="text-xl" />
+        <Icon
+          :name="isConnecting ? 'line-md:loading-twotone-loop' : 'tabler:plug'"
+          class="text-xl"
+        />
       </Button>
     </InputGroupAddon>
   </InputGroup>
