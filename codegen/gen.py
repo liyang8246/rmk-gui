@@ -1,8 +1,3 @@
-# /// script
-# requires-python = ">=3.11"
-# dependencies = []
-# ///
-
 import re
 from collections import OrderedDict
 from lib import Key, gen_info, ext_keys

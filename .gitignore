@@ -14,7 +14,7 @@ dist
 node_modules
 
 # Python cache
-codegen/__pycache__
+codegen/__pycache__/
 
 # Code gen
 app/types/keycode.ts
