@@ -17,7 +17,7 @@ def gen_info(key: Key) -> str:
     return t
 
 
-ext_keys = []
+ext_keys = [Key(code=0x0001, enum="_", symbol=(None, "Trns"))]
 
 
 class Actions:

@@ -4,11 +4,12 @@
 # ///
 
 import re
+from collections import OrderedDict
 from lib import Key, gen_info, ext_keys
 
 pattern = re.compile(r'^\s*(?P<enum>\w+)\s*=\s*(?P<code>0x[0-9A-Fa-f]+),?')
 
-keys: list[Key] = []
+keys: OrderedDict[int, Key] = OrderedDict()
 with open('keycode.rs', 'r') as file:
     keycodes = file.read()
 for line in keycodes.split('\n'):
@@ -22,14 +23,17 @@ for line in keycodes.split('\n'):
 
     enum = match.group('enum')
     code = match.group('code')
-    keys.append(Key(int(code, 16), enum, [None, enum]))
-keys.extend(ext_keys)
+    key_code = int(code, 16)
+    keys[key_code] = Key(key_code, enum, [None, enum])
+
+for key in ext_keys:
+    keys[key.code] = key
 
 with open('template.ts', 'r') as file:
     ts_template = file.read()
 
 key_infos = []
-for key in keys:
+for key in keys.values():
     key_infos.append(gen_info(key))
 
 ts_file = ts_template.replace('  // replace me', '\n'.join(key_infos))
