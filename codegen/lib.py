@@ -33,7 +33,7 @@ class Actions:
 
 ext_keys.extend(
     Key(
-        code=Actions.LT + x,
+        code=Actions.LT + (x << 8),
         enum=f"LT({x}, kc)",
         symbol=(f"LT-{x}", None),
     )

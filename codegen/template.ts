@@ -1,6 +1,6 @@
 interface KeyInfo {
   code: number
-  enum: string
+  rmk: string
   symbol: [string | null, string | null]
 }
 
@@ -19,7 +19,7 @@ export function keyToInfo(key: number): KeyInfo | undefined {
   if (!info.symbol[0])
     return info
 
-  if (info.symbol[0].includes('kc')) {
+  if (info.rmk.includes('kc')) {
     const k1 = keyCodeMap[key & 0x00FF]
     if (!k1)
       return info
@@ -40,5 +40,5 @@ export function keyToRmk(key: number): string {
   const info = keyToInfo(key)
   if (!info)
     return 'No'
-  return info.enum
+  return info.rmk
 }
