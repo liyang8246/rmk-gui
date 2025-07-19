@@ -24,7 +24,7 @@ export interface MacroAction {
   name: string
   keyCodes?: KeyCode[]
   delay?: number | null
-  text?: string
+  text?: string | null
 }
 
 export function fromU8(value: number): MacroCode {
@@ -62,7 +62,7 @@ export function fromMacroCode(value: MacroCode): MacroAction {
     case MacroCode.Delay:
       return { type: value, name: MacroCode[value], delay: null }
     case MacroCode.Text:
-      return { type: value, name: MacroCode[value], text: '' }
+      return { type: value, name: MacroCode[value], text: null }
     default:
       throw new Error('not support')
   }
@@ -146,13 +146,13 @@ export function macroDeserializeV2(rawMacros: number[][], count: number): Array<
           const key = keyCodeFromBytes(keyCodeData)
 
           if (action.type === MacroCode.Down && 'keyCodes' in action) {
-            action.keyCodes!.push(key)
+            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
           }
           else if (action.type === MacroCode.Up && 'keyCodes' in action) {
-            action.keyCodes!.push(key)
+            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
           }
           else if (action.type === MacroCode.Tap && 'keyCodes' in action) {
-            action.keyCodes!.push(key)
+            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
           }
         }
         else if (action && action.type === MacroCode.Delay) {
