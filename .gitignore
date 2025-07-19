@@ -13,6 +13,9 @@ dist
 # Node dependencies
 node_modules
 
+# Python cache
+codegen/__pycache__
+
 # Logs
 logs
 *.log
