@@ -15,7 +15,7 @@ function isActive(path: string) {
 </script>
 
 <template>
-  <div class="flex h-screen w-48 flex-col border-r-2 bg-surface-50 p-3 dark:border-surface-800 dark:bg-surface-950">
+  <div class="flex flex-col h-screen w-48 p-3 border-r-2 dark:border-surface-800 bg-surface-50 dark:bg-surface-950">
     <img src="~/assets/rmk_logo.png" class="mx-auto mb-3 h-[54px]">
     <div class="rounded-prime-xl bg-surface-100 p-3 shadow-inner dark:bg-surface-900">
       <div class="flex flex-col gap-3">

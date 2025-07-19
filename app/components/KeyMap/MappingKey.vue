@@ -31,7 +31,7 @@ function keyBreaks(key: string | null) {
 
 <template>
   <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
-    <div class="rounded-prime-md h-14 w-14">
+    <div class="rounded-prime-md h-12 w-12 shadow-sm shadow-surface-400 dark:shadow-surface-900">
       <div class="rounded-prime-md flex h-full w-full items-center justify-center bg-surface-300 dark:bg-surface-600">
         <span>{{ keyBreaks(keyValue) }}</span>
       </div>
