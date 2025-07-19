@@ -10,7 +10,7 @@ const pageKeymapStore = usePageKeymapStore()
     >
       <KeyMap />
     </div>
-    <div class="flex flex-wrap items-start justify-center gap-1">
+    <div class="flex flex-wrap items-start justify-center gap-2 ">
       <KeyMapMapperPanel />
     </div>
   </div>
