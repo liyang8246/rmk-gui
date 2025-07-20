@@ -1,10 +1,18 @@
 <script lang="ts" setup>
-const { keyValue } = defineProps<{
+interface Props {
   keyValue: string | null
   select?: false | 1 | 2
   kleProps?: InstanceType<typeof KleKey>
-}>()
+  w?: number
+  h?: number
+}
 
+const { keyValue, w, h } = withDefaults(defineProps<Props>(), {
+  select: false,
+  kleProps: undefined,
+  w: 48, 
+  h: 48,
+})
 function insertLineBreaks(str: string, maxLength: number): string {
   return str.replace(new RegExp(`(.{${maxLength}})`, 'g'), '$1\n')
 }
@@ -31,7 +39,13 @@ function keyBreaks(key: string | null) {
 
 <template>
   <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
-    <div class="rounded-prime-md h-12 w-12 shadow-sm shadow-surface-400 dark:shadow-surface-900">
+    <div
+      class="rounded-prime-md shadow-sm shadow-surface-400 dark:shadow-surface-900"
+      :style="{
+        width: `${w}px`,
+        height: `${h}px`,
+      }"
+    >
       <div class="rounded-prime-md flex h-full w-full items-center justify-center bg-surface-300 dark:bg-surface-600">
         <span>{{ keyBreaks(keyValue) }}</span>
       </div>
