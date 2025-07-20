@@ -10,7 +10,7 @@ interface Props {
 const { keyValue, w, h } = withDefaults(defineProps<Props>(), {
   select: false,
   kleProps: undefined,
-  w: 48, 
+  w: 48,
   h: 48,
 })
 function insertLineBreaks(str: string, maxLength: number): string {
