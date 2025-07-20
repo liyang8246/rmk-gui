@@ -1,5 +1,3 @@
-import type { KeyInfo } from '~~/codegen/template'
-
 export enum MacroCode {
   /// 特殊动作前缀，所有控制序列必须以该字节开头
   Prefix = 1,
