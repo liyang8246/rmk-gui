@@ -49,7 +49,7 @@ function swapDownMacro(index: number) {
         </div>
         <div v-else class=" w-full h-full flex items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
-            <KeyMapMappingKey :key-value="keyToConfig(Number(keyCode))" />
+            <KeyMapMappingKey :key-value="keyToRmk(Number(keyCode.code))" />
           </template>
           <div class="">
             添加按钮

@@ -5,11 +5,11 @@
     <Aside />
     <div class="flex flex-1 flex-col overflow-hidden">
       <Header />
-      <ScrollPanel class="flex-1 overflow-hidden">
-        <div class="p-3 h-full w-full">
+      <div class="p-3 h-full w-full overflow-hidden">
+        <ScrollPanel class="overflow-hidden h-full w-full">
           <NuxtPage />
-        </div>
-      </ScrollPanel>
+        </ScrollPanel>
+      </div>
     </div>
   </div>
 </template>
