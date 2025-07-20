@@ -20,11 +20,14 @@ function swapDownMacro(index: number) {
   macros[index] = { ...macros[index + 1] } as MacroAction
   macros[index + 1] = temp
 }
+function addKeyCode(index: number) {
+  keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!)
+}
 </script>
 
 <template>
   <template v-for="i, index in keyboardStore.keyMacros[pageMacrosStore.currMacro]" :key="index">
-    <div class="flex h-16 w-full px-4 items-center justify-between gap-3 rounded-prime-md bg-surface-200 dark:bg-surface-900 ">
+    <div class="rounded-prime-md flex h-14 w-full px-4 items-center justify-between gap-3 bg-surface-200 dark:bg-surface-900 ">
       <div class="flex items-center justify-start gap-3 w-48 h-full">
         <span class=" w-8 h-8" @click="swapUpMacro(index)"><i class="pi pi-angle-double-up w-4 h-4 p-2 text-2xl" /></span>
         <span class=" w-8 h-8" @click="swapDownMacro(index)"><i class="pi pi-angle-double-down w-4 h-4 p-2 text-2xl" /></span>
@@ -35,7 +38,7 @@ function swapDownMacro(index: number) {
           <InputText
             v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.text"
             variant="filled"
-            class="w-full innerText"
+            class="w-full h-8"
             type="text"
           />
         </div>
@@ -49,10 +52,10 @@ function swapDownMacro(index: number) {
         </div>
         <div v-else class=" w-full h-full flex items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
-            <KeyMapMappingKey :key-value="keyToRmk(Number(keyCode.code))" />
+            <KeyMapMappingKey :key-value="keyToRmk(Number(keyCode.code))" :w="42" :h="42" />
           </template>
-          <div class="">
-            添加按钮
+          <div class="rounded-prime-md h-8 w-8 bg-surface-300 dark:bg-surface-600 shadow-sm hover:shadow-surface-400 dark:hover:shadow-surface-900 hover:text-surface-700 dark:hover:text-surface-300 transition-all duration-200 flex justify-center items-center" @click="addKeyCode(index)">
+            <i class="pi pi-plus w-4 h-4 text-2xl" />
           </div>
         </div>
       </div>
