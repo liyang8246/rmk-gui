@@ -1,3 +1,5 @@
+import type { KeyInfo } from '~~/codegen/template'
+
 export enum MacroCode {
   /// 特殊动作前缀，所有控制序列必须以该字节开头
   Prefix = 1,
@@ -22,7 +24,7 @@ export enum MacroCode {
 export interface MacroAction {
   type: MacroCode
   name: string
-  keyCodes?: KeyCode[]
+  keyCodes?: KeyInfo[]
   delay?: number | null
   text?: string | null
 }
@@ -92,9 +94,12 @@ export function splitArray(arr: number[], predicate: (value: number) => boolean)
 
   return result
 }
-export function keyCodeFromBytes(bytes: number[]): KeyCode {
+export function keyCodeFromBytes(bytes: number[]): KeyInfo {
   const value = bytes[1]
-  return value as KeyCode
+  if (value && keyCodeMap[value]) {
+    return keyCodeMap[value]
+  }
+  return keyCodeMap[0]!
 }
 export function macroDeserializeV2(rawMacros: number[][], count: number): Array<Array<MacroAction>> {
   const macrosActions: Array<Array<MacroAction>> = []
@@ -117,12 +122,8 @@ export function macroDeserializeV2(rawMacros: number[][], count: number): Array<
         }
 
         code = rawMacro.shift() as number
-
         macroCode = code as MacroCode
 
-        if (!action) {
-          action = fromMacroCode(macroCode)
-        }
         const newAction = fromMacroCode(macroCode)
 
         if (action && code !== prevCode) {
@@ -132,27 +133,29 @@ export function macroDeserializeV2(rawMacros: number[][], count: number): Array<
           }
           action = newAction
         }
+        if (!action) {
+          action = fromMacroCode(macroCode)
+        }
         if (!prevCode) {
           prevCode = code
         }
-        // 处理不同类型的动作
+
         if (action && (action.type === MacroCode.Down || action.type === MacroCode.Up || action.type === MacroCode.Tap)) {
           if (rawMacro.length === 0) {
             throw new Error(`Macro format error: missing keycode, index: ${idx}`)
           }
 
-          // 处理按键动作
           const keyCodeData = [0, rawMacro.shift() as number]
           const key = keyCodeFromBytes(keyCodeData)
 
           if (action.type === MacroCode.Down && 'keyCodes' in action) {
-            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+            (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
           }
           else if (action.type === MacroCode.Up && 'keyCodes' in action) {
-            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+            (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
           }
           else if (action.type === MacroCode.Tap && 'keyCodes' in action) {
-            (action as { keyCodes: KeyCode[] }).keyCodes.push(key)
+            (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
           }
         }
         else if (action && action.type === MacroCode.Delay) {

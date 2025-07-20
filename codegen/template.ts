@@ -1,10 +1,10 @@
-interface KeyInfo {
+export interface KeyInfo {
   code: number
   rmk: string
   symbol: [string | null, string | null]
 }
 
-const keyCodeMap: Record<number, KeyInfo> = {
+export const keyCodeMap: Record<number, KeyInfo> = {
   // replace me
 }
 
