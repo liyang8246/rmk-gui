@@ -15,7 +15,7 @@ function saveMacro() {
     @click="pageMacrosStore.clearSelectedProps()"
   >
     <div class="flex justify-start items-start w-full">
-      <MacrosMacroSwitcher />
+      <Switcher text="Marco" :count="keyboardStore.macroCount!" :layer="pageMacrosStore.currMacro" @change="pageMacrosStore.currMacro = $event" />
     </div>
     <div class="rounded-prime-md p-3 h-full w-full overflow-hidden bg-surface-50 dark:bg-surface-950 ">
       <ScrollPanel class=" w-full h-full overflow-hidden">

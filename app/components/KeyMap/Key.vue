@@ -66,14 +66,14 @@ const KeyProp = computed(() => {
 
 function compareKeys(zone: 'outer' | 'inner' | null) {
   return [...KeyProp.value, zone].join(',') === select.join(',')
-    ? 'bg-surface-400 dark:bg-surface-500 shadow-sm shadow-surface-600 dark:shadow-surface-800 text-surface-900 dark:text-surface-100'
+    ? 'bg-primary-100/50 dark:bg-primary-600/50 shadow-sm shadow-primary-600 dark:shadow-primary-900 text-surface-900 dark:text-surface-100'
     : 'bg-surface-300 dark:bg-surface-600 shadow-sm shadow-surface-400 dark:shadow-surface-900 text-surface-700 dark:text-surface-300'
 }
 </script>
 
 <template>
   <div
-    class="rounded-prime-md raletive"
+    class="rounded-prime-md raletive bg-surface-300 dark:bg-surface-600"
     :style="{
       width: pageKeymapStore.fixSize(pageKeymapStore.maxSize(kleProps.width, kleProps.width2)),
       height: pageKeymapStore.fixSize(pageKeymapStore.maxSize(kleProps.height, kleProps.height2)),

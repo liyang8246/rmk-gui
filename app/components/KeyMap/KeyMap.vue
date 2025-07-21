@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 const pageKeymapStore = usePageKeymapStore()
+const keyboardStore = useKeyboardStore()
 </script>
 
 <template>
   <div class="flex w-full items-center justify-start pb-4">
-    <KeyMapLayerSwitcher />
+    <Switcher text="Layer" :count="keyboardStore.layerCount!" :layer="pageKeymapStore.currLayer" @change="pageKeymapStore.currLayer = $event" />
   </div>
   <div
     class="rounded-prime-md relative h-96 w-full overflow-hidden"
