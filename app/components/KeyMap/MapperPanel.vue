@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 const pageKeymapStore = usePageKeymapStore()
-function setKeycode(zone: 'outer' | 'inner', key:  [number, number, number,string | null, string | null]) {
+function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, string | null, string | null]) {
   pageKeymapStore.replaceKey = [...key, zone]
 }
 </script>

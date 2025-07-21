@@ -11,7 +11,7 @@ function labelToDisplay(
   return keyboardStore.indexToDisplay([layer, row!, col!])
 }
 
-function setKeycode(zone: 'outer' | 'inner', key: [number, number, number,string | null, string | null]) {
+function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, string | null, string | null]) {
   pageKeymapStore.currKey = [...key, zone]
 }
 </script>

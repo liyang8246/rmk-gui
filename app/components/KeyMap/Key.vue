@@ -18,7 +18,7 @@ const {
     height2: number
     labels: string[]
   }
-  select: [number, number, number,string | null, string | null, 'outer' | 'inner' | null]
+  select: [number, number, number, string | null, string | null, 'outer' | 'inner' | null]
 }>()
 const emit = defineEmits<{
   (e: 'click', zone: 'outer' | 'inner', key: [
