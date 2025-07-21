@@ -23,6 +23,9 @@ function swapDownMacro(index: number) {
 function addKeyCode(index: number) {
   keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!)
 }
+function setKeycode(zone: 'outer' | 'inner', key:  [number, number, number,string | null, string | null]) {
+  pageMacrosStore.currKey = [...key, zone]
+}
 </script>
 
 <template>
@@ -52,9 +55,21 @@ function addKeyCode(index: number) {
         </div>
         <div v-else class=" w-full h-full flex items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
-            <KeyMapMappingKey :key-value="keyToRmk(Number(keyCode.code))" :w="42" :h="42" />
+            <KeyMapKey 
+            :keys="keyCode.symbol" 
+            :kle-props="{
+              width: 0.8,
+              height: 0.8,
+              width2: 0.8,
+              height2: 0.8,
+              labels:[`${index},${keyCodes_index}`]}" 
+            :select="pageMacrosStore.currKey"
+            @click="setKeycode" />
           </template>
-          <div class="rounded-prime-md h-8 w-8 bg-surface-300 dark:bg-surface-600 shadow-sm hover:shadow-surface-400 dark:hover:shadow-surface-900 hover:text-surface-700 dark:hover:text-surface-300 transition-all duration-200 flex justify-center items-center" @click="addKeyCode(index)">
+          <div 
+            class="rounded-prime-md h-8 w-8 bg-surface-300 dark:bg-surface-600 shadow-sm hover:shadow-surface-400 dark:hover:shadow-surface-900 hover:text-surface-700 dark:hover:text-surface-300 transition-all duration-200 flex justify-center items-center"
+            @click="addKeyCode(index)"
+            >
             <i class="pi pi-plus w-4 h-4 text-2xl" />
           </div>
         </div>

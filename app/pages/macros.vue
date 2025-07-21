@@ -10,7 +10,9 @@ function saveMacro() {
 </script>
 
 <template>
-  <div class="flex flex-col justify-around items-center flex-auto gap-3 w-full h-full text-surface-500 dark:text-surface-400">
+  <div class="flex flex-col justify-around items-center flex-auto gap-3 w-full h-full text-surface-500 dark:text-surface-400"
+  @click="pageMacrosStore.clearSelectedProps()"
+  >
     <div class="flex justify-start items-start w-full">
       <MacrosMacroSwitcher />
     </div>

@@ -1,14 +1,32 @@
 <script lang="ts" setup>
-const { keys, kleProps, select } = defineProps<{
-  keys: [string | null, string | null]
-  kleProps: InstanceType<typeof KleKey>
-  select: [number, number, number, 'outer' | 'inner' | null]
+const {
+  keys = [null, null],
+  kleProps = {
+    width: 1,
+    height: 1,
+    width2: 1,
+    height2: 1,
+    labels: ['0, 0'],
+  },
+  select,
+} = defineProps<{
+  keys?: [string | null, string | null]
+  kleProps?: {
+    width: number
+    height: number
+    width2: number
+    height2: number
+    labels: string[]
+  }
+  select: [number, number, number,string | null, string | null, 'outer' | 'inner' | null]
 }>()
 const emit = defineEmits<{
   (e: 'click', zone: 'outer' | 'inner', key: [
     number,
     number,
     number,
+    string | null,
+    string | null,
   ]): void
 }>()
 
@@ -37,10 +55,12 @@ function keyBreaks(key: string | null) {
 }
 
 const KeyProp = computed(() => {
-  return [pageKeymapStore.currLayer, ...kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as number[]] as [
+  return [pageKeymapStore.currLayer, ...kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], ...keys] as [
     number,
     number,
     number,
+    string | null,
+    string | null,
   ]
 })
 
@@ -52,7 +72,13 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
 </script>
 
 <template>
-  <div class="raletive">
+  <div
+    class="rounded-prime-md raletive"
+    :style="{
+      width: pageKeymapStore.fixSize(pageKeymapStore.maxSize(kleProps.width, kleProps.width2)),
+      height: pageKeymapStore.fixSize(pageKeymapStore.maxSize(kleProps.height, kleProps.height2)),
+    }"
+  >
     <label>
       <div
         class="rounded-prime-md absolute bg-surface-300 dark:bg-surface-600"
