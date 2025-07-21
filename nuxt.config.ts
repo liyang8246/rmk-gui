@@ -77,35 +77,17 @@ export default defineNuxtConfig({
   },
   vite: {
     build: {
+      chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('node_modules/lodash')) {
-              return 'lodash'
+            if (id.includes('primevue')) {
+              return 'primevue'
             }
-            if (id.includes('node_modules/vue')
-              || id.includes('node_modules/vue-router')
-              || id.includes('node_modules/pinia')) {
-              return 'vue'
+            if (id.includes('node_modules')) {
+              return 'vendor'
             }
-            if (id.includes('node_modules/@vueuse/core')
-              || id.includes('node_modules/@vueuse/nuxt')) {
-              return 'vueuse'
-            }
-            if (!id.includes('nuxt/dist')) {
-              if (id.includes('components/Aside/')) {
-                return 'Aside'
-              }
-              if (id.includes('components/ConnHID/')) {
-                return 'ConnHID'
-              }
-              if (id.includes('components/KeyMap/')) {
-                return 'KeyMap'
-              }
-              if (id.includes('components/Macros/')) {
-                return 'Macros'
-              }
-            }
+            return 'main'
           },
         },
       },
