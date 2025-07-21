@@ -1,9 +1,11 @@
 export const usePageKeymapStore = defineStore('pageKeymap', () => {
   const currLayer = ref(0)
 
-  const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
+  const currKey = ref<[number, number, number,string | null, string | null, 'outer' | 'inner' | null]>([0, 0, 0,null,null,null])
+  const replaceKey = ref<[number, number, number,string | null, string | null, 'outer' | 'inner' | null]>([0, 0, 0,null,null, null])
   function clearSelectedProps() {
-    currKey.value = [0, 0, 0, null]
+    currKey.value = [0, 0, 0,null,null,null]
+    replaceKey.value = [0, 0, 0,null,null,null]
   }
 
   const keyMargin = 6
@@ -28,6 +30,7 @@ export const usePageKeymapStore = defineStore('pageKeymap', () => {
   return {
     currLayer,
     currKey,
+    replaceKey,
     clearSelectedProps,
     keyMargin,
     fixSize,
