@@ -1,18 +1,16 @@
 <script lang="ts" setup>
-interface Props {
+const {
+  keyValue,
+  w = 48,
+  h = 48,
+} = defineProps<{
   keyValue: string | null
   select?: false | 1 | 2
   kleProps?: InstanceType<typeof KleKey>
   w?: number
   h?: number
-}
+}>()
 
-const { keyValue, w, h } = withDefaults(defineProps<Props>(), {
-  select: false,
-  kleProps: undefined,
-  w: 48,
-  h: 48,
-})
 function insertLineBreaks(str: string, maxLength: number): string {
   return str.replace(new RegExp(`(.{${maxLength}})`, 'g'), '$1\n')
 }
