@@ -1,11 +1,17 @@
 export const usePageKeymapStore = defineStore('pageKeymap', () => {
   const currLayer = ref(0)
 
-  const currKey = ref<[number, number, number]>([0, 0, 0])
-  const keyZone = ref<'outer' | 'inner' | null>(null)
+  const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
   function clearSelectedProps() {
-    currKey.value = [0, 0, 0]
-    keyZone.value = null
+    currKey.value = [0, 0, 0, null]
+  }
+
+  const keyMargin = 6
+  function fixSize(size: number): string {
+    return `calc(56px * ${size} - ${keyMargin}px)`
+  }
+  function maxSize(size1: number, size2: number): number {
+    return size1 > size2 ? size1 : size2
   }
 
   const maxy = ref(0)
@@ -22,8 +28,10 @@ export const usePageKeymapStore = defineStore('pageKeymap', () => {
   return {
     currLayer,
     currKey,
-    keyZone,
     clearSelectedProps,
+    keyMargin,
+    fixSize,
+    maxSize,
     maxy,
     maxx,
     extpending,

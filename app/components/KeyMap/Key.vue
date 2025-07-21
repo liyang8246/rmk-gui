@@ -1,24 +1,18 @@
 <script lang="ts" setup>
-const { keys, kleProps } = defineProps<{
+const { keys, kleProps, select } = defineProps<{
   keys: [string | null, string | null]
   kleProps: InstanceType<typeof KleKey>
+  select: [number, number, number, 'outer' | 'inner' | null]
+}>()
+const emit = defineEmits<{
+  (e: 'click', zone: 'outer' | 'inner', key: [
+    number,
+    number,
+    number,
+  ]): void
 }>()
 
 const pageKeymapStore = usePageKeymapStore()
-
-const keyMargin = 6
-function fixSize(size: number): string {
-  return `calc(56px * ${size} - ${keyMargin}px)`
-}
-function maxSize(size1: number, size2: number): number {
-  return size1 > size2 ? size1 : size2
-}
-
-const translate = computed(() => {
-  return (
-    `calc((-${kleProps.x} + ${kleProps.rotation_x}) * 56px)` + `calc((-${kleProps.y} + ${kleProps.rotation_y}) * 56px)`
-  )
-})
 
 function insertLineBreaks(str: string, maxLength: number): string {
   return str.replace(new RegExp(`(.{${maxLength}})`, 'g'), '$1\n')
@@ -30,13 +24,13 @@ function keyBreaks(key: string | null) {
   if (key === null) {
     return ''
   }
-  if (key.length < Math.round(7 * maxSize(kleProps.width, kleProps.width2))) {
+  if (key.length < Math.round(7 * pageKeymapStore.maxSize(kleProps.width, kleProps.width2))) {
     return key
   }
   const keys = insertLineBigSize(key).split('\n')
   for (let i = 0; i < keys.length; i++) {
-    if (keys[i]!.length > Math.round(7 * maxSize(kleProps.width, kleProps.width2))) {
-      keys[i] = insertLineBreaks(keys[i]!, Math.round(6 * maxSize(kleProps.width, kleProps.width2)))
+    if (keys[i]!.length > Math.round(7 * pageKeymapStore.maxSize(kleProps.width, kleProps.width2))) {
+      keys[i] = insertLineBreaks(keys[i]!, Math.round(6 * pageKeymapStore.maxSize(kleProps.width, kleProps.width2)))
     }
   }
   return keys.join('\n')
@@ -49,35 +43,22 @@ const KeyProp = computed(() => {
     number,
   ]
 })
-function setSelectedProps(zone: 'outer' | 'inner' | null) {
-  pageKeymapStore.keyZone = zone
-  pageKeymapStore.currKey = KeyProp.value
-}
+
 function compareKeys(zone: 'outer' | 'inner' | null) {
-  return KeyProp.value.join(',') === pageKeymapStore.currKey.join(',') && pageKeymapStore.keyZone === zone
+  return [...KeyProp.value, zone].join(',') === select.join(',')
     ? 'bg-surface-400 dark:bg-surface-500 shadow-sm shadow-surface-600 dark:shadow-surface-800 text-surface-900 dark:text-surface-100'
     : 'bg-surface-300 dark:bg-surface-600 shadow-sm shadow-surface-400 dark:shadow-surface-900 text-surface-700 dark:text-surface-300'
 }
 </script>
 
 <template>
-  <div
-    class="rounded-prime-md absolute z-10 h-14 w-14 cursor-pointer select-none text-center text-xs font-bold"
-    :style="{
-      top: `${kleProps.y * 56}px`,
-      left: `${kleProps.x * 56}px`,
-      transform: `rotate(${kleProps.rotation_angle}deg)`,
-      transformOrigin: translate,
-      width: fixSize(maxSize(kleProps.width, kleProps.width2)),
-      height: fixSize(maxSize(kleProps.height, kleProps.height2)),
-    }"
-  >
+  <div class="raletive">
     <label>
       <div
         class="rounded-prime-md absolute bg-surface-300 dark:bg-surface-600"
         :style="{
-          width: fixSize(kleProps.width2),
-          height: fixSize(kleProps.height2),
+          width: pageKeymapStore.fixSize(kleProps.width2),
+          height: pageKeymapStore.fixSize(kleProps.height2),
         }"
       />
       <!-- kc -->
@@ -86,10 +67,10 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
           class="rounded-prime-md absolute flex justify-center pt-[2px] transition-all duration-200"
           :class="compareKeys('outer')"
           :style="{
-            width: fixSize(kleProps.width),
-            height: fixSize(kleProps.height),
+            width: pageKeymapStore.fixSize(kleProps.width),
+            height: pageKeymapStore.fixSize(kleProps.height),
           }"
-          @click.stop="setSelectedProps('outer')"
+          @click.stop="emit('click', 'outer', KeyProp)"
         >
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
@@ -98,11 +79,11 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
           :class="compareKeys('inner')"
           :style="{
             top: '18px',
-            left: `${keyMargin / 2}px`,
-            width: `${kleProps.width * 56 - keyMargin * 2}px`,
-            height: `${kleProps.height * 56 - keyMargin * 1.5 - 18}px`,
+            left: `${pageKeymapStore.keyMargin / 2}px`,
+            width: `${kleProps.width * 56 - pageKeymapStore.keyMargin * 2}px`,
+            height: `${kleProps.height * 56 - pageKeymapStore.keyMargin * 1.5 - 18}px`,
           }"
-          @click.stop="setSelectedProps('inner')"
+          @click.stop="emit('click', 'inner', KeyProp)"
         >
           <span>{{ keyBreaks(keys[1]) }}</span>
         </div>
@@ -113,12 +94,12 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
         class="rounded-prime-md absolute flex items-center justify-center transition-all duration-200"
         :class="compareKeys('outer')"
         :style="{
-          width: fixSize(kleProps.width),
-          height: fixSize(kleProps.height),
+          width: pageKeymapStore.fixSize(kleProps.width),
+          height: pageKeymapStore.fixSize(kleProps.height),
         }"
-        @click.stop="setSelectedProps('outer')"
+        @click.stop="emit('click', 'outer', KeyProp)"
       >
-        <span>{{ keyBreaks(keys![1]) }}</span>
+        <span>{{ keyBreaks(keys[1]) }}</span>
       </div>
     </label>
   </div>
