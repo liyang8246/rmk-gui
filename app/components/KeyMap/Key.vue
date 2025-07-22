@@ -73,17 +73,27 @@ const KeyProp = computed(() => {
     string | null,
   ]
 })
-
-function compareKeys(zone: 'outer' | 'inner' | null) {
-  return [...KeyProp.value, zone].join(',') === select.join(',')
-    ? 'bg-primary-100/50 dark:bg-primary-600/50 shadow-sm shadow-primary-600 dark:shadow-primary-900 text-surface-900 dark:text-surface-100'
-    : 'bg-surface-300 dark:bg-surface-600 shadow-sm shadow-surface-400 dark:shadow-surface-900 text-surface-700 dark:text-surface-300'
+const keyPropValue = KeyProp.value
+function isOuterStyle() {
+  return [...keyPropValue, 'outer'].join(',') === select.join(',')
+    ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100'
+    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300'
+}
+function isOuterShadow() {
+  return [...keyPropValue, 'outer'].join(',') === select.join(',')
+    ? 'shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
+    : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
+}
+function isInnerStyle() {
+  return [...keyPropValue, 'inner'].join(',') === select.join(',')
+    ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100 shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
+    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
 }
 </script>
 
 <template>
   <div
-    class="rounded-prime-md raletive bg-surface-300 dark:bg-surface-600"
+    class="rounded-prime-md raletive"
     :style="{
       width: fixSize(maxSize(kleProps.width, kleProps.width2)),
       height: fixSize(maxSize(kleProps.height, kleProps.height2)),
@@ -91,17 +101,35 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
   >
     <label>
       <div
-        class="rounded-prime-md absolute bg-surface-300 dark:bg-surface-600"
+        class="rounded-prime-md absolute z-1 transition-all duration-200"
+        :class="isOuterShadow()"
         :style="{
           width: fixSize(kleProps.width2),
           height: fixSize(kleProps.height2),
         }"
       />
+      <div
+        class="rounded-prime-md absolute z-2 transition-all duration-200"
+        :class="isOuterShadow()"
+        :style="{
+          width: fixSize(kleProps.width),
+          height: fixSize(kleProps.height),
+        }"
+      />
+      <div
+        class="rounded-prime-md absolute z-3 transition-all duration-200"
+        :class="isOuterStyle()"
+        :style="{
+          width: fixSize(kleProps.width2),
+          height: fixSize(kleProps.height2),
+        }"
+        @click.stop="emit('click', 'outer', KeyProp)"
+      />
       <!-- kc -->
       <div v-if="keys[0]" class="relative">
         <div
-          class="rounded-prime-md absolute flex justify-center pt-[2px] transition-all duration-200"
-          :class="compareKeys('outer')"
+          class="rounded-prime-md absolute flex justify-center pt-[2px] transition-all duration-200 z-5"
+          :class="isOuterStyle()"
           :style="{
             width: fixSize(kleProps.width),
             height: fixSize(kleProps.height),
@@ -111,8 +139,8 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
         <div
-          class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 transition-all duration-200 dark:border-surface-200"
-          :class="compareKeys('inner')"
+          class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 dark:border-surface-200 z-6 transition-all duration-200"
+          :class="isInnerStyle()"
           :style="{
             top: '18px',
             left: `${keyMargin / 2}px`,
@@ -127,8 +155,8 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
       <!-- key -->
       <div
         v-else
-        class="rounded-prime-md absolute flex items-center justify-center transition-all duration-200"
-        :class="compareKeys('outer')"
+        class="rounded-prime-md absolute flex items-center justify-center transition-all duration-200 z-5"
+        :class="isOuterStyle()"
         :style="{
           width: fixSize(kleProps.width),
           height: fixSize(kleProps.height),
