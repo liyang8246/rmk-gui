@@ -145,10 +145,10 @@ function isInnerStyle() {
           class="absolute z-6 flex items-center justify-center border-t-2 border-surface-800 dark:border-surface-200 rounded-prime-md transition-all duration-200 cursor-pointer"
           :class="isInnerStyle()"
           :style="{
-            top: '18px',
+            top: `${defaultKeySize / 3}px`,
             left: `${keyMargin / 2}px`,
-            width: `${kleProps.width * 56 - keyMargin * 2}px`,
-            height: `${kleProps.height * 56 - keyMargin * 1.5 - 18}px`,
+            width: `${kleProps.width * defaultKeySize - keyMargin * 2}px`,
+            height: `${kleProps.height * defaultKeySize - keyMargin * 1.5 - defaultKeySize / 3}px`,
           }"
           @click.stop="emit('click', 'inner', KeyProp)"
         >
