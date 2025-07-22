@@ -16,3 +16,7 @@
 .rounded-prime-md {
   border-radius: var(--p-border-radius-md);
 }
+
+body {
+  overflow: hidden;
+}
