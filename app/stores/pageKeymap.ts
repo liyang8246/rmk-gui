@@ -8,14 +8,6 @@ export const usePageKeymapStore = defineStore('pageKeymap', () => {
     replaceKey.value = [0, 0, 0, null, null, null]
   }
 
-  const keyMargin = 6
-  function fixSize(size: number): string {
-    return `calc(56px * ${size} - ${keyMargin}px)`
-  }
-  function maxSize(size1: number, size2: number): number {
-    return size1 > size2 ? size1 : size2
-  }
-
   const maxy = ref(0)
   const maxx = ref(0)
   const extpending = ref(0)
@@ -32,9 +24,6 @@ export const usePageKeymapStore = defineStore('pageKeymap', () => {
     currKey,
     replaceKey,
     clearSelectedProps,
-    keyMargin,
-    fixSize,
-    maxSize,
     maxy,
     maxx,
     extpending,

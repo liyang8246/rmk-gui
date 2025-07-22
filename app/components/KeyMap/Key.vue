@@ -9,6 +9,7 @@ const {
     labels: ['0, 0'],
   },
   select,
+  keyMargin = 6,
 } = defineProps<{
   keys?: [string | null, string | null]
   kleProps?: {
@@ -19,7 +20,9 @@ const {
     labels: string[]
   }
   select: [number, number, number, string | null, string | null, 'outer' | 'inner' | null]
+  keyMargin?: number
 }>()
+
 const emit = defineEmits<{
   (e: 'click', zone: 'outer' | 'inner', key: [
     number,
@@ -32,6 +35,13 @@ const emit = defineEmits<{
 
 const pageKeymapStore = usePageKeymapStore()
 
+function fixSize(size: number): string {
+  return `calc(56px * ${size} - ${keyMargin}px)`
+}
+function maxSize(size1: number, size2: number): number {
+  return size1 > size2 ? size1 : size2
+}
+
 function insertLineBreaks(str: string, maxLength: number): string {
   return str.replace(new RegExp(`(.{${maxLength}})`, 'g'), '$1\n')
 }
@@ -42,13 +52,13 @@ function keyBreaks(key: string | null) {
   if (key === null) {
     return ''
   }
-  if (key.length < Math.round(7 * pageKeymapStore.maxSize(kleProps.width, kleProps.width2))) {
+  if (key.length < Math.round(7 * maxSize(kleProps.width, kleProps.width2))) {
     return key
   }
   const keys = insertLineBigSize(key).split('\n')
   for (let i = 0; i < keys.length; i++) {
-    if (keys[i]!.length > Math.round(7 * pageKeymapStore.maxSize(kleProps.width, kleProps.width2))) {
-      keys[i] = insertLineBreaks(keys[i]!, Math.round(6 * pageKeymapStore.maxSize(kleProps.width, kleProps.width2)))
+    if (keys[i]!.length > Math.round(7 * maxSize(kleProps.width, kleProps.width2))) {
+      keys[i] = insertLineBreaks(keys[i]!, Math.round(6 * maxSize(kleProps.width, kleProps.width2)))
     }
   }
   return keys.join('\n')
@@ -75,16 +85,16 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
   <div
     class="rounded-prime-md raletive bg-surface-300 dark:bg-surface-600"
     :style="{
-      width: pageKeymapStore.fixSize(pageKeymapStore.maxSize(kleProps.width, kleProps.width2)),
-      height: pageKeymapStore.fixSize(pageKeymapStore.maxSize(kleProps.height, kleProps.height2)),
+      width: fixSize(maxSize(kleProps.width, kleProps.width2)),
+      height: fixSize(maxSize(kleProps.height, kleProps.height2)),
     }"
   >
     <label>
       <div
         class="rounded-prime-md absolute bg-surface-300 dark:bg-surface-600"
         :style="{
-          width: pageKeymapStore.fixSize(kleProps.width2),
-          height: pageKeymapStore.fixSize(kleProps.height2),
+          width: fixSize(kleProps.width2),
+          height: fixSize(kleProps.height2),
         }"
       />
       <!-- kc -->
@@ -93,8 +103,8 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
           class="rounded-prime-md absolute flex justify-center pt-[2px] transition-all duration-200"
           :class="compareKeys('outer')"
           :style="{
-            width: pageKeymapStore.fixSize(kleProps.width),
-            height: pageKeymapStore.fixSize(kleProps.height),
+            width: fixSize(kleProps.width),
+            height: fixSize(kleProps.height),
           }"
           @click.stop="emit('click', 'outer', KeyProp)"
         >
@@ -105,9 +115,9 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
           :class="compareKeys('inner')"
           :style="{
             top: '18px',
-            left: `${pageKeymapStore.keyMargin / 2}px`,
-            width: `${kleProps.width * 56 - pageKeymapStore.keyMargin * 2}px`,
-            height: `${kleProps.height * 56 - pageKeymapStore.keyMargin * 1.5 - 18}px`,
+            left: `${keyMargin / 2}px`,
+            width: `${kleProps.width * 56 - keyMargin * 2}px`,
+            height: `${kleProps.height * 56 - keyMargin * 1.5 - 18}px`,
           }"
           @click.stop="emit('click', 'inner', KeyProp)"
         >
@@ -120,8 +130,8 @@ function compareKeys(zone: 'outer' | 'inner' | null) {
         class="rounded-prime-md absolute flex items-center justify-center transition-all duration-200"
         :class="compareKeys('outer')"
         :style="{
-          width: pageKeymapStore.fixSize(kleProps.width),
-          height: pageKeymapStore.fixSize(kleProps.height),
+          width: fixSize(kleProps.width),
+          height: fixSize(kleProps.height),
         }"
         @click.stop="emit('click', 'outer', KeyProp)"
       >
