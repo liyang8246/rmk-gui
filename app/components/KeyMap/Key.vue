@@ -43,7 +43,6 @@ function fitKeySize(size: number): string {
 function maxKeySize(size1: number, size2: number): number {
   return size1 > size2 ? size1 : size2
 }
-
 function insertLineBreaks(str: string, maxLength: number): string {
   return str.replace(new RegExp(`(.{${maxLength}})`, 'g'), '$1\n')
 }
@@ -80,7 +79,7 @@ const KeyProp = computed(() => {
 const keyPropValue = KeyProp.value
 function isOuterStyle() {
   return [...keyPropValue, 'outer'].join(',') === select.join(',')
-    ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100'
+    ? 'bg-primary-100/50 dark:bg-primary-600/50 text-surface-900 dark:text-surface-100'
     : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300'
 }
 function isOuterShadow() {

@@ -12,7 +12,7 @@ const indices = computed(() => {
 })
 function compare(index: number) {
   return layer === index
-    ? 'bg-primary-400 dark:bg-primary-500 font-bold text-surface-700 dark:text-surface-300'
+    ? 'bg-primary-100 dark:bg-primary-600 font-bold text-surface-700 dark:text-surface-300 shadow-sm shadow-primary-300 dark:shadow-primary-800'
     : 'bg-surface-300 dark:bg-surface-600 hover:bg-surface-100 dark:hover:bg-surface-600 text-surface-500 dark:text-surface-400'
 }
 </script>
