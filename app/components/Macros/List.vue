@@ -25,6 +25,7 @@ function addKeyCode(index: number) {
 }
 function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, string | null, string | null]) {
   pageMacrosStore.currKey = [...key, zone]
+  pageMacrosStore.showMapperPanel = true
 }
 </script>
 
@@ -64,6 +65,7 @@ function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, strin
                 height2: 0.8,
                 labels: [`${index},${keyCodes_index}`] }"
               :select="pageMacrosStore.currKey"
+              :layer="pageMacrosStore.currMacro"
               @click="setKeycode"
             />
           </template>

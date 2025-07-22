@@ -11,6 +11,7 @@ const {
   select,
   keyMargin = 6,
   defaultKeySize = 56,
+  layer = 0,
 } = defineProps<{
   keys?: [string | null, string | null]
   kleProps?: {
@@ -23,6 +24,7 @@ const {
   select: [number, number, number, string | null, string | null, 'outer' | 'inner' | null]
   keyMargin?: number
   defaultKeySize?: number
+  layer?: number
 }>()
 
 const emit = defineEmits<{
@@ -34,9 +36,6 @@ const emit = defineEmits<{
     string | null,
   ]): void
 }>()
-
-const pageKeymapStore = usePageKeymapStore()
-
 function fitKeySize(size: number): string {
   return `${defaultKeySize * size - keyMargin}px`
 }
@@ -68,7 +67,7 @@ function keyBreaks(key: string | null) {
 }
 
 const KeyProp = computed(() => {
-  return [pageKeymapStore.currLayer, ...kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], ...keys] as [
+  return [layer, ...kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], ...keys] as [
     number,
     number,
     number,
@@ -76,19 +75,18 @@ const KeyProp = computed(() => {
     string | null,
   ]
 })
-const keyPropValue = KeyProp.value
 function isOuterStyle() {
-  return [...keyPropValue, 'outer'].join(',') === select.join(',')
+  return [...KeyProp.value, 'outer'].join(',') === select.join(',')
     ? 'bg-primary-100/50 dark:bg-primary-600/50 text-surface-900 dark:text-surface-100'
     : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300'
 }
 function isOuterShadow() {
-  return [...keyPropValue, 'outer'].join(',') === select.join(',')
+  return [...KeyProp.value, 'outer'].join(',') === select.join(',')
     ? 'shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
     : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
 }
 function isInnerStyle() {
-  return [...keyPropValue, 'inner'].join(',') === select.join(',')
+  return [...KeyProp.value, 'inner'].join(',') === select.join(',')
     ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100 shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
     : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
 }

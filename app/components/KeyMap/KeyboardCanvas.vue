@@ -2,27 +2,35 @@
 const keyboardStore = useKeyboardStore()
 const pageKeymapStore = usePageKeymapStore()
 
-const keyBoardKeySize = 30
+const keyBoardKeySize = 40
+const keyBoardKeyMargin = 4
 function labelToDisplay(
-  keys: InstanceType<typeof KleKey>,
+  key: InstanceType<typeof KleKey>,
   layer: number,
 ): [string | null, string | null] {
-  const [row, col] = keys.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
-  pageKeymapStore.getMaxSize(keys.x!, keys.y!, keys.rotation_x!, keys.rotation_y!)
+  const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
+  pageKeymapStore.getPosition(key)
   return keyboardStore.indexToDisplay([layer, row!, col!])
 }
 
 function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, string | null, string | null]) {
   pageKeymapStore.currKey = [...key, zone]
 }
+
+const maxWidth = computed(() => {
+  return `${(pageKeymapStore.position.max_x + pageKeymapStore.position.min_x + pageKeymapStore.position.last_width) * keyBoardKeySize}px`
+})
+const maxHeight = computed(() => {
+  return `${(pageKeymapStore.position.max_y + pageKeymapStore.position.min_y + pageKeymapStore.position.last_height) * keyBoardKeySize}px`
+})
 </script>
 
 <template>
   <div
-    class="rounded-prime-md relative h-96 w-full overflow-hidden bg-black"
+    class="rounded-prime-md relative h-96 w-full overflow-hidden"
     :style="{
-      maxWidth: `${(pageKeymapStore.maxx + 2) * keyBoardKeySize}px`,
-      maxHeight: `${(pageKeymapStore.maxy + 2) * keyBoardKeySize}px`,
+      maxWidth,
+      maxHeight,
     }"
   >
     <template
@@ -43,6 +51,8 @@ function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, strin
           :kle-props="keys"
           :select="pageKeymapStore.currKey"
           :default-key-size="keyBoardKeySize"
+          :key-margin="keyBoardKeyMargin"
+          :layer="pageKeymapStore.currLayer"
           @click="setKeycode"
         />
       </div>
