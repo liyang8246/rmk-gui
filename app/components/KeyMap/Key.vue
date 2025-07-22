@@ -10,6 +10,7 @@ const {
   },
   select,
   keyMargin = 6,
+  defaultKeySize = 56,
 } = defineProps<{
   keys?: [string | null, string | null]
   kleProps?: {
@@ -21,6 +22,7 @@ const {
   }
   select: [number, number, number, string | null, string | null, 'outer' | 'inner' | null]
   keyMargin?: number
+  defaultKeySize?: number
 }>()
 
 const emit = defineEmits<{
@@ -35,10 +37,10 @@ const emit = defineEmits<{
 
 const pageKeymapStore = usePageKeymapStore()
 
-function fixSize(size: number): string {
-  return `calc(56px * ${size} - ${keyMargin}px)`
+function fitKeySize(size: number): string {
+  return `${defaultKeySize * size - keyMargin}px`
 }
-function maxSize(size1: number, size2: number): number {
+function maxKeySize(size1: number, size2: number): number {
   return size1 > size2 ? size1 : size2
 }
 
@@ -52,13 +54,15 @@ function keyBreaks(key: string | null) {
   if (key === null) {
     return ''
   }
-  if (key.length < Math.round(7 * maxSize(kleProps.width, kleProps.width2))) {
+  if (key.length < Math.round(7 * maxKeySize(kleProps.width, kleProps.width2))) {
     return key
   }
+
   const keys = insertLineBigSize(key).split('\n')
+
   for (let i = 0; i < keys.length; i++) {
-    if (keys[i]!.length > Math.round(7 * maxSize(kleProps.width, kleProps.width2))) {
-      keys[i] = insertLineBreaks(keys[i]!, Math.round(6 * maxSize(kleProps.width, kleProps.width2)))
+    if (keys[i]!.length > Math.round(7 * maxKeySize(kleProps.width, kleProps.width2))) {
+      keys[i] = insertLineBreaks(keys[i]!, Math.round(6 * maxKeySize(kleProps.width, kleProps.width2)))
     }
   }
   return keys.join('\n')
@@ -93,53 +97,53 @@ function isInnerStyle() {
 
 <template>
   <div
-    class="rounded-prime-md raletive"
+    class="raletive cursor-pointer select-none text-center font-bold rounded-prime-md"
     :style="{
-      width: fixSize(maxSize(kleProps.width, kleProps.width2)),
-      height: fixSize(maxSize(kleProps.height, kleProps.height2)),
+      width: fitKeySize(maxKeySize(kleProps.width, kleProps.width2)),
+      height: fitKeySize(maxKeySize(kleProps.height, kleProps.height2)),
+      fontSize: `${Math.round(defaultKeySize / 5)}px`,
     }"
   >
     <label>
       <div
-        class="rounded-prime-md absolute z-1 transition-all duration-200"
+        class="absolute z-1 rounded-prime-md transition-all duration-200"
         :class="isOuterShadow()"
         :style="{
-          width: fixSize(kleProps.width2),
-          height: fixSize(kleProps.height2),
+          width: fitKeySize(kleProps.width2),
+          height: fitKeySize(kleProps.height2),
         }"
       />
       <div
-        class="rounded-prime-md absolute z-2 transition-all duration-200"
+        class="absolute z-2 rounded-prime-md transition-all duration-200"
         :class="isOuterShadow()"
         :style="{
-          width: fixSize(kleProps.width),
-          height: fixSize(kleProps.height),
+          width: fitKeySize(kleProps.width),
+          height: fitKeySize(kleProps.height),
         }"
       />
       <div
-        class="rounded-prime-md absolute z-3 transition-all duration-200"
+        class="absolute z-3 rounded-prime-md transition-all duration-200 cursor-pointer"
         :class="isOuterStyle()"
         :style="{
-          width: fixSize(kleProps.width2),
-          height: fixSize(kleProps.height2),
+          width: fitKeySize(kleProps.width2),
+          height: fitKeySize(kleProps.height2),
         }"
         @click.stop="emit('click', 'outer', KeyProp)"
       />
-      <!-- kc -->
       <div v-if="keys[0]" class="relative">
         <div
-          class="rounded-prime-md absolute flex justify-center pt-[2px] transition-all duration-200 z-5"
+          class="absolute z-5 flex justify-center pt-[2px] rounded-prime-md transition-all duration-200 cursor-pointer"
           :class="isOuterStyle()"
           :style="{
-            width: fixSize(kleProps.width),
-            height: fixSize(kleProps.height),
+            width: fitKeySize(kleProps.width),
+            height: fitKeySize(kleProps.height),
           }"
           @click.stop="emit('click', 'outer', KeyProp)"
         >
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
         <div
-          class="rounded-prime-md absolute flex items-center justify-center border-t-2 border-surface-800 dark:border-surface-200 z-6 transition-all duration-200"
+          class="absolute z-6 flex items-center justify-center border-t-2 border-surface-800 dark:border-surface-200 rounded-prime-md transition-all duration-200 cursor-pointer"
           :class="isInnerStyle()"
           :style="{
             top: '18px',
@@ -152,14 +156,13 @@ function isInnerStyle() {
           <span>{{ keyBreaks(keys[1]) }}</span>
         </div>
       </div>
-      <!-- key -->
       <div
         v-else
-        class="rounded-prime-md absolute flex items-center justify-center transition-all duration-200 z-5"
+        class="absolute z-5 flex items-center justify-center rounded-prime-md transition-all duration-200 cursor-pointer"
         :class="isOuterStyle()"
         :style="{
-          width: fixSize(kleProps.width),
-          height: fixSize(kleProps.height),
+          width: fitKeySize(kleProps.width),
+          height: fitKeySize(kleProps.height),
         }"
         @click.stop="emit('click', 'outer', KeyProp)"
       >

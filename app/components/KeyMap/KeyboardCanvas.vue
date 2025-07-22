@@ -22,7 +22,7 @@ function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, strin
     :key="keys"
   >
     <div
-      class="rounded-prime-md absolute z-10 cursor-pointer select-none text-center text-xs font-bold"
+      class="rounded-prime-md absolute z-10 "
       :style="{
         top: `${keys.y * 56}px`,
         left: `${keys.x * 56}px`,
