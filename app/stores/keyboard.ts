@@ -113,6 +113,8 @@ export const useKeyboardStore = defineStore('keyboard', () => {
   }
 
   function initializeApi() {
+    if (api.value)
+      return
     isTauri() ? (api.value = new TauriHIDApi()) : (api.value = new WebHIDApi())
   }
 
@@ -142,6 +144,8 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     if (hidDevice.value) {
       await hidDevice.value.disconnect()
       hidDevice.value = null
+      vialDevice.value = null
+      cleanAll()
     }
   }
 
