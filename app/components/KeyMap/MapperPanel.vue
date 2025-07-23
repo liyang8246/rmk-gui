@@ -1,15 +1,48 @@
 <script lang="ts" setup>
 const pageKeymapStore = usePageKeymapStore()
 
+const BaseCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) =>
+    (value.code >= 0x0000 && value.code <= 0x0067)
+    || (value.code >= 0x00E0 && value.code <= 0x00E7),
+  )
+})
+const ISOCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) =>
+    (value.code >= 0x0000 && value.code <= 0x0067)
+    || (value.code >= 0x0085 && value.code <= 0x0098)
+    || (value.code >= 0x00E0 && value.code <= 0x00E7))
+})
+const LayersCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0x4000 && value.code <= 0x52FF)
+})
+const QuantumCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
+})
+const BacklightCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
+})
+const ToolsCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) => (value.code >= 0x0068 && value.code <= 0x0084))
+})
+const UserCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0x0840 && value.code <= 0x085F)
+})
+const MacroCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) =>
+    (value.code >= 0x7700 && value.code <= 0x771F)
+    || (value.code >= 0x0753 && value.code <= 0x0757))
+})
+
 const tabs = ref([
-  { title: 'base', content: 'Tab 1 Content', value: '0' },
-  { title: 'ISO/JIS', content: 'Tab 2 Content', value: '1' },
-  { title: 'Layers', content: 'Tab 3 Content', value: '2' },
-  { title: 'Quantum', content: 'Tab 3 Content', value: '3' },
-  { title: 'Backlight', content: 'Tab 3 Content', value: '4' },
-  { title: 'App,Media and Mouse', content: 'Tab 3 Content', value: '5' },
-  { title: 'User', content: 'Tab 3 Content', value: '6' },
-  { title: 'Macro', content: 'Tab 3 Content', value: '7' },
+  { title: 'base', content: BaseCodeMap.value, value: '0' },
+  { title: 'ISO/JIS', content: ISOCodeMap.value, value: '1' },
+  { title: 'Layers', content: LayersCodeMap.value, value: '2' },
+  { title: 'Quantum', content: QuantumCodeMap.value, value: '3' },
+  { title: 'Backlight', content: BacklightCodeMap.value, value: '4' },
+  { title: 'App,Media and Mouse', content: ToolsCodeMap.value, value: '5' },
+  { title: 'User', content: UserCodeMap.value, value: '6' },
+  { title: 'Macro', content: MacroCodeMap.value, value: '7' },
 ])
 function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, string | null, string | null]) {
   pageKeymapStore.replaceKey = [...key, 'outer']
@@ -24,17 +57,17 @@ function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, strin
           {{ tab.title }}
         </Tab>
       </TabList>
-      <TabPanels class="!p-3 h-[calc(100%-40px)] ">
-        <TabPanel v-for="tab in tabs" :key="tab.content" :value="tab.value" class="h-full w-full ">
-          <ScrollPanel class="w-full h-full overflow-hidden ">
+      <TabPanels class="!p-3 h-[calc(100%-40px)] w-full">
+        <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="h-full w-full ">
+          <ScrollPanel class="w-full h-full overflow-hidden">
             <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
-              <template v-for="i, index in keyCodeMap" :key="index">
+              <template v-for="[, value] in tab.content" :key="value">
                 <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
-                  <KeyMapKey v-if="index < 20" :keys="i.symbol" :select="pageKeymapStore.replaceKey" @click="setKeycode" />
+                  <KeyMapKey :keys="value.symbol" :select="pageKeymapStore.replaceKey" @click="setKeycode" />
                 </div>
               </template>
             </div>
-          </scrollpanel>
+          </Scrollpanel>
         </TabPanel>
       </TabPanels>
     </Tabs>
