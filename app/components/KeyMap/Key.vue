@@ -11,7 +11,6 @@ const {
   select,
   keyMargin = 6,
   defaultKeySize = 48,
-  layer = 0,
 } = defineProps<{
   keys?: [string | null, string | null]
   kleProps?: {
@@ -24,12 +23,10 @@ const {
   select?: [number, number, number, 'outer' | 'inner' | null]
   keyMargin?: number
   defaultKeySize?: number
-  layer?: number
 }>()
 
 const emit = defineEmits<{
   (e: 'click', zone: 'outer' | 'inner', key: [
-    number,
     number,
     number,
   ]): void
@@ -65,24 +62,20 @@ function keyBreaks(key: string | null) {
 }
 
 const KeyProp = computed(() => {
-  return [layer, ...kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number]] as [
-    number,
-    number,
-    number,
-  ]
+  return kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number]
 })
 function isOuterStyle() {
-  return select && [...KeyProp.value, 'outer'].join(',') === select.join(',')
+  return select && [...KeyProp.value, 'outer'].join(',') === select.slice(1).join(',')
     ? 'bg-primary-100/50 dark:bg-primary-600/50 text-surface-900 dark:text-surface-100'
     : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 active:bg-surface-400 active:dark:bg-surface-700'
 }
 function isOuterShadow() {
-  return select && [...KeyProp.value, 'outer'].join(',') === select.join(',')
+  return select && [...KeyProp.value, 'outer'].join(',') === select.slice(1).join(',')
     ? 'shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
     : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
 }
 function isInnerStyle() {
-  return select && [...KeyProp.value, 'inner'].join(',') === select.join(',')
+  return select && [...KeyProp.value, 'inner'].join(',') === select.slice(1).join(',')
     ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100 shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
     : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900 active:bg-surface-400 active:dark:bg-surface-700'
 }

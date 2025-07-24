@@ -23,8 +23,8 @@ function swapDownMacro(index: number) {
 function addKeyCode(index: number) {
   keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!)
 }
-function setKeycode(zone: 'outer' | 'inner', key: [number, number, number]) {
-  pageMacrosStore.currKey = [...key, zone]
+function setKeycode(zone: 'outer' | 'inner', key: [number, number]) {
+  pageMacrosStore.currKey = [pageMacrosStore.currMacro, ...key, zone]
   pageMacrosStore.showMapperPanel = true
 }
 </script>
@@ -65,7 +65,6 @@ function setKeycode(zone: 'outer' | 'inner', key: [number, number, number]) {
                 height2: 0.8,
                 labels: [`${index},${keyCodes_index}`] }"
               :select="pageMacrosStore.currKey"
-              :layer="pageMacrosStore.currMacro"
               @click="setKeycode"
             />
           </template>

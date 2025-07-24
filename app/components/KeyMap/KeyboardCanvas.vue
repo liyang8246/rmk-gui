@@ -13,8 +13,8 @@ function labelToDisplay(
   return keyboardStore.indexToDisplay([layer, row!, col!])
 }
 
-function setKeycode(zone: 'outer' | 'inner', key: [number, number, number]) {
-  pageKeymapStore.currKey = [...key, zone]
+function setKeycode(zone: 'outer' | 'inner', key: [number, number]) {
+  pageKeymapStore.currKey = [pageKeymapStore.currLayer, ...key, zone]
 }
 
 const maxWidth = computed(() => {
@@ -46,7 +46,6 @@ const maxHeight = computed(() => {
           :select="pageKeymapStore.currKey"
           :default-key-size="keyBoardKeySize"
           :key-margin="keyBoardKeyMargin"
-          :layer="pageKeymapStore.currLayer"
           @click="setKeycode"
         />
       </div>
