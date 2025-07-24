@@ -23,9 +23,12 @@ function swapDownMacro(index: number) {
 function addKeyCode(index: number) {
   keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!)
 }
-function setKeycode(zone: 'outer' | 'inner', key: [number, number]) {
-  pageMacrosStore.currKey = [pageMacrosStore.currMacro, ...key, zone]
+function setKeycode(zone: 'outer' | 'inner', row: number, col: number) {
+  pageMacrosStore.currKey = [pageMacrosStore.currMacro, row, col, zone]
   pageMacrosStore.showMapperPanel = true
+}
+function selectKeycode(row: number, col: number) {
+  return pageMacrosStore.currKey[1] === row && pageMacrosStore.currKey[2] === col ? pageMacrosStore.currKey[3] : null
 }
 </script>
 
@@ -58,14 +61,8 @@ function setKeycode(zone: 'outer' | 'inner', key: [number, number]) {
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
             <KeyMapKey
               :keys="keyCode.symbol"
-              :kle-props="{
-                width: 0.8,
-                height: 0.8,
-                width2: 0.8,
-                height2: 0.8,
-                labels: [`${index},${keyCodes_index}`] }"
-              :select="pageMacrosStore.currKey"
-              @click="setKeycode"
+              :select="selectKeycode(index, keyCodes_index)"
+              @click="setKeycode($event, index, keyCodes_index)"
             />
           </template>
           <div

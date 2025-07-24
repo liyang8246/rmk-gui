@@ -12,6 +12,7 @@ function saveMacro() {
 <template>
   <div
     class="flex flex-col justify-around items-center flex-auto gap-3 w-full h-full text-surface-500 dark:text-surface-400 overflow-hidden"
+    @click="pageMacrosStore.clearSelectedProps()"
   >
     <div class="flex justify-start items-start w-full">
       <Switcher text="Marco" :count="keyboardStore.macroCount!" :layer="pageMacrosStore.currMacro" @change="pageMacrosStore.currMacro = $event" />

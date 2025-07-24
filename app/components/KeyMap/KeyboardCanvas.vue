@@ -13,8 +13,12 @@ function labelToDisplay(
   return keyboardStore.indexToDisplay([layer, row!, col!])
 }
 
-function setKeycode(zone: 'outer' | 'inner', key: [number, number]) {
-  pageKeymapStore.currKey = [pageKeymapStore.currLayer, ...key, zone]
+function selectKeycode(key: InstanceType<typeof KleKey>) {
+  const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
+  return pageKeymapStore.currKey[1] === row && pageKeymapStore.currKey[2] === col ? pageKeymapStore.currKey[3] : null
+}
+function setKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
+  pageKeymapStore.currKey = [pageKeymapStore.currLayer, ...key.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], zone]
 }
 
 const maxWidth = computed(() => {
@@ -43,10 +47,10 @@ const maxHeight = computed(() => {
         <KeyMapKey
           :keys="labelToDisplay(keys, pageKeymapStore.currLayer)"
           :kle-props="keys"
-          :select="pageKeymapStore.currKey"
+          :select="selectKeycode(keys)"
           :default-key-size="keyBoardKeySize"
           :key-margin="keyBoardKeyMargin"
-          @click="setKeycode"
+          @click="setKeycode($event, keys)"
         />
       </div>
     </template>

@@ -66,8 +66,8 @@ function setKeycode(key: [string | null, string | null]) {
             <ScrollPanel class="w-full h-full overflow-hidden">
               <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
                 <template v-for="[, value] in tab.content" :key="value">
-                  <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300" @click="setKeycode(value.symbol)">
-                    <KeyMapKey :keys="value.symbol" />
+                  <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
+                    <KeyMapKey :keys="value.symbol" @click="setKeycode(value.symbol)" />
                   </div>
                 </template>
               </div>

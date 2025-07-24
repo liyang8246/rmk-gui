@@ -6,7 +6,6 @@ const {
     height: 1,
     width2: 1,
     height2: 1,
-    labels: ['0, 0'],
   },
   select,
   keyMargin = 6,
@@ -18,18 +17,14 @@ const {
     height: number
     width2: number
     height2: number
-    labels: string[]
   }
-  select?: [number, number, number, 'outer' | 'inner' | null]
+  select?: 'outer' | 'inner' | null
   keyMargin?: number
   defaultKeySize?: number
 }>()
 
 const emit = defineEmits<{
-  (e: 'click', zone: 'outer' | 'inner', key: [
-    number,
-    number,
-  ]): void
+  (e: 'click', zone: 'outer' | 'inner'): void
 }>()
 function fitKeySize(size: number): string {
   return `${defaultKeySize * size - keyMargin}px`
@@ -61,21 +56,18 @@ function keyBreaks(key: string | null) {
   return keys.join('\n')
 }
 
-const KeyProp = computed(() => {
-  return kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number]
-})
 function isOuterStyle() {
-  return select && [...KeyProp.value, 'outer'].join(',') === select.slice(1).join(',')
+  return select && select === 'outer'
     ? 'bg-primary-100/50 dark:bg-primary-600/50 text-surface-900 dark:text-surface-100'
     : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 active:bg-surface-400 active:dark:bg-surface-700'
 }
 function isOuterShadow() {
-  return select && [...KeyProp.value, 'outer'].join(',') === select.slice(1).join(',')
+  return select && select === 'outer'
     ? 'shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
     : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
 }
 function isInnerStyle() {
-  return select && [...KeyProp.value, 'inner'].join(',') === select.slice(1).join(',')
+  return select && select === 'inner'
     ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100 shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
     : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900 active:bg-surface-400 active:dark:bg-surface-700'
 }
@@ -114,7 +106,7 @@ function isInnerStyle() {
           width: fitKeySize(kleProps.width2),
           height: fitKeySize(kleProps.height2),
         }"
-        @click="emit('click', 'outer', KeyProp)"
+        @click.stop="emit('click', 'outer')"
       />
       <div v-if="keys[0]" class="relative">
         <div
@@ -124,7 +116,7 @@ function isInnerStyle() {
             width: fitKeySize(kleProps.width),
             height: fitKeySize(kleProps.height),
           }"
-          @click="emit('click', 'outer', KeyProp)"
+          @click.stop="emit('click', 'outer')"
         >
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
@@ -137,7 +129,7 @@ function isInnerStyle() {
             width: `${kleProps.width * defaultKeySize - keyMargin * 2}px`,
             height: `${kleProps.height * defaultKeySize - keyMargin * 1.5 - defaultKeySize / 3}px`,
           }"
-          @click="emit('click', 'inner', KeyProp)"
+          @click.stop="emit('click', 'inner')"
         >
           <span>{{ keyBreaks(keys[1]) }}</span>
         </div>
@@ -150,7 +142,7 @@ function isInnerStyle() {
           width: fitKeySize(kleProps.width),
           height: fitKeySize(kleProps.height),
         }"
-        @click="emit('click', 'outer', KeyProp)"
+        @click.stop="emit('click', 'outer')"
       >
         <span>{{ keyBreaks(keys[1]) }}</span>
       </div>
