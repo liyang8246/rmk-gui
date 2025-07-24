@@ -23,7 +23,10 @@ const BacklightCodeMap = computed(() => {
   return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
 })
 const ToolsCodeMap = computed(() => {
-  return Object.entries(keyCodeMap).filter(([, value]) => (value.code >= 0x0068 && value.code <= 0x0084))
+  return Object.entries(keyCodeMap).filter(([, value]) =>
+    (value.code >= 0x0068 && value.code <= 0x0084)
+    || (value.code >= 0x0099 && value.code <= 0x00DF),
+  )
 })
 const UserCodeMap = computed(() => {
   return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0x0840 && value.code <= 0x085F)
@@ -50,26 +53,28 @@ function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, strin
 </script>
 
 <template>
-  <div class="rounded-prime-md p-3 flex justify-center items-center bg-surface-0 dark:bg-surface-950 overflow-hidden w-full h-full">
-    <Tabs class=" flex flex-col items-center justify-start h-full w-full" value="0" scrollable>
-      <TabList class=" flex justify-start items-start h-10 w-full">
-        <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="h-10 !p-3 !pt-2 text-sm ">
-          {{ tab.title }}
-        </Tab>
-      </TabList>
-      <TabPanels class="!p-3 h-[calc(100%-40px)] w-full">
-        <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="h-full w-full ">
-          <ScrollPanel class="w-full h-full overflow-hidden">
-            <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
-              <template v-for="[, value] in tab.content" :key="value">
-                <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
-                  <KeyMapKey :keys="value.symbol" :select="pageKeymapStore.replaceKey" @click="setKeycode" />
-                </div>
-              </template>
-            </div>
-          </Scrollpanel>
-        </TabPanel>
-      </TabPanels>
-    </Tabs>
+  <div class="rounded-prime-md p-3 bg-surface-0 dark:bg-surface-950 overflow-hidden w-full h-full">
+    <div class="rounded-prime-md overflow-hidden w-full h-full">
+      <Tabs class=" flex flex-col items-center justify-start h-full w-full" value="0" scrollable>
+        <TabList class=" flex justify-start items-start h-10 w-full">
+          <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="h-10 !p-3 !pt-2 text-sm !bg-suface-0 dark:!bg-surface-900">
+            {{ tab.title }}
+          </Tab>
+        </TabList>
+        <TabPanels class="!p-3 h-[calc(100%-40px)] w-full">
+          <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="h-full w-full ">
+            <ScrollPanel class="w-full h-full overflow-hidden">
+              <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
+                <template v-for="[, value] in tab.content" :key="value">
+                  <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
+                    <KeyMapKey :keys="value.symbol" :select="pageKeymapStore.replaceKey" @click="setKeycode" />
+                  </div>
+                </template>
+              </div>
+            </Scrollpanel>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+    </div>
   </div>
 </template>

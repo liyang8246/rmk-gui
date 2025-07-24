@@ -5,7 +5,7 @@ const keyboardStore = useKeyboardStore()
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <div class="flex flex-col items-center justify-center w-full h-full" @click="pageKeymapStore.clearSelectedProps()">
+    <div class="flex flex-col items-center justify-between w-full h-full" @click="pageKeymapStore.clearSelectedProps()">
       <div class="flex w-full items-center justify-start pb-4">
         <Switcher text="Layer" :count="keyboardStore.layerCount!" :layer="pageKeymapStore.currLayer" @change="pageKeymapStore.currLayer = $event" />
       </div>
