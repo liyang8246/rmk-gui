@@ -2,8 +2,8 @@
 const keyboardStore = useKeyboardStore()
 const pageKeymapStore = usePageKeymapStore()
 
-const keyBoardKeySize = 40
-const keyBoardKeyMargin = 4
+const keyBoardKeySize = 42
+const keyBoardKeyMargin = 5
 function labelToDisplay(
   key: InstanceType<typeof KleKey>,
   layer: number,

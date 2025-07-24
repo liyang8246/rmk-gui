@@ -10,7 +10,7 @@ const {
   },
   select,
   keyMargin = 6,
-  defaultKeySize = 56,
+  defaultKeySize = 48,
   layer = 0,
 } = defineProps<{
   keys?: [string | null, string | null]
