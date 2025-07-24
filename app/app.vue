@@ -1,9 +1,8 @@
 <script setup lang="ts">
-const pageKeymapStore = usePageKeymapStore()
 </script>
 
 <template>
-  <div class="flex h-screen bg-surface-200 dark:bg-surface-900" @click="pageKeymapStore.clearSelectedProps()">
+  <div class="flex h-screen bg-surface-200 dark:bg-surface-900">
     <Aside />
     <div class="flex flex-1 flex-col overflow-hidden">
       <Header />

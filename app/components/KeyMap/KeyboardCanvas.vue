@@ -13,7 +13,7 @@ function labelToDisplay(
   return keyboardStore.indexToDisplay([layer, row!, col!])
 }
 
-function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, string | null, string | null]) {
+function setKeycode(zone: 'outer' | 'inner', key: [number, number, number]) {
   pageKeymapStore.currKey = [...key, zone]
 }
 
@@ -26,13 +26,7 @@ const maxHeight = computed(() => {
 </script>
 
 <template>
-  <div
-    class="rounded-prime-md relative h-96 w-full overflow-hidden"
-    :style="{
-      maxWidth,
-      maxHeight,
-    }"
-  >
+  <div class="rounded-prime-md relative h-96 w-full overflow-hidden" :style="{ maxWidth, maxHeight }">
     <template
       v-for="keys in keyboardStore.kleDefinition?.keys"
       :key="keys"

@@ -1,9 +1,9 @@
 export const usePageMacrosStore = defineStore('PageMacros', () => {
   const currMacro = ref(0)
-  const currKey = ref<[number, number, number, string | null, string | null, 'outer' | 'inner' | null]>([0, 0, 0, null, null, null])
+  const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
   const showMapperPanel = ref(false)
   function clearSelectedProps() {
-    currKey.value = [0, 0, 0, null, null, null]
+    currKey.value = [0, 0, 0, null]
     showMapperPanel.value = false
   }
 

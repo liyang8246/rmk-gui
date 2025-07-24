@@ -47,8 +47,8 @@ const tabs = ref([
   { title: 'User', content: UserCodeMap.value, value: '6' },
   { title: 'Macro', content: MacroCodeMap.value, value: '7' },
 ])
-function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, string | null, string | null]) {
-  pageKeymapStore.replaceKey = [...key, 'outer']
+function setKeycode(key: [string | null, string | null]) {
+  pageKeymapStore.replaceKey = key
 }
 </script>
 
@@ -66,8 +66,8 @@ function setKeycode(zone: 'outer' | 'inner', key: [number, number, number, strin
             <ScrollPanel class="w-full h-full overflow-hidden">
               <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
                 <template v-for="[, value] in tab.content" :key="value">
-                  <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
-                    <KeyMapKey :keys="value.symbol" :select="pageKeymapStore.replaceKey" @click="setKeycode" />
+                  <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300" @click="setKeycode(value.symbol)">
+                    <KeyMapKey :keys="value.symbol" />
                   </div>
                 </template>
               </div>

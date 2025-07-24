@@ -21,7 +21,7 @@ const {
     height2: number
     labels: string[]
   }
-  select: [number, number, number, string | null, string | null, 'outer' | 'inner' | null]
+  select?: [number, number, number, 'outer' | 'inner' | null]
   keyMargin?: number
   defaultKeySize?: number
   layer?: number
@@ -32,8 +32,6 @@ const emit = defineEmits<{
     number,
     number,
     number,
-    string | null,
-    string | null,
   ]): void
 }>()
 function fitKeySize(size: number): string {
@@ -67,28 +65,26 @@ function keyBreaks(key: string | null) {
 }
 
 const KeyProp = computed(() => {
-  return [layer, ...kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], ...keys] as [
+  return [layer, ...kleProps.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number]] as [
     number,
     number,
     number,
-    string | null,
-    string | null,
   ]
 })
 function isOuterStyle() {
-  return [...KeyProp.value, 'outer'].join(',') === select.join(',')
+  return select && [...KeyProp.value, 'outer'].join(',') === select.join(',')
     ? 'bg-primary-100/50 dark:bg-primary-600/50 text-surface-900 dark:text-surface-100'
-    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300'
+    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 active:bg-surface-400 active:dark:bg-surface-700'
 }
 function isOuterShadow() {
-  return [...KeyProp.value, 'outer'].join(',') === select.join(',')
+  return select && [...KeyProp.value, 'outer'].join(',') === select.join(',')
     ? 'shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
     : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
 }
 function isInnerStyle() {
-  return [...KeyProp.value, 'inner'].join(',') === select.join(',')
+  return select && [...KeyProp.value, 'inner'].join(',') === select.join(',')
     ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100 shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
-    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
+    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900 active:bg-surface-400 active:dark:bg-surface-700'
 }
 </script>
 
@@ -125,7 +121,7 @@ function isInnerStyle() {
           width: fitKeySize(kleProps.width2),
           height: fitKeySize(kleProps.height2),
         }"
-        @click.stop="emit('click', 'outer', KeyProp)"
+        @click="emit('click', 'outer', KeyProp)"
       />
       <div v-if="keys[0]" class="relative">
         <div
@@ -135,12 +131,12 @@ function isInnerStyle() {
             width: fitKeySize(kleProps.width),
             height: fitKeySize(kleProps.height),
           }"
-          @click.stop="emit('click', 'outer', KeyProp)"
+          @click="emit('click', 'outer', KeyProp)"
         >
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
         <div
-          class="absolute z-6 flex items-center justify-center border-t-2 border-surface-800 dark:border-surface-200 rounded-prime-md transition-all duration-200 cursor-pointer"
+          class="absolute z-6 flex items-center justify-center border-t-2 border-surface-800 dark:border-surface-200 rounded-prime-md transition-all duration-200 cursor-pointer "
           :class="isInnerStyle()"
           :style="{
             top: `${defaultKeySize / 3}px`,
@@ -148,7 +144,7 @@ function isInnerStyle() {
             width: `${kleProps.width * defaultKeySize - keyMargin * 2}px`,
             height: `${kleProps.height * defaultKeySize - keyMargin * 1.5 - defaultKeySize / 3}px`,
           }"
-          @click.stop="emit('click', 'inner', KeyProp)"
+          @click="emit('click', 'inner', KeyProp)"
         >
           <span>{{ keyBreaks(keys[1]) }}</span>
         </div>
@@ -161,7 +157,7 @@ function isInnerStyle() {
           width: fitKeySize(kleProps.width),
           height: fitKeySize(kleProps.height),
         }"
-        @click.stop="emit('click', 'outer', KeyProp)"
+        @click="emit('click', 'outer', KeyProp)"
       >
         <span>{{ keyBreaks(keys[1]) }}</span>
       </div>
