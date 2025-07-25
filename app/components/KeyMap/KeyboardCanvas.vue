@@ -1,9 +1,10 @@
 <script lang="ts" setup>
+const { keyBoardKeySize = 42 } = defineProps<{
+  keyBoardKeySize?: number
+}>()
 const keyboardStore = useKeyboardStore()
 const pageKeymapStore = usePageKeymapStore()
 
-const keyBoardKeySize = 42
-const keyBoardKeyMargin = 5
 function labelToDisplay(
   key: InstanceType<typeof KleKey>,
   layer: number,
@@ -31,7 +32,7 @@ const maxHeight = computed(() => {
 </script>
 
 <template>
-  <div class="rounded-prime-md relative h-96 w-full overflow-hidden" :style="{ maxWidth, maxHeight }">
+  <div class="rounded-prime-md relative h-full w-full overflow-hidden" :style="{ maxWidth, maxHeight }">
     <template
       v-for="keys in keyboardStore.kleDefinition?.keys"
       :key="keys"
@@ -50,7 +51,7 @@ const maxHeight = computed(() => {
           :kle-props="keys"
           :select="selectKeycode(keys)"
           :default-key-size="keyBoardKeySize"
-          :key-margin="keyBoardKeyMargin"
+          :key-margin="keyBoardKeySize / 8"
           @click="setKeycode($event, keys)"
         />
       </div>

@@ -9,7 +9,7 @@ const emit = defineEmits<{
 
 const visible = computed({
   get: () => props.show,
-  set: (value) => {
+  set: (value: boolean) => {
     emit('clearCurrkey')
     emit('update:show', value)
   },
