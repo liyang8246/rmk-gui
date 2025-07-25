@@ -75,4 +75,22 @@ export default defineNuxtConfig({
     },
     autoImport: true,
   },
+  vite: {
+    build: {
+      chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('primevue')) {
+              return 'primevue'
+            }
+            if (id.includes('node_modules')) {
+              return 'vendor'
+            }
+            return 'main'
+          },
+        },
+      },
+    },
+  },
 })

@@ -44,6 +44,142 @@ export class VialDevice implements VialInterface {
     return chunk.slice(0, size)
   }
 
+  private readU16(data: Uint8Array<ArrayBufferLike>, offset: number): number {
+    return (data[offset]! << 8) | data[offset + 1]!
+  }
+
+  private splitArray(arr: number[], predicate: (value: number) => boolean): number[][] {
+    const result: number[][] = []
+    let current: number[] = []
+
+    for (const item of arr) {
+      if (predicate(item)) {
+        if (current.length > 0) {
+          result.push(current)
+          current = []
+        }
+      }
+      else {
+        current.push(item)
+      }
+    }
+
+    if (current.length > 0) {
+      result.push(current)
+    }
+
+    return result
+  }
+
+  private keyCodeFromBytes(bytes: number[]): KeyInfo {
+    const value = bytes[1]
+    if (value && keyCodeMap[value]) {
+      return keyCodeMap[value]
+    }
+    return keyCodeMap[0]!
+  }
+
+  private macroDeserializeV2(rawMacros: number[][], count: number): Array<Array<MacroAction>> {
+    const macrosActions: Array<Array<MacroAction>> = []
+    rawMacros.forEach((rawMacro, idx) => {
+      const macroActions: Array<MacroAction> = []
+      let action: MacroAction | null = null
+
+      let prevCode: number | null = null
+
+      while (rawMacro.length > 0) {
+        let code = rawMacro[0]
+        let macroCode = code as MacroCode
+
+        // 处理前缀类型的动作
+        if (macroCode === MacroCode.Prefix) {
+          rawMacro.shift()
+
+          if (rawMacro.length === 0) {
+            throw new Error(`Macro format error: insufficient data after prefix, index: ${idx}`)
+          }
+
+          code = rawMacro.shift() as number
+          macroCode = code as MacroCode
+
+          const newAction = fromMacroCode(macroCode)
+
+          if (action && code !== prevCode) {
+            prevCode = code
+            if (action) {
+              macroActions.push(action)
+            }
+            action = newAction
+          }
+          if (!action) {
+            action = fromMacroCode(macroCode)
+          }
+          if (!prevCode) {
+            prevCode = code
+          }
+
+          if (action && (action.type === MacroCode.Down || action.type === MacroCode.Up || action.type === MacroCode.Tap)) {
+            if (rawMacro.length === 0) {
+              throw new Error(`Macro format error: missing keycode, index: ${idx}`)
+            }
+
+            const keyCodeData = [0, rawMacro.shift() as number]
+            const key = this.keyCodeFromBytes(keyCodeData)
+
+            if (action.type === MacroCode.Down && 'keyCodes' in action) {
+              (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
+            }
+            else if (action.type === MacroCode.Up && 'keyCodes' in action) {
+              (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
+            }
+            else if (action.type === MacroCode.Tap && 'keyCodes' in action) {
+              (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
+            }
+          }
+          else if (action && action.type === MacroCode.Delay) {
+            if (rawMacro.length < 2) {
+              throw new Error(`Macro format error: incomplete delay data, index: ${idx}`)
+            }
+
+            // 处理延迟动作
+            const delay1 = rawMacro.shift() as number
+            const delay2 = rawMacro.shift() as number
+            const delay = (delay1 - 1) + (delay2 - 1) * 255;
+            (action as { delay: number | null }).delay = delay
+          }
+        }
+        else {
+        // 处理文本动作
+          if (!action) {
+            action = { type: MacroCode.Text, name: MacroCode[MacroCode.Text], text: '' }
+          }
+
+          if (action && action.type !== MacroCode.Text) {
+            if (action) {
+              macroActions.push(action)
+            }
+            action = { type: MacroCode.Text, name: MacroCode[MacroCode.Text], text: '' }
+          }
+
+          if (action && action.type === MacroCode.Text) {
+            action.text += String.fromCharCode(rawMacro.shift() as number)
+          }
+        }
+      }
+
+      if (action) {
+        macroActions.push(action)
+      }
+
+      macrosActions.push(macroActions)
+    })
+    while (macrosActions.length < count) {
+      macrosActions.push([])
+    }
+
+    return macrosActions
+  }
+
   async productName(): Promise<string> {
     return await this.device.productName()
   }
@@ -112,4 +248,34 @@ export class VialDevice implements VialInterface {
   kleDefinition(vialJson: VialJson): InstanceType<typeof KleBoard> {
     return deserialize(vialJson.layouts.keymap)
   }
+
+  async macros(macroCount: number): Promise<Array<Array<MacroAction>>> {
+    const sizeData = await this.device.writeRead([VialConstants.Command.GetMacroBufferSize])
+    const macroSize = this.readU16(sizeData, 1)
+
+    const macroMemory: number[] = []
+
+    for (let i = 0; i < Math.ceil(macroSize / VialConstants.BUFFER_CHUNK_SIZE); i++) {
+      const readSize = Math.min(VialConstants.BUFFER_CHUNK_SIZE, macroSize - i * VialConstants.BUFFER_CHUNK_SIZE)
+
+      const msg = new Uint8Array(32)
+      msg[0] = VialConstants.Command.GetMacroBuffer
+      msg[1] = (i * VialConstants.BUFFER_CHUNK_SIZE) >> 8
+      msg[2] = (i * VialConstants.BUFFER_CHUNK_SIZE) & 0xFF
+      msg[3] = readSize
+
+      const data = await this.device.writeRead(Array.from(msg))
+      for (let j = 0; j < readSize; j++) {
+        macroMemory.push(data[4 + j]!)
+      }
+      const zeroCount = macroMemory.filter(x => x === 0).length
+      if (zeroCount > macroCount) {
+        break
+      }
+    }
+    let macros = this.splitArray(macroMemory, x => x === 0)
+    macros = macros.slice(0, macroCount)
+    const deserializedMacros = this.macroDeserializeV2(macros, macroCount)
+    return deserializedMacros
+  };
 }

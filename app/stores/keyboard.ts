@@ -91,6 +91,17 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     return keyToLable(keyValue)
   }
 
+  const keyMacros = ref<Array<Array<MacroAction>>>([])
+  async function fetchMacros() {
+    if (!vialDevice.value) {
+      throw new Error('Vial device not available')
+    }
+    if (!macroCount.value) {
+      throw new Error('Macro Count not available')
+    }
+    keyMacros.value = await vialDevice.value.macros(macroCount.value)
+  };
+
   async function fetchAll() {
     // 并行会报错
     await fetchProductName()
@@ -100,6 +111,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     fetchKleDefinition()
     await fetchKeymap()
     fetchLayoutKeymap()
+    await fetchMacros()
   }
 
   function cleanAll() {
@@ -166,6 +178,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     layoutKeymap,
     fetchLayoutKeymap,
     indexToDisplay,
+    keyMacros,
     fetchAll,
     cleanAll,
     list,

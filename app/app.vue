@@ -1,13 +1,16 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+</script>
 
 <template>
-  <div class="flex h-screen bg-surface-200 dark:bg-surface-800">
+  <div class="flex h-screen bg-surface-200 dark:bg-surface-900">
     <Aside />
     <div class="flex flex-1 flex-col overflow-hidden">
       <Header />
-      <ScrollPanel class="flex-1 overflow-auto">
-        <NuxtPage />
-      </ScrollPanel>
+      <div class="p-3 h-full w-full overflow-hidden">
+        <ScrollPanel class="overflow-hidden h-full w-full">
+          <NuxtPage />
+        </ScrollPanel>
+      </div>
     </div>
   </div>
 </template>

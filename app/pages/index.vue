@@ -1,26 +1,53 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore()
+const value = ref('LayerCount')
 </script>
 
 <template>
   <div>
+    <select id="1" v-model="value" name="1">
+      <option value="LayerCount">
+        LayerCount
+      </option>
+      <option value="MacroCount">
+        MacroCount
+      </option>
+      <option value="VialJson">
+        VialJson
+      </option>
+      <option value="Keymap">
+        Keymap
+      </option>
+      <option value="KleDefinition">
+        KleDefinition
+      </option>
+      <option value="getMacros">
+        getMacros
+      </option>
+    </select>
+  </div>
+  <div v-if="value === 'LayerCount'">
     <span> LayerCount: </span>
-    <span> {{ keyboardStore.layerCount }} </span>
+    <pre> {{ keyboardStore.layerCount }} </pre>
   </div>
-  <div>
+  <div v-else-if="value === 'MacroCount'">
     <span> MacroCount: </span>
-    <span> {{ keyboardStore.macroCount }} </span>
+    <pre> {{ keyboardStore.macroCount }} </pre>
   </div>
-  <div>
+  <div v-else-if="value === 'VialJson'">
     <span> VialJson: </span>
-    <span> {{ keyboardStore.vialJson }} </span>
+    <pre> {{ keyboardStore.vialJson }} </pre>
   </div>
-  <div>
+  <div v-else-if="value === 'Keymap'">
     <span> Keymap: </span>
-    <span> {{ keyboardStore.keymap }} </span>
+    <pre> {{ keyboardStore.keymap }} </pre>
   </div>
-  <div>
+  <div v-else-if="value === 'KleDefinition'">
     <span> KleDefinition: </span>
-    <span> {{ keyboardStore.kleDefinition }} </span>
+    <pre> {{ keyboardStore.kleDefinition }} </pre>
+  </div>
+  <div v-else-if="value === 'getMacros'">
+    <span> getMacros: </span>
+    <pre> {{ keyboardStore.keyMacros }} </pre>
   </div>
 </template>
