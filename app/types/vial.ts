@@ -10,6 +10,7 @@ export interface VialInterface {
     keymap: Map<string, number>,
     layerCount: number
   ) => Map<string, number>
+  macros: (count: number) => Promise<Array<Array<MacroAction>>>
 }
 
 export interface Matrix {

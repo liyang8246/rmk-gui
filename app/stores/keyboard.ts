@@ -93,42 +93,13 @@ export const useKeyboardStore = defineStore('keyboard', () => {
 
   const keyMacros = ref<Array<Array<MacroAction>>>([])
   async function fetchMacros() {
-    if (!hidDevice.value) {
-      throw new Error('Hid Device not available')
-    }
     if (!vialDevice.value) {
       throw new Error('Vial device not available')
     }
     if (!macroCount.value) {
       throw new Error('Macro Count not available')
     }
-    const sizeData = await hidDevice.value.writeRead([VialConstants.Command.GetMacroBufferSize])
-    const macroSize = readU16(sizeData, 1)
-
-    const macroMemory: number[] = []
-
-    for (let i = 0; i < Math.ceil(macroSize / VialConstants.BUFFER_CHUNK_SIZE); i++) {
-      const readSize = Math.min(VialConstants.BUFFER_CHUNK_SIZE, macroSize - i * VialConstants.BUFFER_CHUNK_SIZE)
-
-      const msg = new Uint8Array(32)
-      msg[0] = VialConstants.Command.GetMacroBuffer
-      msg[1] = (i * VialConstants.BUFFER_CHUNK_SIZE) >> 8
-      msg[2] = (i * VialConstants.BUFFER_CHUNK_SIZE) & 0xFF
-      msg[3] = readSize
-
-      const data = await hidDevice.value.writeRead(Array.from(msg))
-      for (let j = 0; j < readSize; j++) {
-        macroMemory.push(data[4 + j]!)
-      }
-      const zeroCount = macroMemory.filter(x => x === 0).length
-      if (zeroCount > macroCount.value) {
-        break
-      }
-    }
-    let macros = splitArray(macroMemory, x => x === 0)
-    macros = macros.slice(0, macroCount.value)
-    const deserializedMacros = macroDeserializeV2(macros, macroCount.value)
-    keyMacros.value = deserializedMacros
+    keyMacros.value = await vialDevice.value.macros(macroCount.value)
   };
 
   async function fetchAll() {
