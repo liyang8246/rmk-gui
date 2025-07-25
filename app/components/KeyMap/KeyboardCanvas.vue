@@ -10,7 +10,6 @@ function labelToDisplay(
   layer: number,
 ): [string | null, string | null] {
   const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
-  pageKeymapStore.getPosition(key)
   return keyboardStore.indexToDisplay([layer, row!, col!])
 }
 
@@ -23,11 +22,25 @@ function setKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
   pageKeymapStore.showMapperPanel = true
 }
 
+const position = computed(() => {
+  if (!keyboardStore.kleDefinition?.keys) {
+    throw new Error('No KLE definition')
+  }
+  const keys = keyboardStore.kleDefinition?.keys
+  return {
+    max_x: keys[keys!.length - 1]!.x!,
+    max_y: keys[keys!.length - 1]!.y!,
+    min_x: keys[0]!.x!,
+    min_y: keys[0]!.y!,
+    last_width: keys[keys!.length - 1]!.width!,
+    last_height: keys[keys!.length - 1]!.height!,
+  }
+})
 const maxWidth = computed(() => {
-  return `${(pageKeymapStore.position.max_x + pageKeymapStore.position.min_x + pageKeymapStore.position.last_width) * keyBoardKeySize}px`
+  return `${(position.value.max_x + position.value.min_x + position.value.last_width) * keyBoardKeySize}px`
 })
 const maxHeight = computed(() => {
-  return `${(pageKeymapStore.position.max_y + pageKeymapStore.position.min_y + pageKeymapStore.position.last_height) * keyBoardKeySize}px`
+  return `${(position.value.max_y + position.value.min_y + position.value.last_height) * keyBoardKeySize}px`
 })
 </script>
 
