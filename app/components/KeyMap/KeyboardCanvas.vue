@@ -19,6 +19,7 @@ function selectKeycode(key: InstanceType<typeof KleKey>) {
 }
 function setKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
   pageKeymapStore.currKey = [pageKeymapStore.currLayer, ...key.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], zone]
+  pageKeymapStore.showMapperPanel = true
 }
 
 const maxWidth = computed(() => {

@@ -53,28 +53,24 @@ function setKeycode(key: [string | null, string | null]) {
 </script>
 
 <template>
-  <div class="rounded-prime-md p-3 bg-surface-0 dark:bg-surface-950 overflow-hidden w-full h-full">
-    <div class="rounded-prime-md overflow-hidden w-full h-full">
-      <Tabs class=" flex flex-col items-center justify-start h-full w-full" value="0" scrollable>
-        <TabList class=" flex justify-start items-start h-10 w-full">
-          <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="h-10 !p-3 !pt-2 text-sm !bg-suface-0 dark:!bg-surface-900">
-            {{ tab.title }}
-          </Tab>
-        </TabList>
-        <TabPanels class="!p-3 h-[calc(100%-40px)] w-full">
-          <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="h-full w-full ">
-            <ScrollPanel class="w-full h-full overflow-hidden">
-              <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
-                <template v-for="[, value] in tab.content" :key="value">
-                  <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
-                    <KeyMapKey :keys="value.symbol" @click="setKeycode(value.symbol)" />
-                  </div>
-                </template>
+  <Tabs class=" flex flex-col items-center justify-start h-full w-full" value="0" scrollable>
+    <TabList class=" flex justify-start items-start h-10 w-full">
+      <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="h-10 !p-3 !pt-2 text-sm !bg-suface-0 dark:!bg-surface-900">
+        {{ tab.title }}
+      </Tab>
+    </TabList>
+    <TabPanels class="!p-3 h-[calc(100%-40px)] w-full">
+      <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="h-full w-full ">
+        <ScrollPanel class="w-full h-full overflow-hidden">
+          <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
+            <template v-for="[, value] in tab.content" :key="value">
+              <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
+                <KeyMapKey :keys="value.symbol" @click="setKeycode(value.symbol)" />
               </div>
-            </Scrollpanel>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </div>
-  </div>
+            </template>
+          </div>
+        </Scrollpanel>
+      </TabPanel>
+    </TabPanels>
+  </Tabs>
 </template>
