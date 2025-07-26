@@ -6,7 +6,7 @@ const keyBoardKeySize = ref(42)
 </script>
 
 <template>
-  <div class="flex flex-col justify-center items-center w-full h-full">
+  <div class="flex flex-col justify-start items-center w-full h-full">
     <div class="flex flex-col items-center justify-start w-full h-full" @click="pageKeymapStore.clearSelectedProps()">
       <div class="flex w-full items-center justify-start gap-3 pb-3">
         <Switcher text="Layer" :count="keyboardStore.layerCount!" :layer="pageKeymapStore.currLayer" @change="pageKeymapStore.currLayer = $event" />
