@@ -68,8 +68,8 @@ function isOuterShadow() {
 }
 function isInnerStyle() {
   return select && select === 'inner'
-    ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100 shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
-    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900 active:bg-surface-400 active:dark:bg-surface-700'
+    ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100'
+    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 active:bg-surface-400 active:dark:bg-surface-700'
 }
 </script>
 
@@ -121,7 +121,7 @@ function isInnerStyle() {
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
         <div
-          class="absolute flex items-center justify-center border-t-2 border-surface-800 dark:border-surface-200 rounded-prime-md transition-all duration-200 cursor-pointer"
+          class="absolute flex items-center justify-center border-surface-800 dark:border-surface-200 rounded-prime-md transition-all duration-200 cursor-pointer"
           :class="isInnerStyle()"
           :style="{
             top: `${defaultKeySize / 3}px`,
@@ -133,6 +133,15 @@ function isInnerStyle() {
         >
           <span>{{ keyBreaks(keys[1]) }}</span>
         </div>
+        <div
+          class="absolute bg-surface-500"
+          :style="{
+            top: `${defaultKeySize / 3 - 1}px`,
+            left: `${(keyMargin) / 2 + (kleProps.width * defaultKeySize - keyMargin * 2) / 4}px`,
+            width: `${(kleProps.width * defaultKeySize - keyMargin * 2) / 2}px`,
+            height: '2px',
+          }"
+        />
       </div>
       <div
         v-else
