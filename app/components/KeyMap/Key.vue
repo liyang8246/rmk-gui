@@ -80,6 +80,7 @@ function isInnerStyle() {
       width: fitKeySize(maxKeySize(kleProps.width, kleProps.width2)),
       height: fitKeySize(maxKeySize(kleProps.height, kleProps.height2)),
       fontSize: `${Math.round(defaultKeySize / 5)}px`,
+      lineHeight: `${Math.round(defaultKeySize / 5)}px`,
     }"
   >
     <label>
@@ -110,7 +111,7 @@ function isInnerStyle() {
       />
       <div v-if="keys[0]" class="relative">
         <div
-          class="absolute flex justify-center pt-[2px] rounded-prime-md transition-all duration-200 cursor-pointer"
+          class="absolute flex justify-center pt-[3px] rounded-prime-md transition-all duration-200 cursor-pointer"
           :class="isOuterStyle()"
           :style="{
             width: fitKeySize(kleProps.width),
@@ -136,10 +137,10 @@ function isInnerStyle() {
         <div
           class="absolute bg-surface-500"
           :style="{
-            top: `${defaultKeySize / 3 - 1}px`,
-            left: `${(keyMargin) / 2 + (kleProps.width * defaultKeySize - keyMargin * 2) / 4}px`,
-            width: `${(kleProps.width * defaultKeySize - keyMargin * 2) / 2}px`,
-            height: '2px',
+            top: `${defaultKeySize / 3 - (keyMargin / 3)}px`,
+            left: `${(keyMargin / 2) + (kleProps.width * defaultKeySize - keyMargin * 2) / 6}px`,
+            width: `${(kleProps.width * defaultKeySize - keyMargin * 2) * 2 / 3}px`,
+            height: `${keyMargin / 3}px`,
           }"
         />
       </div>
