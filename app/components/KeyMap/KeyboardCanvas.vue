@@ -36,16 +36,16 @@ const position = computed(() => {
     last_height: keys[keys!.length - 1]!.height!,
   }
 })
-const maxWidth = computed(() => {
+const width = computed(() => {
   return `${(position.value.max_x + position.value.min_x + position.value.last_width) * keyBoardKeySize}px`
 })
-const maxHeight = computed(() => {
+const height = computed(() => {
   return `${(position.value.max_y + position.value.min_y + position.value.last_height) * keyBoardKeySize}px`
 })
 </script>
 
 <template>
-  <div class="rounded-prime-md relative h-full w-full overflow-hidden" :style="{ maxWidth, maxHeight }">
+  <div class="rounded-prime-md relative h-full w-full overflow-hidden" :style="{ width, height }">
     <template
       v-for="keys in keyboardStore.kleDefinition?.keys"
       :key="keys"
