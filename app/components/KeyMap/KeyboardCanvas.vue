@@ -23,10 +23,19 @@ function setKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
 }
 
 const position = computed(() => {
-  if (!keyboardStore.kleDefinition?.keys) {
-    throw new Error('No KLE definition')
-  }
-  const keys = keyboardStore.kleDefinition?.keys
+  // if (!keyboardStore.kleDefinition?.keys) {
+  //   throw new Error('No KLE definition')
+  // }
+  // const keys = keyboardStore.kleDefinition?.keys
+  const keys = [{
+    x: 0.75,
+    y: 1,
+  }, {
+    x: 14.75,
+    y: 5,
+    width: 1.25,
+    height: 1,
+  }]
   return {
     max_x: keys[keys!.length - 1]!.x!,
     max_y: keys[keys!.length - 1]!.y!,
