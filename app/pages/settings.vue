@@ -2,6 +2,6 @@
 
 <template>
   <div>
-    <Setting />
+    <Theme />
   </div>
 </template>
