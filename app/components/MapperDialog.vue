@@ -18,7 +18,16 @@ const visible = computed({
 </script>
 
 <template>
-  <Dialog v-model:visible="visible" header="Select Key" class="overflow-hidden w-2/3 h-2/3">
+  <Dialog
+    v-model:visible="visible"
+    header="Select Key"
+    class="overflow-hidden w-2/3 h-2/3 p-3"
+    position="bottom"
+    maximizable
+    pt:header:class="!p-0 !pb-3"
+    pt:content:class="!p-0"
+    pt:title:class="!pl-3 !text-lg text-surface-800 dark:text-surface-200"
+  >
     <MapperPanel @set-keycode="emit('setKeycode', $event)" />
   </Dialog>
 </template>
