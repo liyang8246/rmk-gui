@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-const { keyBoardKeySize = 42, keyBoardKeys, layer = 0, keyBoardKeysMap } = defineProps<{
+const { keyBoardKeySize = 42, keyBoardKeys, layer = 0, keyBoardKeysMap, selectKeycodeHandler } = defineProps<{
   keyBoardKeySize?: number
   keyBoardKeys: InstanceType<typeof KleKey>[]
   keyBoardKeysMap: Map<string, number> | null
   layer?: number
+  selectKeycodeHandler?: (key: InstanceType<typeof KleKey>) => 'outer' | 'inner' | null
 }>()
 const emit = defineEmits<{
-  (e: 'selectKeycode', key: InstanceType<typeof KleKey>): 'outer' | 'inner' | null
   (e: 'setKeycode', zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>): void
 }>()
 
@@ -49,6 +49,13 @@ const width = computed(() => {
 const height = computed(() => {
   return `${(position.value.max_y + position.value.min_y + position.value.last_height) * keyBoardKeySize}px`
 })
+
+function getSelectValue(key: InstanceType<typeof KleKey>): 'outer' | 'inner' | null {
+  if (selectKeycodeHandler) {
+    return selectKeycodeHandler(key)
+  }
+  return null
+}
 </script>
 
 <template>
@@ -69,7 +76,7 @@ const height = computed(() => {
         <KeyMapKey
           :keys="labelToDisplay(keys, layer)"
           :kle-props="keys"
-          :select="emit('selectKeycode', keys)"
+          :select="getSelectValue(keys)"
           :default-key-size="keyBoardKeySize"
           :key-margin="keyBoardKeySize / 8"
           @click="emit('setKeycode', $event, keys)"

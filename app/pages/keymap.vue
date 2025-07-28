@@ -36,7 +36,7 @@ function setMapperKeycode(key: [string | null, string | null]) {
           :key-board-keys="keyboardStore.kleDefinition?.keys!"
           :layer="pageKeymapStore.currLayer"
           :key-board-keys-map="keyboardStore.layoutKeymap"
-          @select-keycode="selectKeycode"
+          :select-keycode-handler="selectKeycode"
           @set-keycode="setKeyBoardKeycode"
         />
       </div>
