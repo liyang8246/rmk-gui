@@ -1,15 +1,20 @@
 <script lang="ts" setup>
-const pageKeymapStore = usePageKeymapStore()
 const keyboardStore = useKeyboardStore()
 
 const keyBoardKeySize = ref(42)
 
+const currLayer = ref(0)
+const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
+
+function clearSelectedProps() {
+  currKey.value = [0, 0, 0, null]
+}
 function selectKeycode(key: InstanceType<typeof KleKey>) {
   const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
-  return pageKeymapStore.currKey[1] === row && pageKeymapStore.currKey[2] === col ? pageKeymapStore.currKey[3] : null
+  return currKey.value[1] === row && currKey.value[2] === col ? currKey.value[3] : null
 }
 function setKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
-  pageKeymapStore.currKey = [pageKeymapStore.currLayer, ...key.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], zone]
+  currKey.value = [currLayer.value, ...key.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], zone]
 }
 
 const replaceKey = ref<[string | null, string | null]>([null, null])
@@ -23,9 +28,9 @@ function setMapperKeycode(key: [string | null, string | null]) {
 
 <template>
   <div class="flex flex-col justify-start items-center w-full h-full">
-    <div class="flex flex-col items-center justify-start w-full h-full" @click="pageKeymapStore.clearSelectedProps()">
+    <div class="flex flex-col items-center justify-start w-full h-full" @click="clearSelectedProps()">
       <div class="flex w-full items-center justify-start gap-3 pb-3">
-        <Switcher text="Layer" :count="keyboardStore.layerCount!" :layer="pageKeymapStore.currLayer" @change="pageKeymapStore.currLayer = $event" />
+        <Switcher text="Layer" :count="keyboardStore.layerCount!" :layer="currLayer" @change="currLayer = $event" />
         <div class="rounded-prime-xl card flex items-center justify-center h-5 bg-surface-200 dark:bg-surface-700 shadow-sm shadow-surface-400 dark:shadow-surface-950 px-[10px]">
           <Slider v-model="keyBoardKeySize" class="w-40 !h-2" :min="30" :max="78" :step="1" />
         </div>
@@ -34,7 +39,7 @@ function setMapperKeycode(key: [string | null, string | null]) {
         <KeyMapKeyboardCanvas
           :key-board-key-size="keyBoardKeySize"
           :key-board-keys="keyboardStore.kleDefinition?.keys!"
-          :layer="pageKeymapStore.currLayer"
+          :layer="currLayer"
           :key-board-keys-map="keyboardStore.layoutKeymap"
           :select-keycode-handler="selectKeycode"
           @set-keycode="setKeyBoardKeycode"
