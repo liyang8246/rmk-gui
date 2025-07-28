@@ -7,6 +7,15 @@ function addMacro() {
 }
 function saveMacro() {
 }
+
+const replaceMacroKey = ref<[string | null, string | null]>([null, null])
+function setKeycode(key: [string | null, string | null]) {
+  replaceMacroKey.value = key
+
+  // 替换键后清空操作
+  pageMacrosStore.clearSelectedProps()
+  replaceMacroKey.value = [null, null]
+}
 </script>
 
 <template>
@@ -28,5 +37,5 @@ function saveMacro() {
     </div>
   </div>
 
-  <MapperDialog :show="pageMacrosStore.showMapperPanel" @clear-currkey="pageMacrosStore.clearSelectedProps()" />
+  <MapperDialog :show="pageMacrosStore.showMapperPanel" @clear-currkey="pageMacrosStore.clearSelectedProps()" @set-keycode="setKeycode" />
 </template>

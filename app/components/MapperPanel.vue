@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-const pageKeymapStore = usePageKeymapStore()
+const emit = defineEmits<{
+  (e: 'setKeycode', key: [string | null, string | null]): void
+}>()
 
 const BaseCodeMap = computed(() => {
   return Object.entries(keyCodeMap).filter(([, value]) =>
@@ -47,9 +49,6 @@ const tabs = ref([
   { title: 'User', content: UserCodeMap.value, value: '6' },
   { title: 'Macro', content: MacroCodeMap.value, value: '7' },
 ])
-function setKeycode(key: [string | null, string | null]) {
-  pageKeymapStore.replaceKey = key
-}
 </script>
 
 <template>
@@ -65,7 +64,7 @@ function setKeycode(key: [string | null, string | null]) {
           <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
             <template v-for="[, value] in tab.content" :key="value">
               <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
-                <KeyMapKey :keys="value.symbol" @click="setKeycode(value.symbol)" />
+                <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.symbol)" />
               </div>
             </template>
           </div>

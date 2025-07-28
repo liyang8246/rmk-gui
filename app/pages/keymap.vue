@@ -3,6 +3,14 @@ const pageKeymapStore = usePageKeymapStore()
 const keyboardStore = useKeyboardStore()
 
 const keyBoardKeySize = ref(42)
+
+const replaceKey = ref<[string | null, string | null]>([null, null])
+function setKeycode(key: [string | null, string | null]) {
+  replaceKey.value = key
+
+  // 替换后清空操作
+  replaceKey.value = [null, null]
+}
 </script>
 
 <template>
@@ -20,7 +28,7 @@ const keyBoardKeySize = ref(42)
     </div>
     <div class="rounded-prime-md p-3 bg-surface-0 dark:bg-surface-950 overflow-hidden w-full h-full">
       <div class="rounded-prime-md overflow-hidden w-full h-full">
-        <MapperPanel />
+        <MapperPanel @set-keycode="setKeycode" />
       </div>
     </div>
   </div>
