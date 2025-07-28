@@ -4,8 +4,16 @@ const keyboardStore = useKeyboardStore()
 
 const keyBoardKeySize = ref(42)
 
+function selectKeycode(key: InstanceType<typeof KleKey>) {
+  const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
+  return pageKeymapStore.currKey[1] === row && pageKeymapStore.currKey[2] === col ? pageKeymapStore.currKey[3] : null
+}
+function setKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
+  pageKeymapStore.currKey = [pageKeymapStore.currLayer, ...key.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], zone]
+}
+
 const replaceKey = ref<[string | null, string | null]>([null, null])
-function setKeycode(key: [string | null, string | null]) {
+function setMapperKeycode(key: [string | null, string | null]) {
   replaceKey.value = key
 
   // 替换后清空操作
@@ -23,12 +31,19 @@ function setKeycode(key: [string | null, string | null]) {
         </div>
       </div>
       <div class="h-full w-full flex justify-center items-start">
-        <KeyMapKeyboardCanvas :key-board-key-size="keyBoardKeySize" />
+        <KeyMapKeyboardCanvas
+          :key-board-key-size="keyBoardKeySize"
+          :key-board-keys="keyboardStore.kleDefinition?.keys!"
+          :layer="pageKeymapStore.currLayer"
+          :key-board-keys-map="keyboardStore.layoutKeymap"
+          @select-keycode="selectKeycode"
+          @set-keycode="setKeyBoardKeycode"
+        />
       </div>
     </div>
     <div class="rounded-prime-md p-3 bg-surface-0 dark:bg-surface-950 overflow-hidden w-full h-full">
       <div class="rounded-prime-md overflow-hidden w-full h-full">
-        <MapperPanel @set-keycode="setKeycode" />
+        <MapperPanel @set-keycode="setMapperKeycode" />
       </div>
     </div>
   </div>

@@ -1,41 +1,39 @@
 <script lang="ts" setup>
-const { keyBoardKeySize = 42 } = defineProps<{
+const { keyBoardKeySize = 42, keyBoardKeys, layer = 0, keyBoardKeysMap } = defineProps<{
   keyBoardKeySize?: number
+  keyBoardKeys: InstanceType<typeof KleKey>[]
+  keyBoardKeysMap: Map<string, number> | null
+  layer?: number
 }>()
-const keyboardStore = useKeyboardStore()
-const pageKeymapStore = usePageKeymapStore()
+const emit = defineEmits<{
+  (e: 'selectKeycode', key: InstanceType<typeof KleKey>): 'outer' | 'inner' | null
+  (e: 'setKeycode', zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>): void
+}>()
+
+function indexToDisplay(index: [number, number, number]): [string | null, string | null] {
+  if (!keyBoardKeysMap) {
+    throw new Error('Layout keymap not available')
+  }
+  const keyValue = keyBoardKeysMap.get(index.toString())
+  if (keyValue === undefined) {
+    throw new Error(`Keymap value for index ${index.toString()} not found`)
+  }
+  return keyToLable(keyValue)
+}
 
 function labelToDisplay(
   key: InstanceType<typeof KleKey>,
   layer: number,
 ): [string | null, string | null] {
   const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
-  return keyboardStore.indexToDisplay([layer, row!, col!])
-}
-
-function selectKeycode(key: InstanceType<typeof KleKey>) {
-  const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
-  return pageKeymapStore.currKey[1] === row && pageKeymapStore.currKey[2] === col ? pageKeymapStore.currKey[3] : null
-}
-function setKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
-  pageKeymapStore.currKey = [pageKeymapStore.currLayer, ...key.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], zone]
-  pageKeymapStore.showMapperPanel = true
+  return indexToDisplay([layer, row!, col!])
 }
 
 const position = computed(() => {
-  // if (!keyboardStore.kleDefinition?.keys) {
-  //   throw new Error('No KLE definition')
-  // }
-  // const keys = keyboardStore.kleDefinition?.keys
-  const keys = [{
-    x: 0.75,
-    y: 1,
-  }, {
-    x: 14.75,
-    y: 5,
-    width: 1.25,
-    height: 1,
-  }]
+  if (!keyBoardKeys) {
+    throw new Error('No KLE definition')
+  }
+  const keys = keyBoardKeys
   return {
     max_x: keys[keys!.length - 1]!.x!,
     max_y: keys[keys!.length - 1]!.y!,
@@ -56,7 +54,7 @@ const height = computed(() => {
 <template>
   <div class="rounded-prime-md relative h-full w-full overflow-hidden" :style="{ width, height }">
     <template
-      v-for="keys in keyboardStore.kleDefinition?.keys"
+      v-for="keys in keyBoardKeys"
       :key="keys"
     >
       <div
@@ -69,12 +67,12 @@ const height = computed(() => {
         }"
       >
         <KeyMapKey
-          :keys="labelToDisplay(keys, pageKeymapStore.currLayer)"
+          :keys="labelToDisplay(keys, layer)"
           :kle-props="keys"
-          :select="selectKeycode(keys)"
+          :select="emit('selectKeycode', keys)"
           :default-key-size="keyBoardKeySize"
           :key-margin="keyBoardKeySize / 8"
-          @click="setKeycode($event, keys)"
+          @click="emit('setKeycode', $event, keys)"
         />
       </div>
     </template>
