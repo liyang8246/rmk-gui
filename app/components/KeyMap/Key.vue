@@ -135,7 +135,7 @@ function isInnerStyle() {
           <span>{{ keyBreaks(keys[1]) }}</span>
         </div>
         <div
-          class="absolute bg-surface-500"
+          class="absolute bg-surface-500 dark:bg-surface-400"
           :style="{
             top: `${defaultKeySize / 3 - (keyMargin / 3)}px`,
             left: `${(keyMargin / 2) + (kleProps.width * defaultKeySize - keyMargin * 2) / 6}px`,
