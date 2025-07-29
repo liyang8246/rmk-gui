@@ -31,9 +31,9 @@ function setKeycode(key: [string | null, string | null]) {
         <Macros />
       </ScrollPanel>
     </div>
-    <div class="flex justify-start items-start h-10 w-full gap-3  select-none">
-      <span class="rounded-prime-md py-1 px-2 cursor-pointer bg-surface-300 dark:bg-surface-950" @click="addMacro()">add</span>
-      <span class="rounded-prime-md py-1 px-2 cursor-pointer bg-surface-300 dark:bg-surface-950" @click="saveMacro()">save</span>
+    <div class="flex justify-start items-start h-10 w-full gap-3 select-none">
+      <MacrosButton label="add" @click="addMacro()" />
+      <MacrosButton label="save" @click="saveMacro()" />
     </div>
   </div>
 
