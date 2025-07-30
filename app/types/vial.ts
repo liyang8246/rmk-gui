@@ -11,6 +11,7 @@ export interface VialInterface {
     layerCount: number
   ) => Map<string, number>
   macros: (count: number) => Promise<Array<Array<MacroAction>>>
+  setKeycode: (lyrRowCol: [number, number, number], keycode: number) => Promise<void>
 }
 
 export interface Matrix {

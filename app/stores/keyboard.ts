@@ -92,6 +92,13 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     keyMacros.value = await vialDevice.value.macros(macroCount.value)
   };
 
+  async function setKeycode(lyrRowCol: [number, number, number], keycode: number) {
+    if (!vialDevice.value) {
+      throw new Error('Vial device not available')
+    }
+    await vialDevice.value.setKeycode(lyrRowCol, keycode)
+  };
+
   async function fetchAll() {
     // 并行会报错
     await fetchProductName()
@@ -174,5 +181,6 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     connect,
     disconnect,
     isConnected,
+    setKeycode,
   }
 })

@@ -286,4 +286,17 @@ export class VialDevice implements VialInterface {
     const deserializedMacros = this.macroDeserializeV2(macros, macroCount)
     return deserializedMacros
   };
+
+  async setKeycode(lyrRowCol: [number, number, number], keycode: number): Promise<void> {
+    const [layer, row, col] = lyrRowCol
+
+    const msg = Array.from({ length: 6 }, () => 0)
+    msg[0] = VialConstants.Command.SetKeycode
+    msg[1] = layer
+    msg[2] = row
+    msg[3] = col
+    msg[4] = (keycode >> 8) & 0xFF
+    msg[5] = keycode & 0xFF
+    await this.device.writeRead(msg)
+  }
 }

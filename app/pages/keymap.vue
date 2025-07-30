@@ -18,13 +18,16 @@ function setKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof Kl
 }
 
 function getNextKeyValue(): [number, number, number] {
-  if (!keyboardStore.kleDefinition?.keys || !keyboardStore.keymap || !currKey.value) {
+  if (!keyboardStore.kleDefinition?.keys) {
     throw new Error('kle Definition not available')
+  }
+  if (!keyboardStore.layoutKeymap) {
+    throw new Error('layoutKeymap not available')
   }
 
   const currentKey = currKey.value.slice(0, 3).toString()
 
-  const entries = Array.from(keyboardStore.keymap.entries()).filter(key => Number(key[0].split(',')[0]) === currLayer.value && keyboardStore.kleDefinition?.keys.findIndex(keys => [currLayer.value, keys.labels[0]].join(',') === key[0]) !== -1)
+  const entries = Array.from(keyboardStore.layoutKeymap.entries()).filter(key => Number(key[0].split(',')[0]) === currLayer.value && keyboardStore.kleDefinition?.keys.findIndex(keys => [currLayer.value, keys.labels[0]].join(',') === key[0]) !== -1)
 
   const currentIndex = entries.findIndex(key => key[0] === currentKey)
 
@@ -38,16 +41,27 @@ function getNextKeyValue(): [number, number, number] {
   return entries[nextIndex]![0].split(',').map(n => Number.parseInt(n, 10)) as [number, number, number]
 }
 
-const replaceKey = ref<number | null>(null)
-function setMapperKeycode(key: number) {
-  replaceKey.value = key
-
-  // 替换后操作
-  if (currKey.value) {
-    currKey.value = [...getNextKeyValue(), currKey.value[3]]
+async function setMapperKeycode(key: number) {
+  if (!keyboardStore.layoutKeymap) {
+    throw new Error('layoutKeymap not available')
   }
-  // 清空选择
-  replaceKey.value = null
+  if (!currKey.value) {
+    return
+  }
+
+  let finalKeycode = key
+  if (currKey.value[3] === 'outer') {
+    await keyboardStore.setKeycode(currKey.value.slice(0, 3) as [number, number, number], finalKeycode)
+  }
+  else if (currKey.value[3] === 'inner') {
+    const outer = keyboardStore.layoutKeymap!.get(currKey.value.slice(0, 3).toString())! & 0xFF00
+    finalKeycode = outer + key
+    await keyboardStore.setKeycode(currKey.value.slice(0, 3) as [number, number, number], finalKeycode)
+  }
+
+  // 页面优化操作
+  keyboardStore.layoutKeymap.set(currKey.value.slice(0, 3).toString(), finalKeycode)
+  currKey.value = [...getNextKeyValue(), 'outer']
 }
 </script>
 
