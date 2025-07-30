@@ -5,7 +5,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:show', value: boolean): void
   (e: 'clearCurrkey'): void
-  (e: 'setKeycode', value: [string | null, string | null]): void
+  (e: 'setKeycode', key: number): void
 }>()
 
 const visible = computed({

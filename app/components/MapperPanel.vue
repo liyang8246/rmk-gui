@@ -4,7 +4,7 @@ const { area } = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'setKeycode', key: [string | null, string | null]): void
+  (e: 'setKeycode', key: number): void
 }>()
 
 const BaseCodeMap = computed(() => {
@@ -68,7 +68,7 @@ const tabs = computed(() => [
           <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
             <template v-for="[, value] in tab.content" :key="value">
               <div class="cursor-pointer text-center text-xs font-bold text-surface-700 dark:text-surface-300">
-                <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.symbol)" />
+                <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
               </div>
             </template>
           </div>

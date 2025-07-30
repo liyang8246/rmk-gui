@@ -38,8 +38,8 @@ function getNextKeyValue(): [number, number, number] {
   return entries[nextIndex]![0].split(',').map(n => Number.parseInt(n, 10)) as [number, number, number]
 }
 
-const replaceKey = ref<[string | null, string | null]>([null, null])
-function setMapperKeycode(key: [string | null, string | null]) {
+const replaceKey = ref<number | null>(null)
+function setMapperKeycode(key: number) {
   replaceKey.value = key
 
   // 替换后操作
@@ -47,7 +47,7 @@ function setMapperKeycode(key: [string | null, string | null]) {
     currKey.value = [...getNextKeyValue(), currKey.value[3]]
   }
   // 清空选择
-  replaceKey.value = [null, null]
+  replaceKey.value = null
 }
 </script>
 
