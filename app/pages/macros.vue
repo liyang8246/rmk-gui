@@ -32,8 +32,12 @@ function setMapperKeycode(key: number) {
       </ScrollPanel>
     </div>
     <div class="flex justify-start items-start h-10 w-full gap-3 select-none">
-      <MacrosButton label="add" @click="addMacro()" />
-      <MacrosButton label="save" @click="saveMacro()" />
+      <Button label="" severity="contrast" variant="text" class="!h-8 !p-0 !border-none" @click="addMacro()">
+        <span class="py-1 px-2 cursor-pointer bg-surface-400 dark:bg-surface-950 hover:shadow-surface-500 transition-all duration-200">add</span>
+      </Button>
+      <Button label="" severity="contrast" variant="text" class="!h-8 !p-0 !border-none" @click="saveMacro()">
+        <span class="py-1 px-2 cursor-pointer bg-surface-400 dark:bg-surface-950 hover:shadow-surface-500 transition-all duration-200">save</span>
+      </Button>
     </div>
   </div>
 
