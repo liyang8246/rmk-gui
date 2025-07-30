@@ -21,7 +21,7 @@ function swapDownMacro(index: number) {
   macros[index + 1] = temp
 }
 function addKeyCode(index: number) {
-  keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!)
+  keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!.symbol)
 }
 function setKeycode(zone: 'outer' | 'inner', row: number, col: number) {
   pageMacrosStore.currKey = [pageMacrosStore.currMacro, row, col, zone]
@@ -60,7 +60,7 @@ function selectKeycode(row: number, col: number) {
         <div v-else class=" w-full h-full flex items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
             <KeyMapKey
-              :keys="keyCode.symbol"
+              :keys="keyCode"
               :select="selectKeycode(index, keyCodes_index)"
               @click="setKeycode($event, index, keyCodes_index)"
             />

@@ -71,12 +71,12 @@ export class VialDevice implements VialInterface {
     return result
   }
 
-  private keyCodeFromBytes(bytes: number[]): KeyInfo {
+  private keyCodeFromBytes(bytes: number[]): [string | null, string | null] {
     const value = bytes[1]
     if (value && keyCodeMap[value]) {
-      return keyCodeMap[value]
+      return keyCodeMap[value].symbol
     }
-    return keyCodeMap[0]!
+    return keyCodeMap[0]!.symbol
   }
 
   private macroDeserializeV2(rawMacros: number[][], count: number): Array<Array<MacroAction>> {
@@ -85,13 +85,12 @@ export class VialDevice implements VialInterface {
       const macroActions: Array<MacroAction> = []
       let action: MacroAction | null = null
 
-      let prevCode: number | null = null
+      let prevCode: MacroCode | null = null
 
       while (rawMacro.length > 0) {
         let code = rawMacro[0]
         let macroCode = code as MacroCode
 
-        // 处理前缀类型的动作
         if (macroCode === MacroCode.Prefix) {
           rawMacro.shift()
 
@@ -104,8 +103,8 @@ export class VialDevice implements VialInterface {
 
           const newAction = fromMacroCode(macroCode)
 
-          if (action && code !== prevCode) {
-            prevCode = code
+          if (action && prevCode != null && fromMacroCode(macroCode).type !== fromMacroCode(prevCode).type) {
+            prevCode = macroCode
             if (action) {
               macroActions.push(action)
             }
@@ -115,33 +114,43 @@ export class VialDevice implements VialInterface {
             action = fromMacroCode(macroCode)
           }
           if (!prevCode) {
-            prevCode = code
+            prevCode = macroCode
           }
-
-          if (action && (action.type === MacroCode.Down || action.type === MacroCode.Up || action.type === MacroCode.Tap)) {
+          if (action && (macroCode === MacroCode.Tap || macroCode === MacroCode.Prefix || macroCode === MacroCode.Down || macroCode === MacroCode.Up)) {
             if (rawMacro.length === 0) {
               throw new Error(`Macro format error: missing keycode, index: ${idx}`)
             }
-
             const keyCodeData = [0, rawMacro.shift() as number]
-            const key = this.keyCodeFromBytes(keyCodeData)
+            const key: [string | null, string | null] = this.keyCodeFromBytes(keyCodeData)
 
-            if (action.type === MacroCode.Down && 'keyCodes' in action) {
-              (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
-            }
-            else if (action.type === MacroCode.Up && 'keyCodes' in action) {
-              (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
-            }
-            else if (action.type === MacroCode.Tap && 'keyCodes' in action) {
-              (action as { keyCodes: KeyInfo[] }).keyCodes.push(key)
+            if ('keyCodes' in action) {
+              (action as { keyCodes: [string | null, string | null][] }).keyCodes.push(key)
             }
           }
-          else if (action && action.type === MacroCode.Delay) {
+          else if (action && (macroCode === MacroCode.ExtTap || macroCode === MacroCode.ExtDown || macroCode === MacroCode.ExtUp)) {
+            if (rawMacro.length < 2) {
+              throw new Error(`Macro format error: missing Ext keycode, index: ${idx}`)
+            }
+            let key: [string | null, string | null]
+            const keyCodeData1 = [0, rawMacro.shift() as number]
+            const keyCodeData2 = [0, rawMacro.shift() as number]
+            if (keyCodeData2[1] === 255) {
+              keyCodeData1[1] = keyCodeData1[1]! * 16 ** 2
+              key = this.keyCodeFromBytes(keyCodeData1)
+            }
+            else {
+              keyCodeData2[1] = keyCodeData2[1]! * 16 ** 2
+              key = [this.keyCodeFromBytes(keyCodeData2)[0], this.keyCodeFromBytes(keyCodeData1)[1]]
+            }
+            if ('keyCodes' in action) {
+              (action as { keyCodes: [string | null, string | null][] }).keyCodes.push(key)
+            }
+          }
+          else if (action && macroCode === MacroCode.Delay) {
             if (rawMacro.length < 2) {
               throw new Error(`Macro format error: incomplete delay data, index: ${idx}`)
             }
 
-            // 处理延迟动作
             const delay1 = rawMacro.shift() as number
             const delay2 = rawMacro.shift() as number
             const delay = (delay1 - 1) + (delay2 - 1) * 255;
@@ -149,7 +158,6 @@ export class VialDevice implements VialInterface {
           }
         }
         else {
-        // 处理文本动作
           if (!action) {
             action = { type: MacroCode.Text, name: MacroCode[MacroCode.Text], text: '' }
           }
