@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+const { area } = defineProps<{
+  area?: 'inner' | 'outer' | null
+}>()
+
 const emit = defineEmits<{
   (e: 'setKeycode', key: [string | null, string | null]): void
 }>()
@@ -39,16 +43,16 @@ const MacroCodeMap = computed(() => {
     || (value.code >= 0x0753 && value.code <= 0x0757))
 })
 
-const tabs = ref([
-  { title: 'base', content: BaseCodeMap.value, value: '0' },
-  { title: 'ISO/JIS', content: ISOCodeMap.value, value: '1' },
-  { title: 'Layers', content: LayersCodeMap.value, value: '2' },
-  { title: 'Quantum', content: QuantumCodeMap.value, value: '3' },
-  { title: 'Backlight', content: BacklightCodeMap.value, value: '4' },
-  { title: 'App,Media and Mouse', content: ToolsCodeMap.value, value: '5' },
-  { title: 'User', content: UserCodeMap.value, value: '6' },
-  { title: 'Macro', content: MacroCodeMap.value, value: '7' },
-])
+const tabs = computed(() => [
+  { area: 'any', title: 'base', content: BaseCodeMap.value, value: '0' },
+  { area: 'any', title: 'ISO/JIS', content: ISOCodeMap.value, value: '1' },
+  { area: 'outer', title: 'Layers', content: LayersCodeMap.value, value: '2' },
+  { area: 'outer', title: 'Quantum', content: QuantumCodeMap.value, value: '3' },
+  { area: 'outer', title: 'Backlight', content: BacklightCodeMap.value, value: '4' },
+  { area: 'any', title: 'App,Media and Mouse', content: ToolsCodeMap.value, value: '5' },
+  { area: 'outer', title: 'User', content: UserCodeMap.value, value: '6' },
+  { area: 'outer', title: 'Macro', content: MacroCodeMap.value, value: '7' },
+].filter(tab => tab.area === 'any' || tab.area === area || area === null))
 </script>
 
 <template>
@@ -68,7 +72,7 @@ const tabs = ref([
               </div>
             </template>
           </div>
-        </Scrollpanel>
+        </ScrollPanel>
       </TabPanel>
     </TabPanels>
   </Tabs>

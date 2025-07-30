@@ -73,7 +73,7 @@ function setMapperKeycode(key: [string | null, string | null]) {
     </div>
     <div class="rounded-prime-md p-3 bg-surface-0 dark:bg-surface-950 overflow-hidden w-full h-full">
       <div class="rounded-prime-md overflow-hidden w-full h-full">
-        <MapperPanel @set-keycode="setMapperKeycode" />
+        <MapperPanel :area="currKey[3]" @set-keycode="setMapperKeycode" />
       </div>
     </div>
   </div>
