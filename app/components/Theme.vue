@@ -6,7 +6,7 @@ const options = [
   { icon: 'pi pi-moon text-base', label: 'dark' },
   { icon: 'pi pi-cog text-base', label: 'system' },
 ]
-const value = ref(options.find(option => option.label === useColorMode().preference) || options[0])
+const value = ref(options.find(option => option.label === useColorMode().preference) || options[0]!)
 </script>
 
 <template>
@@ -93,7 +93,9 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
           <SelectButton
             v-model="value"
             :options="options"
-            @click="$colorMode.preference = value!.label"
+            option-label="label"
+            data-key="label"
+            @click="$colorMode.preference = value.label"
           >
             <template #option="slotProps">
               <i :class="slotProps.option.icon" />
