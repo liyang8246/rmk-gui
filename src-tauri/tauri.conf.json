@@ -14,10 +14,11 @@
     "windows": [
       {
         "title": "RMK-GUI",
-        "width": 800,
-        "height": 600,
-        "minHeight": 600,
-        "minWidth": 800
+        "width": 1200,
+        "height": 800,
+        "minHeight": 800,
+        "minWidth": 1200,
+        "dragDropEnabled": false
       }
     ],
     "security": {
