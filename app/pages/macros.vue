@@ -1,13 +1,8 @@
 <script lang="ts" setup>
+import { VueDraggable } from 'vue-draggable-plus'
+
 const keyboardStore = useKeyboardStore()
 const pageMacrosStore = usePageMacrosStore()
-
-function addMacro() {
-  keyboardStore.keyMacros[pageMacrosStore.currMacro]!.push(fromMacroCode(MacroCode.Text))
-}
-function saveMacro() {
-}
-
 const replaceMacroKey = ref<number | null>(null)
 function setMapperKeycode(key: number) {
   replaceMacroKey.value = key
@@ -16,6 +11,35 @@ function setMapperKeycode(key: number) {
   pageMacrosStore.clearSelectedProps()
   replaceMacroKey.value = null
 }
+
+const addList = ref<MacroAction[]>([
+  {
+    type: 0,
+    name: 'Tap',
+    keyCodes: [],
+  },
+  {
+    type: 2,
+    name: 'Down',
+    keyCodes: [],
+  },
+  {
+    type: 3,
+    name: 'Up',
+    keyCodes: [],
+  },
+  {
+    type: 4,
+    name: 'Delay',
+    keyCodes: [],
+  },
+  {
+    type: 9,
+    name: 'Text',
+    text: null,
+  },
+
+])
 </script>
 
 <template>
@@ -26,20 +50,28 @@ function setMapperKeycode(key: number) {
     <div class="flex justify-start items-start w-full">
       <Switcher text="Marco" :count="keyboardStore.macroCount!" :layer="pageMacrosStore.currMacro" @change="pageMacrosStore.currMacro = $event" />
     </div>
-    <div class="rounded-prime-md p-3 h-full w-full overflow-hidden bg-surface-0 dark:bg-surface-950 transition-all duration-200">
-      <ScrollPanel class="w-full h-full overflow-hidden">
-        <Macros />
-      </ScrollPanel>
-    </div>
-    <div class="flex justify-start items-start h-10 w-full gap-3 select-none">
-      <Button label="" severity="contrast" variant="text" class="!h-8 !p-0 !border-none" @click="addMacro()">
-        <span class="py-1 px-2 cursor-pointer bg-surface-400 dark:bg-surface-950 hover:shadow-surface-500 transition-all duration-200">add</span>
-      </Button>
-      <Button label="" severity="contrast" variant="text" class="!h-8 !p-0 !border-none" @click="saveMacro()">
-        <span class="py-1 px-2 cursor-pointer bg-surface-400 dark:bg-surface-950 hover:shadow-surface-500 transition-all duration-200">save</span>
-      </Button>
+    <div class="rounded-prime-md pt-3 h-full w-full flex justify-start items-start gap-6 overflow-hidden transition-all duration-200">
+      <VueDraggable
+        v-model="addList"
+        :animation="150"
+        :group="{ name: 'people', pull: 'clone', put: false }"
+        :sort="false"
+        class="flex flex-col gap-2 rounded-prime-md"
+      >
+        <div
+          v-for="item in addList"
+          :key="item.type"
+          class="cursor-move h-50px w-68px p-3 text-md text-surface-500 dark:text-surface-400  bg-surface-0 dark:bg-surface-600 rounded-prime-md "
+        >
+          {{ item.name }}
+        </div>
+      </VueDraggable>
+      <div class="rounded-prime-md w-full h-full p-3 bg-surface-0 dark:bg-surface-600">
+        <ScrollPanel class="w-full h-full overflow-hidden">
+          <MacrosList />
+        </ScrollPanel>
+      </div>
     </div>
   </div>
-
   <MapperDialog :show="pageMacrosStore.showMapperPanel" @clear-currkey="pageMacrosStore.clearSelectedProps()" @set-keycode="setMapperKeycode" />
 </template>
