@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { VueDraggable } from 'vue-draggable-plus'
-
 const keyboardStore = useKeyboardStore()
 const pageMacrosStore = usePageMacrosStore()
 
