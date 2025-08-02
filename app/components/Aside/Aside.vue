@@ -5,6 +5,7 @@ const pages = [
   { name: 'Home', icon: 'tabler:home-filled', to: '/' },
   { name: 'Keymap', icon: 'tabler:keyboard-filled', to: '/keymap' },
   { name: 'Macros', icon: 'tabler:circle-letter-a-filled', to: '/macros' },
+  { name: 'Combos', icon: 'tabler:circle-letter-k-filled', to: '/combos' },
   { name: 'Settings', icon: 'tabler:settings-filled', to: '/settings' },
   { name: 'Export', icon: 'tabler:file-export', to: '/export' },
 ]
