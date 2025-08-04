@@ -34,20 +34,32 @@ const position = computed(() => {
     throw new Error('No KLE definition')
   }
   const keys = keyBoardKeys
+  let max_x = 0
+  let max_y = 0
+  let min_x = Infinity
+  let min_y = Infinity
+  for (let i = 0; i < keys.length; i++) {
+    max_x = Math.max(keys[i]!.x, max_x)
+    max_y = Math.max(keys[i]!.y, max_y)
+    min_x = Math.min(keys[i]!.x, min_x)
+    min_y = Math.min(keys[i]!.y, min_y)
+  }
+  const last_width = keys[keys.findIndex(key => key.x === max_x)]!.width
+  const last_height = keys[keys.findIndex(key => key.y === max_y)]!.height
   return {
-    max_x: keys[keys!.length - 1]!.x!,
-    max_y: keys[keys!.length - 1]!.y!,
-    min_x: keys[0]!.x!,
-    min_y: keys[0]!.y!,
-    last_width: keys[keys!.length - 1]!.width!,
-    last_height: keys[keys!.length - 1]!.height!,
+    max_x,
+    max_y,
+    min_x,
+    min_y,
+    last_width,
+    last_height,
   }
 })
 const width = computed(() => {
-  return `${(position.value.max_x + position.value.min_x + position.value.last_width) * keyBoardKeySize}px`
+  return `${(position.value.max_x + position.value.min_x + position.value.last_width) * keyBoardKeySize + 2}px`
 })
 const height = computed(() => {
-  return `${(position.value.max_y + position.value.min_y + position.value.last_height) * keyBoardKeySize}px`
+  return `${(position.value.max_y + position.value.min_y + position.value.last_height) * keyBoardKeySize + 2}px`
 })
 
 function getSelectValue(key: InstanceType<typeof KleKey>): 'outer' | 'inner' | null {
@@ -67,8 +79,8 @@ function getSelectValue(key: InstanceType<typeof KleKey>): 'outer' | 'inner' | n
       <div
         class="rounded-prime-md absolute z-10 "
         :style="{
-          top: `${keys.y * keyBoardKeySize}px`,
-          left: `${keys.x * keyBoardKeySize}px`,
+          top: `${keys.y * keyBoardKeySize + 2}px`,
+          left: `${keys.x * keyBoardKeySize + 2}px`,
           transform: `rotate(${keys.rotation_angle}deg)`,
           transformOrigin: `calc(${(-keys.x + keys.rotation_x) * keyBoardKeySize}px)` + `calc(${(-keys.y + keys.rotation_y) * keyBoardKeySize}px)`,
         }"

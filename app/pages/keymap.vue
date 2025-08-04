@@ -21,14 +21,13 @@ function getNextKeyValue(): [number, number, number] {
   if (!keyboardStore.kleDefinition?.keys) {
     throw new Error('kle Definition not available')
   }
-  if (!keyboardStore.layoutKeymap) {
-    throw new Error('layoutKeymap not available')
+  if (!keyboardStore.keymap) {
+    throw new Error('keymap not available')
   }
 
   const currentKey = currKey.value.slice(0, 3).toString()
 
-  const entries = Array.from(keyboardStore.layoutKeymap.entries()).filter(key => Number(key[0].split(',')[0]) === currLayer.value && keyboardStore.kleDefinition?.keys.findIndex(keys => [currLayer.value, keys.labels[0]].join(',') === key[0]) !== -1)
-
+  const entries = Array.from(keyboardStore.keymap.entries()).filter(key => Number(key[0].split(',')[0]) === currLayer.value && keyboardStore.kleDefinition?.keys.findIndex(keys => [currLayer.value, keys.labels[0]].join(',') === key[0]) !== -1)
   const currentIndex = entries.findIndex(key => key[0] === currentKey)
 
   let nextIndex = currentIndex + 1
@@ -42,10 +41,10 @@ function getNextKeyValue(): [number, number, number] {
 }
 
 async function setMapperKeycode(key: number) {
-  if (!keyboardStore.layoutKeymap) {
-    throw new Error('layoutKeymap not available')
+  if (!keyboardStore.keymap) {
+    throw new Error('keymap not available')
   }
-  if (!currKey.value) {
+  if (currKey.value[3] === null) {
     return
   }
 
@@ -54,13 +53,13 @@ async function setMapperKeycode(key: number) {
     await keyboardStore.setKeycode(currKey.value.slice(0, 3) as [number, number, number], finalKeycode)
   }
   else if (currKey.value[3] === 'inner') {
-    const outer = keyboardStore.layoutKeymap!.get(currKey.value.slice(0, 3).toString())! & 0xFF00
+    const outer = keyboardStore.keymap!.get(currKey.value.slice(0, 3).toString())! & 0xFF00
     finalKeycode = outer + key
     await keyboardStore.setKeycode(currKey.value.slice(0, 3) as [number, number, number], finalKeycode)
   }
 
   // 页面优化操作
-  keyboardStore.layoutKeymap.set(currKey.value.slice(0, 3).toString(), finalKeycode)
+  keyboardStore.keymap.set(currKey.value.slice(0, 3).toString(), finalKeycode)
   currKey.value = [...getNextKeyValue(), 'outer']
 }
 </script>
@@ -79,7 +78,7 @@ async function setMapperKeycode(key: number) {
           :key-board-key-size="keyBoardKeySize"
           :key-board-keys="keyboardStore.kleDefinition?.keys!"
           :layer="currLayer"
-          :key-board-keys-map="keyboardStore.layoutKeymap"
+          :key-board-keys-map="keyboardStore.keymap"
           :select-keycode-handler="selectKeycode"
           @set-keycode="setKeyBoardKeycode"
         />
