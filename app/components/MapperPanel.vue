@@ -110,7 +110,6 @@ function generateKeyboard(data: (string | Record<string, any>)[][]) {
   }
   return result
 }
-
 function generateKeymap(data: (string | Record<string, any>)[][]) {
   const map = new Map<string, number>()
   for (let i = 0; i < data.length; i++) {
@@ -193,9 +192,12 @@ function setISOKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof
       </Tab>
     </TabList>
     <TabPanels class="!p-3 h-[calc(100%-40px)] w-full">
-      <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="h-full w-full ">
-        <ScrollPanel class="w-full h-full overflow-hidden">
-          <div class="m-1 flex flex-wrap items-start justify-start gap-2 w-[calc(100%-8px)]">
+      <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="h-full w-full">
+        <ScrollPanel
+          class="w-full h-full overflow-hidden"
+          pt:barx:class="!hidden"
+        >
+          <div class="m-1 w-[calc(100%-8px)]">
             <template v-if="tab.title === 'base'">
               <div class="h-full w-full flex justify-center items-start">
                 <KeyMapKeyboardCanvas
@@ -214,9 +216,11 @@ function setISOKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof
                 />
               </div>
             </template>
-            <template v-for="[, value] in tab.content" v-else :key="value">
-              <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
-            </template>
+            <div v-else class="relative h-full w-full flex flex-1 flex-wrap items-start justify-start gap-2">
+              <template v-for="[, value] in tab.content" :key="value">
+                <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
+              </template>
+            </div>
           </div>
         </ScrollPanel>
       </TabPanel>

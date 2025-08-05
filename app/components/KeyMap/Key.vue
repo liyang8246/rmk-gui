@@ -6,6 +6,8 @@ const {
     height: 1,
     width2: 1,
     height2: 1,
+    x2: 0,
+    y2: 0,
   },
   select,
   keyMargin = 6,
@@ -17,6 +19,8 @@ const {
     height: number
     width2: number
     height2: number
+    x2: number
+    y2: number
   }
   select?: 'outer' | 'inner' | null
   keyMargin?: number
@@ -59,7 +63,7 @@ function keyBreaks(key: string | null) {
 function isOuterStyle() {
   return select && select === 'outer'
     ? 'bg-primary-100/50 dark:bg-primary-600/50 text-surface-900 dark:text-surface-100'
-    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 active:bg-surface-400 active:dark:bg-surface-700'
+    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 group-active:bg-surface-400 group-active:dark:bg-surface-700'
 }
 function isOuterShadow() {
   return select && select === 'outer'
@@ -69,13 +73,13 @@ function isOuterShadow() {
 function isInnerStyle() {
   return select && select === 'inner'
     ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100'
-    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 active:bg-surface-400 active:dark:bg-surface-700'
+    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 group-active:bg-surface-400 group-active:dark:bg-surface-700'
 }
 </script>
 
 <template>
   <div
-    class="raletive cursor-pointer select-none text-center font-bold rounded-prime-md"
+    class="raletive cursor-pointer select-none text-center font-bold rounded-prime-md group"
     :style="{
       width: fitKeySize(maxKeySize(kleProps.width, kleProps.width2)),
       height: fitKeySize(maxKeySize(kleProps.height, kleProps.height2)),
@@ -90,6 +94,8 @@ function isInnerStyle() {
         :style="{
           width: fitKeySize(kleProps.width2),
           height: fitKeySize(kleProps.height2),
+          ...(kleProps.y2 !== 0 && { top: `${kleProps.y2 * defaultKeySize}px` }),
+          ...(kleProps.x2 !== 0 && { left: `${kleProps.x2 * defaultKeySize}px` }),
         }"
       />
       <div
@@ -106,6 +112,8 @@ function isInnerStyle() {
         :style="{
           width: fitKeySize(kleProps.width2),
           height: fitKeySize(kleProps.height2),
+          ...(kleProps.y2 !== 0 && { top: `${kleProps.y2 * defaultKeySize}px` }),
+          ...(kleProps.x2 !== 0 && { left: `${kleProps.x2 * defaultKeySize}px` }),
         }"
         @click.stop="emit('click', 'outer')"
       />
