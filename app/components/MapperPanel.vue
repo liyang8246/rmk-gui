@@ -137,22 +137,14 @@ function generateKeyboard(data: (string | Record<string, any>)[][]) {
         currentY2 = 0
       }
       else if (typeof item === 'object' && item !== null) {
-        if ('x' in item && item.x !== undefined)
-          currentX += item.x as number
-        if ('y' in item && item.y !== undefined)
-          currentY += item.y as number
-        if ('w' in item && item.w !== undefined)
-          w = item.w as number
-        if ('h' in item && item.h !== undefined)
-          h = item.h as number
-        if ('x2' in item && item.x2 !== undefined)
-          currentX2 = item.x2 as number
-        if ('y2' in item && item.y2 !== undefined)
-          currentY2 = item.y2 as number
-        if ('w2' in item && item.w2 !== undefined)
-          w2 = item.w2 as number
-        if ('h2' in item && item.h2 !== undefined)
-          h2 = item.h2 as number
+        'x' in item && (currentX += item.x ?? 0)
+        'y' in item && (currentY += item.y ?? 0)
+        'w' in item && (w = item.w ?? 1)
+        'h' in item && (h = item.h ?? 1)
+        'x2' in item && (currentX2 = item.x2 ?? 0)
+        'y2' in item && (currentY2 = item.y2 ?? 0)
+        'w2' in item && (w2 = item.w2 ?? 1)
+        'h2' in item && (h2 = item.h2 ?? 1)
       }
     }
     currentY += 1
