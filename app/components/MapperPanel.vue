@@ -9,26 +9,65 @@ const emit = defineEmits<{
 
 const activeTab = ref('0')
 
-watch(() => area, () => {
-  activeTab.value = '0'
-})
+const screenWidth = ref(0)
 
-const baseData = [
+const baseDataAll = [
   ['Escape', { x: 1 }, 'F1', 'F2', 'F3', 'F4', { x: 0.5 }, 'F5', 'F6', 'F7', 'F8', { x: 0.5 }, 'F9', 'F10', 'F11', 'F12', { x: 0.25 }, 'PrintScreen', 'ScrollLock', 'Pause'],
-  [{ y: 0.5 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', { w: 2 }, 'Backspace', { x: 0.25 }, 'Insert', 'Home', 'PageUp', { x: 0.25 }, 'NumLock', 'KpSlash', 'KpAsterisk', 'KpMinus'],
-  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { w: 1.5 }, 'Backslash', { x: 0.25 }, 'Delete', 'End', 'PageDown', { x: 0.25 }, 'Kp7', 'Kp8', 'Kp9', { h: 2 }, 'KpPlus'],
-  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', { w: 2.25 }, 'Enter', { x: 3.5 }, 'Kp4', 'Kp5', 'Kp6'],
-  [{ w: 2.25 }, 'LShift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift', { x: 1.25 }, 'Up', { x: 1.25 }, 'Kp1', 'Kp2', 'Kp3', { h: 2 }, 'KpEnter'],
-  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 6.25 }, 'Space', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl', { x: 0.25 }, 'Left', 'Down', 'Right', { x: 0.25, w: 2 }, 'Kp0', 'KpDot'],
+  [{ y: 0.25 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', { w: 2 }, 'Backspace', { x: 0.25 }, 'Insert', 'Home', 'PageUp', { x: 0.25 }, 'NumLock', 'KpSlash', 'KpAsterisk', 'KpMinus'],
+  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { w: 1.5 }, 'Backslash', { x: 0.25 }, 'Delete', 'End', 'PageDown', { x: 0.25 }, 'Kp7', 'Kp8', 'Kp9', 'KpPlus'],
+  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', { w: 2.25 }, 'Enter', { x: 3.5 }, 'Kp4', 'Kp5', 'Kp6', 'KpComma'],
+  [{ w: 2.25 }, 'LShift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift', { x: 1.25 }, 'Up', { x: 1.25 }, 'Kp1', 'Kp2', 'Kp3', 'KpEqual'],
+  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 6.25 }, 'Space', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl', { x: 0.25 }, 'Left', 'Down', 'Right', { x: 0.25, w: 2 }, 'Kp0', 'KpDot', 'KpEnter'],
 ]
-const ISOData = [
+// 1225
+const baseData1225 = [
   ['Escape', { x: 1 }, 'F1', 'F2', 'F3', 'F4', { x: 0.5 }, 'F5', 'F6', 'F7', 'F8', { x: 0.5 }, 'F9', 'F10', 'F11', 'F12', { x: 0.25 }, 'PrintScreen', 'ScrollLock', 'Pause'],
-  [{ y: 0.5 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', { w: 2 }, 'Backspace', { x: 0.25 }, 'Insert', 'Home', 'PageUp', { x: 0.25 }, 'NumLock', 'KpSlash', 'KpAsterisk', 'KpMinus'],
-  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { x: 0.25, w: 1.25, h: 2, w2: 1.5, h2: 1, x2: -0.25 }, 'Enter', { x: 0.25 }, 'Delete', 'End', 'PageDown', { x: 0.25 }, 'Kp7', 'Kp8', 'Kp9', { h: 2 }, 'KpPlus'],
-  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', 'Backslash', { x: 4.75 }, 'Kp4', 'Kp5', 'Kp6'],
-  [{ w: 1.25 }, 'LShift', 'Backslash', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift', { x: 1.25 }, 'Up', { x: 1.25 }, 'Kp1', 'Kp2', 'Kp3', { h: 2 }, 'KpEnter'],
-  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { a: 7, w: 6.25 }, 'Space', { a: 4, w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl', { x: 0.25 }, 'Left', 'Down', 'Right', { x: 0.25, w: 2 }, 'Kp0', 'KpDot'],
+  [{ y: 0.25 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', { w: 2 }, 'Backspace', { x: 0.25 }, 'Insert', 'Home', 'PageUp'],
+  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { w: 1.5 }, 'Backslash', { x: 0.25 }, 'Delete', 'End', 'PageDown'],
+  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', { w: 2.25 }, 'Enter'],
+  [{ w: 2.25 }, 'LShift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift', { x: 1.25 }, 'Up'],
+  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 6.25 }, 'Space', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl', { x: 0.25 }, 'Left', 'Down', 'Right'],
 ]
+// 1050
+const baseData1050 = [
+  ['Escape', { x: 1 }, 'F1', 'F2', 'F3', 'F4', { x: 0.5 }, 'F5', 'F6', 'F7', 'F8', { x: 0.5 }, 'F9', 'F10', 'F11', 'F12'],
+  [{ y: 0.25 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', { w: 2 }, 'Backspace'],
+  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { w: 1.5 }, 'Backslash'],
+  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', { w: 2.25 }, 'Enter'],
+  [{ w: 2.25 }, 'LShift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift'],
+  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 6.25 }, 'Space', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl'],
+]
+
+const getBaseData = computed(() => screenWidth.value >= 1225 ? baseDataAll : screenWidth.value >= 1050 ? baseData1225 : baseData1050)
+
+const ISODataAll = [
+  ['Escape', { x: 1 }, 'F1', 'F2', 'F3', 'F4', { x: 0.5 }, 'F5', 'F6', 'F7', 'F8', { x: 0.5 }, 'F9', 'F10', 'F11', 'F12', { x: 0.25 }, 'PrintScreen', 'ScrollLock', 'Pause'],
+  [{ y: 0.25 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', 'International3', 'Backspace', { x: 0.25 }, 'Insert', 'Home', 'PageUp', { x: 0.25 }, 'NumLock', 'KpSlash', 'KpAsterisk', 'KpMinus'],
+  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { x: 0.25, w: 1.25, h: 2, w2: 1.5, h2: 1, x2: -0.25 }, 'Enter', { x: 0.25 }, 'Delete', 'End', 'PageDown', { x: 0.25 }, 'Kp7', 'Kp8', 'Kp9', 'KpPlus'],
+  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', 'Backslash', { x: 4.75 }, 'Kp4', 'Kp5', 'Kp6', 'KpComma'],
+  [{ w: 1.25 }, 'LShift', 'Backslash', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift', { x: 1.25 }, 'Up', { x: 1.25 }, 'Kp1', 'Kp2', 'Kp3', 'KpEqual'],
+  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 1.25 }, 'International5', { w: 2.5 }, 'Space', { w: 1.25 }, 'International4', { w: 1.25 }, 'International2', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl', { x: 0.25 }, 'Left', 'Down', 'Right', { x: 0.25, w: 2 }, 'Kp0', 'KpDot', 'KpEnter'],
+]
+// 1225
+const ISOData1225 = [
+  ['Escape', { x: 1 }, 'F1', 'F2', 'F3', 'F4', { x: 0.5 }, 'F5', 'F6', 'F7', 'F8', { x: 0.5 }, 'F9', 'F10', 'F11', 'F12', { x: 0.25 }, 'PrintScreen', 'ScrollLock', 'Pause'],
+  [{ y: 0.25 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', 'International3', 'Backspace', { x: 0.25 }, 'Insert', 'Home', 'PageUp'],
+  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { x: 0.25, w: 1.25, h: 2, w2: 1.5, h2: 1, x2: -0.25 }, 'Enter', { x: 0.25 }, 'Delete', 'End', 'PageDown'],
+  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', 'Backslash'],
+  [{ w: 1.25 }, 'LShift', 'Backslash', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift', { x: 1.25 }, 'Up'],
+  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 1.25 }, 'International5', { w: 2.5 }, 'Space', { w: 1.25 }, 'International4', { w: 1.25 }, 'International2', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl', { x: 0.25 }, 'Left', 'Down', 'Right'],
+]
+// 1050
+const ISOData1050 = [
+  ['Escape', { x: 1 }, 'F1', 'F2', 'F3', 'F4', { x: 0.5 }, 'F5', 'F6', 'F7', 'F8', { x: 0.5 }, 'F9', 'F10', 'F11', 'F12'],
+  [{ y: 0.25 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', 'International3', 'Backspace'],
+  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { x: 0.25, w: 1.25, h: 2, w2: 1.5, h2: 1, x2: -0.25 }, 'Enter'],
+  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', 'Backslash'],
+  [{ w: 1.25 }, 'LShift', 'Backslash', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift'],
+  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 1.25 }, 'International5', { w: 2.5 }, 'Space', { w: 1.25 }, 'International4', { w: 1.25 }, 'International2', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl'],
+]
+
+const getISOData = computed(() => screenWidth.value >= 1225 ? ISODataAll : screenWidth.value >= 1050 ? ISOData1225 : ISOData1050)
 
 function generateKeyboard(data: (string | Record<string, any>)[][]) {
   const result: InstanceType<typeof KleKey>[] = []
@@ -125,15 +164,16 @@ function generateKeymap(data: (string | Record<string, any>)[][]) {
   return map
 }
 
-const baseKeyboard = computed(() => generateKeyboard(baseData))
-const baseKeymap = computed(() => generateKeymap(baseData))
-const ISOKeyboard = computed(() => generateKeyboard(ISOData))
-const ISOKeymap = computed(() => generateKeymap(ISOData))
+const baseKeyboard = computed(() => generateKeyboard(getBaseData.value))
+const baseKeymap = computed(() => generateKeymap(getBaseData.value))
+const ISOKeyboard = computed(() => generateKeyboard(getISOData.value))
+const ISOKeymap = computed(() => generateKeymap(getISOData.value))
 
 const BaseCodeMap = computed(() => {
   return Object.entries(keyCodeMap).filter(([, value]) =>
     (value.code >= 0x0000 && value.code <= 0x0067)
-    || (value.code >= 0x00E0 && value.code <= 0x00E7),
+    || (value.code >= 0x00E0 && value.code <= 0x00E7)
+    || (value.code >= 0x0085 && value.code <= 0x0086),
   )
 })
 const ISOCodeMap = computed(() => {
@@ -165,9 +205,13 @@ const MacroCodeMap = computed(() => {
     (value.code >= 0x7700 && value.code <= 0x771F)
     || (value.code >= 0x0753 && value.code <= 0x0757))
 })
+
+const BaseCodeMapFliter = computed(() => BaseCodeMap.value.filter(item => !baseKeymap.value.entries().find(key => item[1].code === key[1])))
+const ISOCodeMapFliter = computed(() => ISOCodeMap.value.filter(item => !ISOKeymap.value.entries().find(key => item[1].code === key[1])))
+
 const tabs = computed(() => [
-  { area: 'any', title: 'base', content: BaseCodeMap.value, value: '0' },
-  { area: 'any', title: 'ISO/JIS', content: ISOCodeMap.value, value: '1' },
+  { area: 'any', title: 'base', content: BaseCodeMapFliter.value, value: '0' },
+  { area: 'any', title: 'ISO/JIS', content: ISOCodeMapFliter.value, value: '1' },
   { area: 'outer', title: 'Layers', content: LayersCodeMap.value, value: '2' },
   { area: 'outer', title: 'Quantum', content: QuantumCodeMap.value, value: '3' },
   { area: 'outer', title: 'Backlight', content: BacklightCodeMap.value, value: '4' },
@@ -182,6 +226,16 @@ function setBaseKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeo
 function setISOKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
   emit('setKeycode', ISOKeymap.value.get(`0,${key.labels[0]!}`)!)
 }
+
+watch(() => area, () => {
+  activeTab.value = '0'
+})
+onMounted(() => {
+  screenWidth.value = window.innerWidth
+  window.addEventListener('resize', () => {
+    screenWidth.value = window.innerWidth
+  })
+})
 </script>
 
 <template>
@@ -199,7 +253,7 @@ function setISOKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof
         >
           <div class="m-1 w-[calc(100%-8px)]">
             <template v-if="tab.title === 'base'">
-              <div class="h-full w-full flex justify-center items-start">
+              <div class="h-full w-full flex justify-center items-start mb-8">
                 <KeyMapKeyboardCanvas
                   :key-board-keys="baseKeyboard"
                   :key-board-keys-map="baseKeymap"
@@ -208,7 +262,7 @@ function setISOKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof
               </div>
             </template>
             <template v-else-if="tab.title === 'ISO/JIS'">
-              <div class="h-full w-full flex justify-center items-start">
+              <div class="h-full w-full flex justify-center items-start mb-5 pb-5">
                 <KeyMapKeyboardCanvas
                   :key-board-keys="ISOKeyboard"
                   :key-board-keys-map="ISOKeymap"
@@ -216,7 +270,7 @@ function setISOKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof
                 />
               </div>
             </template>
-            <div v-else class="relative h-full w-full flex flex-1 flex-wrap items-start justify-start gap-2">
+            <div class="h-full w-full flex flex-wrap items-start justify-start gap-2">
               <template v-for="[, value] in tab.content" :key="value">
                 <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
               </template>

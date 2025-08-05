@@ -16,13 +16,23 @@ const visible = computed({
   },
 })
 const pageMacrosStore = usePageMacrosStore()
+
+const screenWidth = ref(0)
+
+onMounted(() => {
+  screenWidth.value = window.innerWidth
+  window.addEventListener('resize', () => {
+    screenWidth.value = window.innerWidth
+  })
+})
 </script>
 
 <template>
   <Dialog
     v-model:visible="visible"
     header="Select Key"
-    class="overflow-hidden w-2/3 h-2/3 p-3"
+    class="overflow-hidden w-[950px] h-[430px] p-3"
+    :style="{ width: screenWidth > 1225 ? '1000px' : screenWidth > 1050 ? '830px' : '730px' }"
     position="bottom"
     maximizable
     pt:header:class="!p-0 !pb-3"
