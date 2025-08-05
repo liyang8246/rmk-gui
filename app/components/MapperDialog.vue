@@ -8,6 +8,8 @@ const emit = defineEmits<{
   (e: 'setKeycode', key: number): void
 }>()
 
+const { screenWidth } = useScreenWidth()
+
 const visible = computed({
   get: () => props.show,
   set: (value: boolean) => {
@@ -16,15 +18,6 @@ const visible = computed({
   },
 })
 const pageMacrosStore = usePageMacrosStore()
-
-const screenWidth = ref(0)
-
-onMounted(() => {
-  screenWidth.value = window.innerWidth
-  window.addEventListener('resize', () => {
-    screenWidth.value = window.innerWidth
-  })
-})
 </script>
 
 <template>

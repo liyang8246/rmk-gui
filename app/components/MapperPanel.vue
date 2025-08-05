@@ -7,8 +7,8 @@ const emit = defineEmits<{
   (e: 'setKeycode', key: number): void
 }>()
 
+const { screenWidth } = useScreenWidth()
 const activeTab = ref('0')
-const screenWidth = ref(0)
 
 const baseDataBase = [
   ['Escape', { x: 1 }, 'F1', 'F2', 'F3', 'F4', { x: 0.5 }, 'F5', 'F6', 'F7', 'F8', { x: 0.5 }, 'F9', 'F10', 'F11', 'F12'],
@@ -231,12 +231,6 @@ function setISOKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof
 
 watch(() => area, () => {
   activeTab.value = '0'
-})
-onMounted(() => {
-  screenWidth.value = window.innerWidth
-  window.addEventListener('resize', () => {
-    screenWidth.value = window.innerWidth
-  })
 })
 </script>
 
