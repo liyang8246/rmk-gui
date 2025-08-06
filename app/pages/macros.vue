@@ -36,7 +36,6 @@ const addList = ref<MacroAction[]>([
     name: 'Text',
     text: null,
   },
-
 ])
 </script>
 
@@ -64,10 +63,12 @@ const addList = ref<MacroAction[]>([
           {{ item.name }}
         </div>
       </VueDraggable>
-      <div class="rounded-prime-md w-full h-full p-3 bg-surface-0 dark:bg-surface-600">
-        <ScrollPanel class="w-full h-full overflow-hidden">
+      <div class="rounded-prime-md w-full h-full relative bg-surface-0 dark:bg-surface-600 overflow-hidden">
+        <div class="h-4 bg-surface-0 dark:bg-surface-600 absolute top-0 w-full z-50" />
+        <div class="h-4 bg-surface-0 dark:bg-surface-600 absolute bottom-0 w-full z-50" />
+        <div class="rounded-prime-md p-4 pr-0 w-full h-full overflow-y-scroll scrollbar scrollbar-thumb-surface-200 dark:scrollbar-thumb-surface-800 scrollbar-track-surface-0 dark:scrollbar-track-surface-600">
           <MacrosList />
-        </ScrollPanel>
+        </div>
       </div>
     </div>
   </div>

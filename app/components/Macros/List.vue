@@ -49,11 +49,12 @@ function selectKeycode(row: number, col: number) {
             type="number"
           />
         </div>
-        <div v-else class=" w-full h-full flex items-center justify-start gap-2">
+        <div v-else class=" w-full h-full flex items-center justify-start gap-2 m-1 relative">
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
             <KeyMapKey
               :keys="keyCode"
               :select="selectKeycode(index, keyCodes_index)"
+              :default-key-size="42"
               @click="setKeycode($event, index, keyCodes_index)"
             />
           </template>

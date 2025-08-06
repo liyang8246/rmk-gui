@@ -27,6 +27,7 @@
     "pinia": "3.0.3",
     "primeicons": "7.0.0",
     "primevue": "4.3.6",
+    "tailwind-scrollbar": "^4.0.2",
     "tailwindcss-primeui": "0.6.1",
     "vue-draggable-plus": "^0.6.0",
     "xz-decompress": "0.2.2"
