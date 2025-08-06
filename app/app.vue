@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <div class="flex h-screen bg-surface-200 dark:bg-surface-900">
+  <div class="flex h-screen bg-surface-200 dark:bg-surface-900 select-none">
     <Aside />
     <div class="flex flex-1 flex-col overflow-hidden">
       <Header />
