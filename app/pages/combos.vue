@@ -37,13 +37,13 @@ function selectKeycode(row: number, col: number) {
 
 <template>
   <div
-    class="flex flex-col justify-around items-center flex-auto gap-3 w-full h-full text-surface-500 dark:text-surface-400 overflow-hidden"
+    class="flex flex-col justify-around items-center flex-auto gap-3 p-3 w-full h-full text-surface-500 dark:text-surface-400 overflow-hidden"
     @click="clearSelectedProps()"
   >
-    <div class="flex justify-start items-start w-full p-3">
+    <div class="flex justify-start items-start w-full">
       <Switcher text="Combos" :count="combosCount" :layer="currCombos" @change="currCombos = $event" />
     </div>
-    <div class="rounded-prime-md pt-3 h-full w-full flex justify-center items-center gap-6 overflow-hidden transition-all duration-200">
+    <div class="rounded-prime-md h-full w-full flex justify-center items-center gap-6 overflow-hidden transition-all duration-200">
       <div v-for="list, list_index in keyList[currCombos]" :key="list_index" class="grid grid-cols-2 gap-2">
         <div class="flex flex-col justify-around items-center gap-2">
           <template v-for="(keyCode, keyCodes_index) in list" :key="keyCodes_index">
