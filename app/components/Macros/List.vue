@@ -22,14 +22,16 @@ function selectKeycode(row: number, col: number) {
     v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
     :animation="150"
     group="people"
+    handle=".handle"
     class="flex flex-col p-1 gap-2 w-full rounded-prime-md min-h-full"
   >
     <div
       v-for="i, index in keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
       :key="i.type"
-      class="rounded-prime-md flex min-h-14 w-full px-2 items-center justify-between gap-3 bg-surface-200 dark:bg-surface-900"
+      class="  rounded-prime-md flex min-h-14 w-full px-2 items-center justify-between gap-3 bg-surface-200 dark:bg-surface-900"
     >
-      <div class="w-32 h-full">
+      <div class="flex items-center justify-start gap-2 w-42 h-full">
+        <span class=" w-8 h-8 handle cursor-move"><i class="pi pi-sort-alt w-4 h-4 p-2 text-2xl" /></span>
         <MacrosSelect :index="index" />
       </div>
       <div class=" w-full h-full overflow-hidden">
