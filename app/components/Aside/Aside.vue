@@ -16,8 +16,11 @@ function isActive(path: string) {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen w-48 p-3 border-r-2 dark:border-surface-800 bg-surface-50 dark:bg-surface-950">
-    <img src="~/assets/rmk_logo.png" class="mx-auto mb-3 h-[54px]">
+  <div class=" flex flex-col h-screen w-48 p-3 border-r-2 dark:border-surface-800 bg-surface-50 dark:bg-surface-950">
+    <div class="relative h-[54px] mb-3">
+      <div class="left-[34px] top-[5px] h-[38px] w-[98px] bg-gradient-to-b from-primary-200 to-primary-500 dark:from-primary-500 dark:to-primary-800 absolute shadow-lg shadow-primary-300 dark:shadow-primary-900" />
+      <img src="~/assets/rmk_logo.svg" class="left-[29px] h-[54px] w-[109px] absolute">
+    </div>
     <div class="rounded-prime-xl bg-surface-100 p-3 shadow-inner dark:bg-surface-900">
       <div class="flex flex-col gap-3">
         <NuxtLink v-for="page in pages" :key="page.to" :to="page.to" class="no-underline">
