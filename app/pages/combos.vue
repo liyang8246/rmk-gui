@@ -40,7 +40,7 @@ function selectKeycode(row: number, col: number) {
     class="flex flex-col justify-around items-center flex-auto gap-3 w-full h-full text-surface-500 dark:text-surface-400 overflow-hidden"
     @click="clearSelectedProps()"
   >
-    <div class="flex justify-start items-start w-full">
+    <div class="flex justify-start items-start w-full p-3">
       <Switcher text="Combos" :count="combosCount" :layer="currCombos" @change="currCombos = $event" />
     </div>
     <div class="rounded-prime-md pt-3 h-full w-full flex justify-center items-center gap-6 overflow-hidden transition-all duration-200">

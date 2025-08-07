@@ -22,7 +22,7 @@ function selectKeycode(row: number, col: number) {
     v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
     :animation="150"
     group="people"
-    class="flex flex-col gap-2 w-full rounded-prime-md min-h-full"
+    class="flex flex-col p-1 gap-2 w-full rounded-prime-md min-h-full"
   >
     <div
       v-for="i, index in keyboardStore.keyMacros[pageMacrosStore.currMacro]!"

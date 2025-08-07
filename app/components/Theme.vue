@@ -10,7 +10,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
 </script>
 
 <template>
-  <div class="rounded-prime-md w-full p-3 bg-surface-50 dark:bg-surface-700">
+  <div class="rounded-prime-md w-full p-3 bg-surface-50 dark:bg-surface-700 shadow-sm shadow-surface-300 dark:shadow-surface-950">
     <h1 class="text-lg text-surface-800 dark:text-surface-200 font-bold mb-4">
       Theme
     </h1>
