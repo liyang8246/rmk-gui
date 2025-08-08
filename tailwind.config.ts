@@ -1,4 +1,3 @@
-import type { Config } from 'tailwindcss'
 import tailwindScrollbar from 'tailwind-scrollbar'
 import PrimeUI from 'tailwindcss-primeui'
 
@@ -9,4 +8,4 @@ export default {
   theme: {
     extend: {},
   },
-} satisfies Config
+}
