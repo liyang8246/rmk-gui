@@ -2,9 +2,11 @@
 const keyboardStore = useKeyboardStore()
 const devices = ref<any[]>([])
 const selected = ref<any>(null)
+const router = useRouter()
 
 const { isLoading: isConnecting, execute: toggleConnection } = useAsyncState(
   async () => {
+    router.push('/')
     if (keyboardStore.isConnected) {
       await keyboardStore.disconnect()
       keyboardStore.cleanAll()
