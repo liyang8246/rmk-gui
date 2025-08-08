@@ -71,12 +71,12 @@ export class VialDevice implements VialInterface {
     return result
   }
 
-  private keyCodeFromBytes(bytes: number[]): [string | null, string | null] {
+  private keyCodeFromBytes(bytes: number[]): KeyInfo {
     const value = bytes[1]
     if (value && keyCodeMap[value]) {
-      return keyCodeMap[value].symbol
+      return keyCodeMap[value]
     }
-    return keyCodeMap[0]!.symbol
+    return keyCodeMap[0]!
   }
 
   private macroDeserializeV2(rawMacros: number[][], count: number): Array<Array<MacroAction>> {
@@ -121,7 +121,7 @@ export class VialDevice implements VialInterface {
               throw new Error(`Macro format error: missing keycode, index: ${idx}`)
             }
             const keyCodeData = [0, rawMacro.shift() as number]
-            const key: [string | null, string | null] = this.keyCodeFromBytes(keyCodeData)
+            const key: [string | null, string | null] = this.keyCodeFromBytes(keyCodeData).symbol
 
             if ('keyCodes' in action) {
               (action as { keyCodes: [string | null, string | null][] }).keyCodes.push(key)
@@ -136,11 +136,11 @@ export class VialDevice implements VialInterface {
             const keyCodeData2 = [0, rawMacro.shift() as number]
             if (keyCodeData2[1] === 255) {
               keyCodeData1[1] = keyCodeData1[1]! * 16 ** 2
-              key = this.keyCodeFromBytes(keyCodeData1)
+              key = this.keyCodeFromBytes(keyCodeData1).symbol
             }
             else {
               keyCodeData2[1] = keyCodeData2[1]! * 16 ** 2
-              key = [this.keyCodeFromBytes(keyCodeData2)[0], this.keyCodeFromBytes(keyCodeData1)[1]]
+              key = [this.keyCodeFromBytes(keyCodeData2).symbol[0], this.keyCodeFromBytes(keyCodeData1).symbol[1]]
             }
             if ('keyCodes' in action) {
               (action as { keyCodes: [string | null, string | null][] }).keyCodes.push(key)
