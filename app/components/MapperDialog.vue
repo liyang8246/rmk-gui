@@ -8,7 +8,7 @@ const emit = defineEmits<{
   (e: 'setKeycode', key: number): void
 }>()
 
-const { screenWidth } = useScreenWidth()
+const { width: screenWidth } = useWindowSize()
 
 const visible = computed({
   get: () => props.show,

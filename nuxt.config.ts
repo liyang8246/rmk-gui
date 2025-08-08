@@ -28,7 +28,7 @@ export default defineNuxtConfig({
     },
   },
   imports: {
-    dirs: ['types', 'composables'],
+    dirs: ['types'],
     presets: [
       {
         from: '@tauri-apps/api/core',
