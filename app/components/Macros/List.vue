@@ -1,27 +1,12 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore()
 const pageMacrosStore = usePageMacrosStore()
+
 function delMacro(index: number) {
   keyboardStore.keyMacros[pageMacrosStore.currMacro]!.splice(index, 1)
 }
-function swapUpMacro(index: number) {
-  if (index === 0)
-    return
-  const macros = keyboardStore.keyMacros[pageMacrosStore.currMacro]!
-  const temp = { ...macros[index] } as MacroAction
-  macros[index] = { ...macros[index - 1] } as MacroAction
-  macros[index - 1] = temp
-}
-function swapDownMacro(index: number) {
-  if (index === keyboardStore.keyMacros[pageMacrosStore.currMacro]!.length - 1)
-    return
-  const macros = keyboardStore.keyMacros[pageMacrosStore.currMacro]!
-  const temp = { ...macros[index] } as MacroAction
-  macros[index] = { ...macros[index + 1] } as MacroAction
-  macros[index + 1] = temp
-}
 function addKeyCode(index: number) {
-  keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!)
+  keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!.symbol)
 }
 function setKeycode(zone: 'outer' | 'inner', row: number, col: number) {
   pageMacrosStore.currKey = [pageMacrosStore.currMacro, row, col, zone]
@@ -33,11 +18,20 @@ function selectKeycode(row: number, col: number) {
 </script>
 
 <template>
-  <template v-for="i, index in keyboardStore.keyMacros[pageMacrosStore.currMacro]" :key="index">
-    <div class="rounded-prime-md flex h-14 w-full px-4 items-center justify-between gap-3 bg-surface-200 dark:bg-surface-900 ">
-      <div class="flex items-center justify-start gap-3 w-48 h-full">
-        <span class=" w-8 h-8" @click="swapUpMacro(index)"><i class="pi pi-angle-double-up w-4 h-4 p-2 text-2xl" /></span>
-        <span class=" w-8 h-8" @click="swapDownMacro(index)"><i class="pi pi-angle-double-down w-4 h-4 p-2 text-2xl" /></span>
+  <VueDraggable
+    v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
+    :animation="150"
+    group="people"
+    handle=".handle"
+    class="flex flex-col p-1 gap-2 w-full rounded-prime-md min-h-full"
+  >
+    <div
+      v-for="i, index in keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
+      :key="i.type"
+      class="  rounded-prime-md flex min-h-14 w-full px-2 items-center justify-between gap-3 bg-surface-200 dark:bg-surface-900"
+    >
+      <div class="flex items-center justify-start gap-2 w-42 h-full">
+        <span class=" w-8 h-8 handle cursor-move"><i class="pi pi-sort-alt w-4 h-4 p-2 text-2xl" /></span>
         <MacrosSelect :index="index" />
       </div>
       <div class=" w-full h-full overflow-hidden">
@@ -57,11 +51,12 @@ function selectKeycode(row: number, col: number) {
             type="number"
           />
         </div>
-        <div v-else class=" w-full h-full flex items-center justify-start gap-2">
+        <div v-else class=" w-full h-full flex items-center justify-start gap-2 m-1 relative">
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
             <KeyMapKey
-              :keys="keyCode.symbol"
+              :keys="keyCode"
               :select="selectKeycode(index, keyCodes_index)"
+              :default-key-size="42"
               @click="setKeycode($event, index, keyCodes_index)"
             />
           </template>
@@ -76,7 +71,9 @@ function selectKeycode(row: number, col: number) {
       <span
         class="rounded-prime-md p-4 w-6 h-6 flex justify-center items-center cursor-pointer transition-colors duration-200 hover:text-surface-400"
         @click="delMacro(index)"
-      ><i class="pi pi-times w-4 h-4 text-2xl" /></span>
+      >
+        <i class="pi pi-times w-4 h-4 text-2xl" />
+      </span>
     </div>
-  </template>
+  </VueDraggable>
 </template>

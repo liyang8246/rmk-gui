@@ -1,7 +1,8 @@
+import tailwindScrollbar from 'tailwind-scrollbar'
 import PrimeUI from 'tailwindcss-primeui'
 
 export default {
-  plugins: [PrimeUI],
+  plugins: [PrimeUI, tailwindScrollbar],
   darkMode: ['class', '.dark-mode'],
   content: [],
   theme: {

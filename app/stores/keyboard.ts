@@ -80,16 +80,6 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     }
     layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value, layerCount.value)
   }
-  function indexToDisplay(index: [number, number, number]): [string | null, string | null] {
-    if (!layoutKeymap.value) {
-      throw new Error('Layout keymap not available')
-    }
-    const keyValue = layoutKeymap.value.get(index.toString())
-    if (keyValue === undefined) {
-      throw new Error(`Keymap value for index ${index.toString()} not found`)
-    }
-    return keyToLable(keyValue)
-  }
 
   const keyMacros = ref<Array<Array<MacroAction>>>([])
   async function fetchMacros() {
@@ -100,6 +90,13 @@ export const useKeyboardStore = defineStore('keyboard', () => {
       throw new Error('Macro Count not available')
     }
     keyMacros.value = await vialDevice.value.macros(macroCount.value)
+  };
+
+  async function setKeycode(lyrRowCol: [number, number, number], keycode: number) {
+    if (!vialDevice.value) {
+      throw new Error('Vial device not available')
+    }
+    await vialDevice.value.setKeycode(lyrRowCol, keycode)
   };
 
   async function fetchAll() {
@@ -177,7 +174,6 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     fetchKeymap,
     layoutKeymap,
     fetchLayoutKeymap,
-    indexToDisplay,
     keyMacros,
     fetchAll,
     cleanAll,
@@ -185,5 +181,6 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     connect,
     disconnect,
     isConnected,
+    setKeycode,
   }
 })

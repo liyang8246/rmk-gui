@@ -1,53 +1,40 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore()
 const value = ref('LayerCount')
+
+interface DisplayItem {
+  label: string
+  value: () => any
+}
+
+const displayOptions: Record<string, DisplayItem> = {
+  LayerCount: { label: 'LayerCount', value: () => keyboardStore.layerCount },
+  MacroCount: { label: 'MacroCount', value: () => keyboardStore.macroCount },
+  VialJson: { label: 'VialJson', value: () => keyboardStore.vialJson },
+  Keymap: { label: 'Keymap', value: () => keyboardStore.keymap },
+  KleDefinition: { label: 'KleDefinition', value: () => keyboardStore.kleDefinition },
+  getMacros: { label: 'getMacros', value: () => keyboardStore.keyMacros },
+}
+
+const currentDisplay = computed<DisplayItem>(() => {
+  return displayOptions[value.value] || { label: '', value: () => undefined }
+})
 </script>
 
 <template>
   <div>
     <select id="1" v-model="value" name="1">
-      <option value="LayerCount">
-        LayerCount
-      </option>
-      <option value="MacroCount">
-        MacroCount
-      </option>
-      <option value="VialJson">
-        VialJson
-      </option>
-      <option value="Keymap">
-        Keymap
-      </option>
-      <option value="KleDefinition">
-        KleDefinition
-      </option>
-      <option value="getMacros">
-        getMacros
+      <option
+        v-for="(option, key) in displayOptions"
+        :key="key"
+        :value="option.label"
+      >
+        {{ option.label }}
       </option>
     </select>
   </div>
-  <div v-if="value === 'LayerCount'">
-    <span> LayerCount: </span>
-    <pre> {{ keyboardStore.layerCount }} </pre>
-  </div>
-  <div v-else-if="value === 'MacroCount'">
-    <span> MacroCount: </span>
-    <pre> {{ keyboardStore.macroCount }} </pre>
-  </div>
-  <div v-else-if="value === 'VialJson'">
-    <span> VialJson: </span>
-    <pre> {{ keyboardStore.vialJson }} </pre>
-  </div>
-  <div v-else-if="value === 'Keymap'">
-    <span> Keymap: </span>
-    <pre> {{ keyboardStore.keymap }} </pre>
-  </div>
-  <div v-else-if="value === 'KleDefinition'">
-    <span> KleDefinition: </span>
-    <pre> {{ keyboardStore.kleDefinition }} </pre>
-  </div>
-  <div v-else-if="value === 'getMacros'">
-    <span> getMacros: </span>
-    <pre> {{ keyboardStore.keyMacros }} </pre>
+  <div>
+    <span>{{ currentDisplay.label }}: </span>
+    <pre>{{ currentDisplay.value() }}</pre>
   </div>
 </template>

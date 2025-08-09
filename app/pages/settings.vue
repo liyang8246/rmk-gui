@@ -1,7 +1,7 @@
 <script setup></script>
 
 <template>
-  <div>
-    <Setting />
+  <div class="p-3">
+    <Theme />
   </div>
 </template>

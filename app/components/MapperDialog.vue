@@ -5,7 +5,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:show', value: boolean): void
   (e: 'clearCurrkey'): void
+  (e: 'setKeycode', key: number): void
 }>()
+
+const { width: screenWidth } = useWindowSize()
 
 const visible = computed({
   get: () => props.show,
@@ -14,10 +17,21 @@ const visible = computed({
     emit('update:show', value)
   },
 })
+const pageMacrosStore = usePageMacrosStore()
 </script>
 
 <template>
-  <Dialog v-model:visible="visible" header="Select Key" class="overflow-hidden w-2/3 h-2/3">
-    <MapperPanel />
+  <Dialog
+    v-model:visible="visible"
+    header="Select Key"
+    class="overflow-hidden h-[430px] p-3 !m-0"
+    :style="{ width: screenWidth > 1225 ? '1000px' : screenWidth > 1050 ? '830px' : '730px' }"
+    position="bottom"
+    maximizable
+    pt:header:class="!p-0 !pb-3"
+    pt:content:class="!p-0"
+    pt:title:class="!pl-3 !text-lg text-surface-800 dark:text-surface-200"
+  >
+    <MapperPanel :area="pageMacrosStore.currKey[3]" @set-keycode="emit('setKeycode', $event)" />
   </Dialog>
 </template>

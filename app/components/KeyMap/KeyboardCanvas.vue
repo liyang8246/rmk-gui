@@ -1,71 +1,97 @@
 <script lang="ts" setup>
-const { keyBoardKeySize = 42 } = defineProps<{
+const { keyBoardKeySize = 42, keyBoardKeys, layer = 0, keyBoardKeysMap, selectKeycodeHandler } = defineProps<{
   keyBoardKeySize?: number
+  keyBoardKeys: InstanceType<typeof KleKey>[]
+  keyBoardKeysMap: Map<string, number> | null
+  layer?: number
+  selectKeycodeHandler?: (key: InstanceType<typeof KleKey>) => 'outer' | 'inner' | null
 }>()
-const keyboardStore = useKeyboardStore()
-const pageKeymapStore = usePageKeymapStore()
+const emit = defineEmits<{
+  (e: 'setKeycode', zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>): void
+}>()
+
+function indexToDisplay(index: [number, number, number]): [string | null, string | null] {
+  if (!keyBoardKeysMap) {
+    throw new Error('Layout keymap not available')
+  }
+  const keyValue = keyBoardKeysMap.get(index.toString())
+  if (keyValue === undefined) {
+    throw new Error(`Keymap value for index ${index.toString()} not found`)
+  }
+  return keyToLable(keyValue)
+}
 
 function labelToDisplay(
   key: InstanceType<typeof KleKey>,
   layer: number,
 ): [string | null, string | null] {
   const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
-  return keyboardStore.indexToDisplay([layer, row!, col!])
-}
-
-function selectKeycode(key: InstanceType<typeof KleKey>) {
-  const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
-  return pageKeymapStore.currKey[1] === row && pageKeymapStore.currKey[2] === col ? pageKeymapStore.currKey[3] : null
-}
-function setKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
-  pageKeymapStore.currKey = [pageKeymapStore.currLayer, ...key.labels[0]?.split(',').map(n => Number.parseInt(n, 10)) as [number, number], zone]
-  pageKeymapStore.showMapperPanel = true
+  return indexToDisplay([layer, row!, col!])
 }
 
 const position = computed(() => {
-  if (!keyboardStore.kleDefinition?.keys) {
+  if (!keyBoardKeys) {
     throw new Error('No KLE definition')
   }
-  const keys = keyboardStore.kleDefinition?.keys
+  const keys = keyBoardKeys
+  let max_x = 0
+  let max_y = 0
+  let min_x = Infinity
+  let min_y = Infinity
+  for (let i = 0; i < keys.length; i++) {
+    max_x = Math.max(keys[i]!.x, max_x)
+    max_y = Math.max(keys[i]!.y, max_y)
+    min_x = Math.min(keys[i]!.x, min_x)
+    min_y = Math.min(keys[i]!.y, min_y)
+  }
+  const last_width = keys[keys.findIndex(key => key.x === max_x)]!.width
+  const last_height = keys[keys.findIndex(key => key.y === max_y)]!.height
   return {
-    max_x: keys[keys!.length - 1]!.x!,
-    max_y: keys[keys!.length - 1]!.y!,
-    min_x: keys[0]!.x!,
-    min_y: keys[0]!.y!,
-    last_width: keys[keys!.length - 1]!.width!,
-    last_height: keys[keys!.length - 1]!.height!,
+    max_x,
+    max_y,
+    min_x,
+    min_y,
+    last_width,
+    last_height,
   }
 })
-const maxWidth = computed(() => {
-  return `${(position.value.max_x + position.value.min_x + position.value.last_width) * keyBoardKeySize}px`
+const width = computed(() => {
+  return `${(position.value.max_x + position.value.min_x + position.value.last_width) * keyBoardKeySize + 2}px`
 })
-const maxHeight = computed(() => {
-  return `${(position.value.max_y + position.value.min_y + position.value.last_height) * keyBoardKeySize}px`
+const height = computed(() => {
+  return `${(position.value.max_y + position.value.min_y + position.value.last_height) * keyBoardKeySize + 2}px`
 })
+
+function getSelectValue(key: InstanceType<typeof KleKey>): 'outer' | 'inner' | null {
+  if (selectKeycodeHandler) {
+    return selectKeycodeHandler(key)
+  }
+  return null
+}
 </script>
 
 <template>
-  <div class="rounded-prime-md relative h-full w-full overflow-hidden" :style="{ maxWidth, maxHeight }">
+  <div class="rounded-prime-md relative h-full w-full overflow-hidden" :style="{ width, height }">
     <template
-      v-for="keys in keyboardStore.kleDefinition?.keys"
+      v-for="keys in keyBoardKeys"
       :key="keys"
     >
       <div
         class="rounded-prime-md absolute z-10 "
         :style="{
-          top: `${keys.y * keyBoardKeySize}px`,
-          left: `${keys.x * keyBoardKeySize}px`,
+          top: `${keys.y * keyBoardKeySize + 2}px`,
+          left: `${keys.x * keyBoardKeySize + 2}px`,
           transform: `rotate(${keys.rotation_angle}deg)`,
           transformOrigin: `calc(${(-keys.x + keys.rotation_x) * keyBoardKeySize}px)` + `calc(${(-keys.y + keys.rotation_y) * keyBoardKeySize}px)`,
         }"
       >
         <KeyMapKey
-          :keys="labelToDisplay(keys, pageKeymapStore.currLayer)"
+          :keys="labelToDisplay(keys, layer)"
           :kle-props="keys"
-          :select="selectKeycode(keys)"
+          :select="getSelectValue(keys)"
           :default-key-size="keyBoardKeySize"
           :key-margin="keyBoardKeySize / 8"
-          @click="setKeycode($event, keys)"
+          @click="emit('setKeycode', $event, keys)"
         />
       </div>
     </template>
