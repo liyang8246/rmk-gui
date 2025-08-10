@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore()
 
-const keyBoardKeySize = ref(42)
+const keyBoardKeySize = ref(56)
 
 const currLayer = ref(0)
 const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
