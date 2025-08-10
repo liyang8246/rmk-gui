@@ -1,49 +1,96 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import Aura from '@primeuix/themes/aura'
+
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
+  app: {
+    head: {
+      title: 'RMK-GUI',
+      meta: [
+        {
+          name: 'description',
+          content: 'A gui configuration for RMK based on Tauri and Nuxt',
+        },
+      ],
+    },
+  },
+  css: ['primeicons/primeicons.css'],
+  // Development Config
   future: {
     compatibilityVersion: 4,
   },
+  compatibilityDate: '2025-06-23',
   devtools: { enabled: true },
   ssr: false,
-  devServer: { host: process.env.TAURI_DEV_HOST || 'localhost' },
-
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        types: ['@types/w3c-web-hid'],
+      },
+    },
+  },
   imports: {
+    dirs: ['types'],
     presets: [
       {
         from: '@tauri-apps/api/core',
         imports: ['invoke'],
       },
+      {
+        from: 'xz-decompress',
+        imports: ['XzReadableStream'],
+      },
+      {
+        from: '@kcf-hub/kle-serial',
+        imports: ['deserialize'],
+      },
+      {
+        from: '@kcf-hub/kle-serial/dist/interfaces',
+        imports: [
+          ['Keyboard', 'KleBoard'],
+          ['Key', 'KleKey'],
+        ],
+      },
     ],
   },
-
-  app: {
-    pageTransition: { name: 'page', mode: 'out-in' },
-  },
-
-  typescript: {
-    typeCheck: true,
-  },
-
-  css: ['~/assets/main.css'],
+  // Module Configurations
+  modules: [
+    '@nuxtjs/tailwindcss',
+    '@primevue/nuxt-module',
+    '@pinia/nuxt',
+    '@nuxt/icon',
+    '@nuxtjs/color-mode',
+    '@vueuse/nuxt',
+  ],
   tailwindcss: {
-    cssPath: '~/assets/main.css',
+    configPath: 'tailwind.config.ts',
   },
-  shadcn: {
-    prefix: '',
-    componentDir: './app/components/ui',
+  primevue: {
+    options: {
+      theme: {
+        preset: Aura,
+        options: {
+          darkModeSelector: '.dark-mode',
+        },
+      },
+      ripple: true,
+    },
+    autoImport: true,
   },
-  colorMode: {
-    classSuffix: '',
-  },
-
   vite: {
-    clearScreen: false,
-    envPrefix: ['VITE_', 'TAURI_'],
-    server: {
-      strictPort: true,
+    build: {
+      chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('primevue')) {
+              return 'primevue'
+            }
+            if (id.includes('node_modules')) {
+              return 'vendor'
+            }
+            return 'main'
+          },
+        },
+      },
     },
   },
-
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode', '@pinia/nuxt', 'shadcn-nuxt', '@nuxt/icon'],
-});
+})

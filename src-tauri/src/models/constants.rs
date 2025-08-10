@@ -4,26 +4,26 @@ pub const VIAL_USAGE_PAGE_MAGIC: u16 = 0xFF60;
 pub const VIAL_USAGE_MAGIC: u16 = 0x61;
 
 pub const MSG_LEN: usize = 32;
-pub const BUFFER_FETCH_CHUNK: usize = 28;
+// pub const BUFFER_FETCH_CHUNK: usize = 28;
 
-#[repr(u8)]
-pub enum VialCommand {
-    GetSize            = 0x01,
-    GetDefinition      = 0x02,
-    SetKeycode         = 0x05,
-    GetMacroCount      = 0x0C,
-    GetMacroBuffer     = 0x0E,
-    GetMacroBufferSize = 0x0D,
-    GetLayerCount      = 0x11,
-    GetKeymapBuffer    = 0x12,
-    VialPrefix         = 0xFE,
-}
+// #[repr(u8)]
+// pub enum VialCommand {
+//     GetSize            = 0x01,
+//     GetDefinition      = 0x02,
+//     SetKeycode         = 0x05,
+//     GetMacroCount      = 0x0C,
+//     GetMacroBuffer     = 0x0E,
+//     GetMacroBufferSize = 0x0D,
+//     GetLayerCount      = 0x11,
+//     GetKeymapBuffer    = 0x12,
+//     VialPrefix         = 0xFE,
+// }
 
-impl Into<u8> for VialCommand {
-    fn into(self) -> u8 {
-        self as u8
-    }
-}
+// impl Into<u8> for VialCommand {
+//     fn into(self) -> u8 {
+//         self as u8
+//     }
+// }
 
 // The list of commands that VIA uses
 // #[repr(u8)]

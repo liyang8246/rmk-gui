@@ -1,24 +1,57 @@
-name: "build-test"
+name: build-test
 
-on: 
-  [push, pull_request, workflow_dispatch]
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
-  test-tauri:
+  lint:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '>=3.11'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run lint check
+        run: pnpm lint:check
+
+  build:
+    needs: lint
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: "macos-latest" # for Arm based macs (M1 and above).
-            args: "--target aarch64-apple-darwin"
-          - platform: "macos-latest" # for Intel based macs.
-            args: "--target x86_64-apple-darwin"
-          - platform: "ubuntu-24.04" # for Tauri v1 you could replace this with ubuntu-20.04.
-            args: "--target x86_64-unknown-linux-gnu"
-          # - platform: "ubuntu-24.04"
-          #   args: "--target aarch64-unknown-linux-gnu"
-          - platform: "windows-latest"
-            args: ""
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+          - platform: ubuntu-24.04
+            args: --target x86_64-unknown-linux-gnu
+          - platform: windows-latest
+            args: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -32,7 +65,6 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: install dependencies (ubuntu only)
@@ -41,13 +73,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libudev-dev
           rustup target add aarch64-unknown-linux-gnu
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
-      - name: install frontend dependencies
-        run: |
-          npm install -g pnpm
-          pnpm install
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '>=3.11'
+
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Cache Rust dependencies and build artifacts
         uses: actions/cache@v3
         with:
@@ -57,7 +94,6 @@ jobs:
             src-tauri/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      # If tagName and releaseId are omitted tauri-action will only build the app and won't try to upload any assets.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

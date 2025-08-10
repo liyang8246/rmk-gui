@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "vue.volar",
+    "rust-lang.rust-analyzer",
+    "nuxtr.nuxtr-vscode"
+  ]
+}

@@ -1,22 +1,186 @@
-export const useKeyboardStore = defineStore('Keyboard', () => {
-  const keyboard = ref<Keyboard>({
-    name: '',
-    layer: 0,
-    macro: 0,
-    row: 0,
-    col: 0,
-    keys: [],
-  });
-  const keyboardSize = computed(() => {
-    let maxWidth = 0;
-    let maxHeight = 0;
-    keyboard.value.keys.forEach((key) => {
-      const rightEdge = key.position_x[0] * 58 + key.width[0] * 58;
-      const bottomEdge = key.position_y[0] * 58 + 58;
-      maxWidth = Math.max(maxWidth, rightEdge);
-      maxHeight = Math.max(maxHeight, bottomEdge);
-    });
-    return { width: maxWidth, height: maxHeight };
-  });
-  return { keyboard, keyboardSize };
-});
+export const useKeyboardStore = defineStore('keyboard', () => {
+  const hidDevice = ref<HIDInterface | null>(null)
+  const vialDevice = ref<VialInterface | null>(null)
+  const api = ref<HIDApi | null>(null)
+
+  const isConnected = computed(() => hidDevice.value != null)
+
+  const productName = ref<string | null>(null)
+  async function fetchProductName() {
+    if (!vialDevice.value) {
+      throw new Error('Device not connected')
+    }
+    productName.value = await vialDevice.value.productName()
+  }
+
+  const layerCount = ref<number | null>(null)
+  async function fetchLayerCount() {
+    if (!vialDevice.value) {
+      throw new Error('Device not connected')
+    }
+    layerCount.value = await vialDevice.value.layerCount()
+  }
+
+  const macroCount = ref<number | null>(null)
+  async function fetchMacroCount() {
+    if (!vialDevice.value) {
+      throw new Error('Device not connected')
+    }
+    macroCount.value = await vialDevice.value.marcoCount()
+  }
+
+  const vialJson = ref<VialJson | null>(null)
+  async function fetchVialJson() {
+    if (!vialDevice.value) {
+      throw new Error('Device not connected')
+    }
+    vialJson.value = await vialDevice.value.vialJson()
+  }
+
+  const kleDefinition = ref<InstanceType<typeof KleBoard> | null>(null)
+  function fetchKleDefinition() {
+    if (!vialDevice.value) {
+      throw new Error('Device not connected')
+    }
+    if (!vialJson.value) {
+      throw new Error('Vial JSON not available')
+    }
+    kleDefinition.value = vialDevice.value.kleDefinition(vialJson.value)
+  }
+
+  const keymap = ref<Map<string, number> | null>(null)
+  async function fetchKeymap() {
+    if (!vialDevice.value) {
+      throw new Error('Device not connected')
+    }
+    if (!layerCount.value) {
+      throw new Error('Layer count not available')
+    }
+    if (!vialJson.value) {
+      throw new Error('Vial JSON not available')
+    }
+    const layer = layerCount.value
+    const { rows, cols } = vialJson.value.matrix
+    keymap.value = await vialDevice.value.keymap(layer, rows, cols)
+  }
+
+  const layoutKeymap = ref<Map<string, number> | null>(null)
+  function fetchLayoutKeymap() {
+    if (!vialDevice.value) {
+      throw new Error('Vial device not available')
+    }
+    if (!kleDefinition.value) {
+      throw new Error('KLE definition not available')
+    }
+    if (!keymap.value) {
+      throw new Error('Keymap not available')
+    }
+    if (!layerCount.value) {
+      throw new Error('Layer count not available')
+    }
+    layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value, layerCount.value)
+  }
+
+  const keyMacros = ref<Array<Array<MacroAction>>>([])
+  async function fetchMacros() {
+    if (!vialDevice.value) {
+      throw new Error('Vial device not available')
+    }
+    if (!macroCount.value) {
+      throw new Error('Macro Count not available')
+    }
+    keyMacros.value = await vialDevice.value.macros(macroCount.value)
+  };
+
+  async function setKeycode(lyrRowCol: [number, number, number], keycode: number) {
+    if (!vialDevice.value) {
+      throw new Error('Vial device not available')
+    }
+    await vialDevice.value.setKeycode(lyrRowCol, keycode)
+  };
+
+  async function fetchAll() {
+    // 并行会报错
+    await fetchProductName()
+    await fetchLayerCount()
+    await fetchMacroCount()
+    await fetchVialJson()
+    fetchKleDefinition()
+    await fetchKeymap()
+    fetchLayoutKeymap()
+    await fetchMacros()
+  }
+
+  function cleanAll() {
+    productName.value = null
+    layerCount.value = null
+    macroCount.value = null
+    vialJson.value = null
+    kleDefinition.value = null
+    keymap.value = null
+    layoutKeymap.value = null
+  }
+
+  function initializeApi() {
+    if (api.value)
+      return
+    isTauri() ? (api.value = new TauriHIDApi()) : (api.value = new WebHIDApi())
+  }
+
+  async function list() {
+    if (!api.value) {
+      initializeApi()
+    }
+    if (!api.value) {
+      console.error('HID API not available')
+      return
+    }
+
+    return await api.value.listDevices()
+  }
+
+  async function connect(device: number[] | HIDDevice) {
+    if (!api.value) {
+      console.error('HID API not available')
+      return
+    }
+
+    hidDevice.value = await api.value.connectDevice(device)
+    vialDevice.value = new VialDevice(hidDevice.value)
+  }
+
+  async function disconnect() {
+    if (hidDevice.value) {
+      await hidDevice.value.disconnect()
+      hidDevice.value = null
+      vialDevice.value = null
+      cleanAll()
+    }
+  }
+
+  return {
+    device: vialDevice,
+    productName,
+    fetchProductName,
+    layerCount,
+    fetchLayerCount,
+    macroCount,
+    fetchMacroCount,
+    vialJson,
+    fetchVialJson,
+    kleDefinition,
+    fetchKleDefinition,
+    keymap,
+    fetchKeymap,
+    layoutKeymap,
+    fetchLayoutKeymap,
+    keyMacros,
+    fetchAll,
+    cleanAll,
+    list,
+    connect,
+    disconnect,
+    isConnected,
+    setKeycode,
+  }
+})
