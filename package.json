@@ -1,7 +1,7 @@
 {
   "name": "rmk-gui",
   "type": "module",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Gui configuration for RMK based on Tauri and Nuxt",
   "scripts": {
     "nuxt:prepare": "nuxt prepare",
