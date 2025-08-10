@@ -12,14 +12,6 @@ Gui configuration for <a href="https://github.com/HaoboGu/rmk">RMK</a> based on 
 This project is currently in the process of building an epic-level shit mountain. It is recommended to observe from a
 safe distance.
 
-## Preview
-
-| Home                                | Keymap                                |
-| ----------------------------------- | ------------------------------------- |
-| ![preview](./docs/preview_home.png) | ![preview](./docs/preview_keymap.png) |
-
-It is still in the early stages of development, and the preview images only represent the current state.
-
 ## Install
 
 Go to the release page to download the corresponding installation package Supports Windows (x64/x86), Linux (x64/arm64)
