@@ -1,6 +1,8 @@
 import re
 from collections import OrderedDict
-from lib import Key, gen_info, ext_keys
+from lib import Key, gen_info
+from extkey import ext_keys
+from symbol import special_symbol
 
 pattern = re.compile(r"^\s*(?P<enum>\w+)\s*=\s*(?P<code>0x[0-9A-Fa-f]+),?")
 
@@ -19,7 +21,9 @@ for line in keycodes.split("\n"):
     enum = match.group("enum")
     code = match.group("code")
     key_code = int(code, 16)
-    keys[key_code] = Key(key_code, enum, [None, enum])
+    symbol = [None, enum]
+    symbol = special_symbol(symbol)
+    keys[key_code] = Key(key_code, enum, symbol)
 
 for key in ext_keys:
     keys[key.code] = key
