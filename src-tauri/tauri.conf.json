@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "RMK-GUI",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "identifier": "com.rmk.gui",
   "build": {
     "beforeDevCommand": "pnpm web:dev",
@@ -27,7 +27,18 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["msi", "deb", "rpm", "app"],
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
+    "targets": [
+      "msi",
+      "deb",
+      "rpm",
+      "app"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }

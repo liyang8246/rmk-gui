@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/liyang8246/rmk-gui/compare/v0.3.0...v0.3.1) (2025-08-10)
+
+
+### Bug Fixes
+
+* **ui:** fix keys display overflow ([38577b9](https://github.com/liyang8246/rmk-gui/commit/38577b977a105e25e26a1af2071d26c1567d3cec))
+
 ## [0.3.0](https://github.com/liyang8246/rmk-gui/compare/v0.2.0...v0.3.0) (2025-04-09)
 
 
