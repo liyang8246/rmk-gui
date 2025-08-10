@@ -16,19 +16,6 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Update Cargo.lock
-        run: |
-          cd src-tauri
-          cargo check
-          git add Cargo.lock
-          git commit -m "Update Cargo.lock" || echo "No changes to commit"
-
-      - name: Push Cargo.lock changes
-        run: |
-          git push origin HEAD:${{ github.ref_name }} || echo "Nothing to push"
 
       - uses: googleapis/release-please-action@v4
         id: release
