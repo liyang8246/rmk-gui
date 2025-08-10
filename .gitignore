@@ -1,3 +1,7 @@
+# Tauri
+src-tauri/target/
+src-tauri/gen/schemas
+
 # Nuxt dev/build outputs
 .output
 .data
@@ -8,6 +12,12 @@ dist
 
 # Node dependencies
 node_modules
+
+# Python cache
+codegen/__pycache__/
+
+# Code gen
+app/types/keycode.ts
 
 # Logs
 logs

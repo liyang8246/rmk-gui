@@ -1,40 +1,33 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "$schema": "https://schema.tauri.app/config/2",
   "productName": "RMK-GUI",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "identifier": "com.rmk.gui",
   "build": {
-    "frontendDist": "../dist",
+    "beforeDevCommand": "pnpm web:dev",
+    "beforeBuildCommand": "pnpm web:build",
     "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "pnpm nuxt dev",
-    "beforeBuildCommand": "pnpm generate"
+    "frontendDist": "../dist"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "RMK-GUI",
-        "width": 960,
-        "height": 720,
-        "minWidth": 800,
-        "minHeight": 600,
-        "resizable": true,
-        "fullscreen": false
+        "width": 1200,
+        "height": 800,
+        "minHeight": 800,
+        "minWidth": 1200,
+        "dragDropEnabled": false
       }
     ],
     "security": {
       "csp": null
-    },
-    "withGlobalTauri": true
+    }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ]
+    "targets": ["msi", "deb", "rpm", "app"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
   }
 }

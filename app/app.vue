@@ -1,18 +1,16 @@
-<script lang="ts" setup>
-const hidDevicesStore = useHidDevicesStore();
-hidDevicesStore.devices = await invoke<{ product_string: string; path: number[] }[]>('get_vial_devices').catch((e) => {
-  showErrorToast(e);
-  return [];
-});
+<script setup lang="ts">
 </script>
 
 <template>
-  <main class="flex h-screen bg-base-200">
-    <Sidebar />
-    <div class="flex-grow flex flex-col">
+  <div class="flex h-screen bg-surface-200 dark:bg-surface-900 select-none">
+    <Aside />
+    <div class="flex flex-1 flex-col overflow-hidden">
       <Header />
-      <NuxtPage class="flex-grow" />
+      <div class="h-full w-full overflow-hidden">
+        <ScrollPanel class="overflow-hidden h-full w-full">
+          <NuxtPage />
+        </ScrollPanel>
+      </div>
     </div>
-    <Toaster />
-  </main>
+  </div>
 </template>

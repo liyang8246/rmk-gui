@@ -1,67 +1,40 @@
 <script lang="ts" setup>
-const guiVersion = ref<string | null>(null);
-const layerCount = ref<number | null>(null);
-const keyCount = ref<number | null>(null);
-const macrosCount = ref<number | null>(null);
-const { keyboard } = useKeyboardStore();
+const keyboardStore = useKeyboardStore()
+const value = ref('LayerCount')
 
-onMounted(async () => {
-  const [version, layers, keys, macros] = await Promise.all([
-    invoke<string>('get_gui_version').catch((e) => {
-      showErrorToast(e);
-      return null;
-    }),
-    invoke<number>('get_layer_count').catch((e) => {
-      showErrorToast(e);
-      return null;
-    }),
-    invoke<number>('get_key_count').catch((e) => {
-      showErrorToast(e);
-      return null;
-    }),
-    invoke<number>('get_macro_count').catch((e) => {
-      showErrorToast(e);
-      return null;
-    }),
-  ]);
-  guiVersion.value = version;
-  layerCount.value = layers;
-  keyboard.layer = layers ?? 0;
-  keyboard.macro = macros ?? 0;
-  keyCount.value = keys;
-  macrosCount.value = macros;
-});
+interface DisplayItem {
+  label: string
+  value: () => any
+}
+
+const displayOptions: Record<string, DisplayItem> = {
+  LayerCount: { label: 'LayerCount', value: () => keyboardStore.layerCount },
+  MacroCount: { label: 'MacroCount', value: () => keyboardStore.macroCount },
+  VialJson: { label: 'VialJson', value: () => keyboardStore.vialJson },
+  Keymap: { label: 'Keymap', value: () => keyboardStore.keymap },
+  KleDefinition: { label: 'KleDefinition', value: () => keyboardStore.kleDefinition },
+  getMacros: { label: 'getMacros', value: () => keyboardStore.keyMacros },
+}
+
+const currentDisplay = computed<DisplayItem>(() => {
+  return displayOptions[value.value] || { label: '', value: () => undefined }
+})
 </script>
 
 <template>
-  <div class="flex flex-col">
-    <div class="flex flex-grow justify-center items-center">
-      <div class="grid grid-cols-3 gap-2 w-fit">
-        <div class="flex flex-col justify-center items-center bg-base-100 w-48 h-32 rounded-lg">
-          <div class="text-2xl font-bold">GUI</div>
-          <div>{{ guiVersion }}</div>
-        </div>
-        <div class="flex flex-col justify-center items-center bg-base-100 w-48 h-32 rounded-lg">
-          <div class="text-2xl font-bold">RMK</div>
-          <div>x.x.x</div>
-        </div>
-        <div class="flex flex-col justify-center items-center bg-base-100 w-48 h-32 rounded-lg">
-          <div class="text-2xl font-bold">Vial</div>
-          <div>x.x.x</div>
-        </div>
-        <div class="flex flex-col justify-center items-center bg-base-100 w-48 h-32 rounded-lg">
-          <div class="text-2xl font-bold">Layers</div>
-          <div>{{ layerCount }}</div>
-        </div>
-        <div class="flex flex-col justify-center items-center bg-base-100 w-48 h-32 rounded-lg">
-          <div class="text-2xl font-bold">Keys</div>
-          <div>{{ keyCount }}</div>
-        </div>
-        <div class="flex flex-col justify-center items-center bg-base-100 w-48 h-32 rounded-lg">
-          <div class="text-2xl font-bold">Macros</div>
-          <div>{{ macrosCount }}</div>
-        </div>
-      </div>
-    </div>
+  <div>
+    <select id="1" v-model="value" name="1">
+      <option
+        v-for="(option, key) in displayOptions"
+        :key="key"
+        :value="option.label"
+      >
+        {{ option.label }}
+      </option>
+    </select>
+  </div>
+  <div>
+    <span>{{ currentDisplay.label }}: </span>
+    <pre>{{ currentDisplay.value() }}</pre>
   </div>
 </template>

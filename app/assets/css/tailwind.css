@@ -1,0 +1,22 @@
+@layer tailwind-base, primevue, tailwind-utilities;
+
+@layer tailwind-base {
+  @tailwind base;
+}
+
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
+
+.rounded-prime-xl {
+  border-radius: var(--p-border-radius-xl);
+}
+
+.rounded-prime-md {
+  border-radius: var(--p-border-radius-md);
+}
+
+body {
+  overflow: hidden;
+}
