@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { keyCodeMap } from '~/types/keycode'
+
 const { area } = defineProps<{
   area?: 'inner' | 'outer' | null
 }>()
@@ -185,7 +187,23 @@ const ISOCodeMap = computed(() => {
     || (value.code >= 0x00E0 && value.code <= 0x00E7))
 })
 const LayersCodeMap = computed(() => {
-  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0x4000 && value.code <= 0x52FF)
+  const layerEntries = Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0x4000 && value.code <= 0x52FF)
+  
+  // Group by first 2-3 alpha characters (LT-, TO-, DF-, etc.)
+  const grouped = new Map<string, Array<[string, typeof keyCodeMap[number]]>>()
+  
+  layerEntries.forEach(([key, value]) => {
+    const symbol = value.symbol[0] || value.symbol[1] || ''
+    const match = symbol.match(/^([A-Z]{2,3})-/)
+    const prefix = match ? match[1] : 'Other'
+    
+    if (!grouped.has(prefix)) {
+      grouped.set(prefix, [])
+    }
+    grouped.get(prefix)!.push([key, value])
+  })
+  
+  return grouped
 })
 const QuantumCodeMap = computed(() => {
   return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
@@ -266,11 +284,27 @@ watch(() => area, () => {
                 />
               </div>
             </template>
-            <div class="h-full w-full flex flex-wrap items-start justify-start gap-2">
-              <template v-for="[, value] in tab.content" :key="value">
-                <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
-              </template>
-            </div>
+            <template v-if="tab.title === 'Layers'">
+              <div class="h-full w-full">
+                <template v-for="[groupName, entries] in tab.content" :key="groupName">
+                  <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">{{ groupName }}</h3>
+                    <div class="flex flex-wrap items-start justify-start gap-2">
+                      <template v-for="[, value] in entries" :key="value">
+                        <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+            <template v-else>
+              <div class="h-full w-full flex flex-wrap items-start justify-start gap-2">
+                <template v-for="[, value] in tab.content" :key="value">
+                  <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
+                </template>
+              </div>
+            </template>
           </div>
         </ScrollPanel>
       </TabPanel>
