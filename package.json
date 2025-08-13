@@ -34,21 +34,21 @@
     "xz-decompress": "0.2.2"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.17.0",
+    "@antfu/eslint-config": "5.2.1",
     "@nuxt/devtools": "2.6.2",
-    "@nuxt/icon": "1.15.0",
+    "@nuxt/icon": "2.0.0",
     "@nuxtjs/color-mode": "3.5.2",
     "@nuxtjs/tailwindcss": "6.14.0",
-    "@primevue/nuxt-module": "4.3.6",
+    "@primevue/nuxt-module": "4.3.7",
     "@tauri-apps/cli": "2.6.2",
     "@types/w3c-web-hid": "1.0.6",
     "@vueuse/nuxt": "13.5.0",
-    "eslint": "^9.31.0",
+    "eslint": "^9.33.0",
     "eslint-plugin-format": "^1.0.1",
     "npm-run-all": "^4.1.5",
-    "nuxt": "3.17.6",
+    "nuxt": "^4.0.3",
     "prettier-plugin-tailwindcss": "0.6.13",
-    "vue": "^3.5.0",
+    "vue": "^3.5.18",
     "vue-router": "4.5.1"
   }
 }

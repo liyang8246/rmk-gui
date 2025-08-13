@@ -12,7 +12,7 @@ export default defineNuxtConfig({
       ],
     },
   },
-  css: ['primeicons/primeicons.css'],
+  css: ['~/assets/main.css'],
   // Development Config
   future: {
     compatibilityVersion: 4,
