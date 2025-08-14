@@ -1,4 +1,5 @@
 <script setup lang="ts">
+await useThemeStore().fetchAll()
 </script>
 
 <template>

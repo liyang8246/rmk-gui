@@ -17,6 +17,7 @@ pub fn run() {
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
         .manage(state)
         .invoke_handler(tauri::generate_handler![
             list,
