@@ -1,6 +1,5 @@
 <script setup lang="ts">
-const themeStore = useThemeStore()
-themeStore.persistTheme()
+await useThemeStore().fetchAll()
 </script>
 
 <template>

@@ -1,7 +1,11 @@
 import { updatePrimaryPalette, updateSurfacePalette } from '@primeuix/themes'
 
 export const useThemeStore = defineStore('Theme', () => {
-  const appState = ref({
+  interface AppState {
+    primary: string
+    surface: string
+  }
+  const appState = ref<AppState>({
     primary: 'emerald',
     surface: 'slate',
   })
@@ -422,10 +426,39 @@ export const useThemeStore = defineStore('Theme', () => {
     }
   }
 
-  function persistTheme() {
-    updatePrimaryPalette(primaryColors.value.find(c => c.name === appState.value.primary)?.palette)
-    updateSurfacePalette(surfaces.value.find(s => s.name === appState.value.surface)?.palette)
+  const hybridStorage = ref<TauriStorage | WebStorage | null>()
+  async function fetchHybridStorage() {
+    hybridStorage.value = await createHybridStorage()
   }
+  async function fetchTheme() {
+    if (!hybridStorage.value) {
+      throw new Error('Hybrid storage not initialized')
+    }
+    const value = await hybridStorage.value.getItem('theme')
+
+    if (value) {
+      const originValue = JSON.parse(value) as AppState
+      appState.value = originValue
+      updatePrimaryPalette(primaryColors.value.find(c => c.name === originValue.primary)?.palette)
+      updateSurfacePalette(surfaces.value.find(s => s.name === originValue.surface)?.palette)
+    }
+  }
+
+  async function fetchAll() {
+    await fetchHybridStorage()
+    await fetchTheme()
+  }
+  watch(
+    appState,
+    (newState) => {
+      if (!hybridStorage.value) {
+        throw new Error('Hybrid storage not initialized')
+      }
+      hybridStorage.value.setItem('theme', JSON.stringify(newState))
+    },
+    { deep: true },
+  )
+
   return {
     appState,
     primaryColors,
@@ -433,11 +466,8 @@ export const useThemeStore = defineStore('Theme', () => {
     setPrimary,
     setSurface,
     updateColors,
-    persistTheme,
+    fetchHybridStorage,
+    fetchTheme,
+    fetchAll,
   }
-}, {
-  persist: {
-    key: 'rmk-theme',
-    pick: ['appState'],
-  },
 })

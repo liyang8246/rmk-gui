@@ -25,6 +25,7 @@
     "@primeuix/themes": "1.2.0",
     "@primevue/forms": "4.3.6",
     "@tauri-apps/api": "2.6.0",
+    "@tauri-apps/plugin-store": "^2.3.0",
     "pinia": "3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
     "primeicons": "7.0.0",
