@@ -4,7 +4,6 @@ export const useThemeStore = defineStore('Theme', () => {
   const appState = ref({
     primary: 'emerald',
     surface: 'slate',
-    darkMode: false,
   })
   const primaryColors = ref([
     {
@@ -423,16 +422,22 @@ export const useThemeStore = defineStore('Theme', () => {
     }
   }
 
-  const primary = computed(() => appState.value.primary)
-  const surface = computed(() => appState.value.surface)
-
+  function persistTheme() {
+    updatePrimaryPalette(primaryColors.value.find(c => c.name === appState.value.primary)?.palette)
+    updateSurfacePalette(surfaces.value.find(s => s.name === appState.value.surface)?.palette)
+  }
   return {
+    appState,
     primaryColors,
     surfaces,
-    primary,
-    surface,
     setPrimary,
     setSurface,
     updateColors,
+    persistTheme,
   }
+}, {
+  persist: {
+    key: 'rmk-theme',
+    pick: ['appState'],
+  },
 })

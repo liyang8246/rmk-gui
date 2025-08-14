@@ -29,7 +29,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
             }"
             icon="pi pi-palette"
             class="w-28 h-9 !justify-start"
-            :label="themeStore.primary"
+            :label="themeStore.appState.primary"
             aria-label="Settings"
           />
           <div
@@ -42,7 +42,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
                 type="button"
                 :title="pc.name"
                 class="w-5 h-5 rounded-full cursor-pointer transition-all duration-300" :class="[
-                  { 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface-0 dark:ring-offset-surface-900': themeStore.primary === pc.name },
+                  { 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface-0 dark:ring-offset-surface-900': themeStore.appState.primary === pc.name },
                 ]"
                 :style="{ backgroundColor: pc.palette['500'] }"
                 @click="themeStore.updateColors('primary', pc.name)"
@@ -65,7 +65,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
             }"
             icon="pi pi-desktop"
             class="w-28 h-9 !bg-surface-500 !border-surface-500 !justify-start"
-            :label="themeStore.surface"
+            :label="themeStore.appState.surface"
             aria-label="Settings"
           />
           <div
@@ -78,7 +78,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
                 type="button"
                 :title="surface.name"
                 class="w-5 h-5 rounded-full cursor-pointer transition-all duration-300" :class="[
-                  { 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface-0 dark:ring-offset-surface-900': themeStore.surface === surface.name },
+                  { 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface-0 dark:ring-offset-surface-900': themeStore.appState.surface === surface.name },
                 ]"
                 :style="{ backgroundColor: surface.palette['500'] }"
                 @click="themeStore.updateColors('surface', surface.name)"

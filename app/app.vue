@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const themeStore = useThemeStore()
+themeStore.persistTheme()
 </script>
 
 <template>
