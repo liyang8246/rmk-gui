@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useThemeStore()
 </script>
 
 <template>

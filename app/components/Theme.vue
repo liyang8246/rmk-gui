@@ -37,7 +37,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
           >
             <div class="flex gap-2 flex-wrap justify-between">
               <button
-                v-for="pc of themeStore.primaryColors"
+                v-for="pc of primaryColors"
                 :key="pc.name"
                 type="button"
                 :title="pc.name"
@@ -45,7 +45,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
                   { 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface-0 dark:ring-offset-surface-900': themeStore.primary === pc.name },
                 ]"
                 :style="{ backgroundColor: pc.palette['500'] }"
-                @click="themeStore.updateColors('primary', pc.name)"
+                @click="themeStore.primary = pc.name"
               />
             </div>
           </div>
@@ -73,7 +73,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
           >
             <div class="flex gap-2 flex-wrap justify-between">
               <button
-                v-for="surface of themeStore.surfaces"
+                v-for="surface of surfaces"
                 :key="surface.name"
                 type="button"
                 :title="surface.name"
@@ -81,7 +81,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
                   { 'ring-2 ring-primary-500 ring-offset-2 ring-offset-surface-0 dark:ring-offset-surface-900': themeStore.surface === surface.name },
                 ]"
                 :style="{ backgroundColor: surface.palette['500'] }"
-                @click="themeStore.updateColors('surface', surface.name)"
+                @click="themeStore.surface = surface.name"
               />
             </div>
           </div>

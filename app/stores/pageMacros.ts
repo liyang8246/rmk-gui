@@ -1,4 +1,4 @@
-export const usePageMacrosStore = defineStore('PageMacros', () => {
+export const usePageMacrosStore = defineStore('pageMacros', () => {
   const currMacro = ref(0)
   const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
   const showMapperPanel = ref(false)
