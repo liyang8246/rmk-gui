@@ -23,7 +23,9 @@ pub fn run() {
             connect,
             disconnect,
             product_name,
-            write_read
+            write_read,
+            storage_read,
+            storage_write
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");

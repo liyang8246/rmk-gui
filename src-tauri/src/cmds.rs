@@ -1,8 +1,10 @@
 use std::ffi::CString;
+use std::collections::HashMap;
+use std::fs;
 
 use crate::{
     models::{AppState, VialDevice},
-    utils::{hid_write_read, is_vial_device},
+    utils::{hid_write_read, is_vial_device, config_file},
 };
 
 #[tauri::command]
@@ -67,4 +69,32 @@ pub async fn write_read(state: tauri::State<'_, AppState>, data: Vec<u8>) -> Res
     let data = hid_write_read(device, &data).unwrap();
 
     Ok(data)
+}
+
+#[tauri::command]
+pub async fn storage_read(key: String) -> Result<Option<String>, String> {
+    let config_path = config_file();
+    let content = fs::read_to_string(config_path).map_err(|e| format!("Failed to read config file: {e}"))?;
+    
+    let config: HashMap<String, String> = toml::from_str(&content).map_err(|e| format!("Failed to parse config file: {e}"))?;
+    
+    Ok(config.get(&key).cloned())
+}
+
+#[tauri::command]
+pub async fn storage_write(key: String, value: String) -> Result<(), String> {
+    println!("Writing to storage: {key} = {value}");
+    let config_path = config_file();
+    let mut config: HashMap<String, String> = HashMap::new();
+
+    let content = fs::read_to_string(&config_path).unwrap();
+    if let Ok(existing_config) = toml::from_str(&content) {
+        config = existing_config;
+    }
+    config.insert(key, value);
+
+    let toml_string = toml::to_string(&config).map_err(|e| format!("Failed to serialize config: {e}"))?;
+    fs::write(config_path, toml_string).map_err(|e| format!("Failed to write config file: {e}"))?;
+    
+    Ok(())
 }

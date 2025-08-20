@@ -23,8 +23,18 @@ class LocalStorageAdapter implements StorageAdapter {
   }
 }
 
+class TauriStorageAdapter implements StorageAdapter {
+  async read(key: string): Promise<any> {
+    return await invoke<string | null>('storage_read', { key })
+  }
+
+  async write(key: string, value: any): Promise<void> {
+    return await invoke('storage_write', { key, value })
+  }
+}
+
 function storageAdapter(): StorageAdapter {
-  return new LocalStorageAdapter()
+  return isTauri() ? new TauriStorageAdapter() : new LocalStorageAdapter()
 }
 
 function piniaPersist({ store, options }: PiniaPluginContext) {
