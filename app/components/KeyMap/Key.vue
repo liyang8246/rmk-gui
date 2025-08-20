@@ -68,18 +68,18 @@ function isOuterStyle() {
 function isOuterShadow() {
   return select && select === 'outer'
     ? 'shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
-    : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900'
+    : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900 group-active:shadow-surface-600 group-active:dark:shadow-surface-950'
 }
 function isInnerStyle() {
   return select && select === 'inner'
     ? 'bg-primary-100 dark:bg-primary-600 text-surface-900 dark:text-surface-100'
-    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 group-active:bg-surface-400 group-active:dark:bg-surface-700'
+    : 'bg-surface-300 dark:bg-surface-600 text-surface-700 dark:text-surface-300 active:bg-surface-400 active:dark:bg-surface-700'
 }
 </script>
 
 <template>
   <div
-    class="rounded-prime-md group relative cursor-pointer select-none text-center font-bold"
+    class="rounded-prime-md relative cursor-pointer select-none text-center font-bold"
     :style="{
       width: fitKeySize(maxKeySize(kleProps.width, kleProps.width2)),
       height: fitKeySize(maxKeySize(kleProps.height, kleProps.height2)),
@@ -87,15 +87,15 @@ function isInnerStyle() {
       lineHeight: `${Math.round(defaultKeySize / 5)}px`,
     }"
   >
-    <label>
+    <div class="group">
       <div
         class="rounded-prime-md absolute transition-all duration-200"
         :class="isOuterShadow()"
         :style="{
           width: fitKeySize(kleProps.width2),
           height: fitKeySize(kleProps.height2),
-          ...(kleProps.y2 !== 0 && { top: `${kleProps.y2 * defaultKeySize}px` }),
-          ...(kleProps.x2 !== 0 && { left: `${kleProps.x2 * defaultKeySize}px` }),
+          top: `${kleProps.y2 * defaultKeySize}px`,
+          left: `${kleProps.x2 * defaultKeySize}px`,
         }"
       />
       <div
@@ -106,20 +106,20 @@ function isInnerStyle() {
           height: fitKeySize(kleProps.height),
         }"
       />
-      <div
-        class="rounded-prime-md absolute cursor-pointer transition-all duration-200"
+      <button
+        class="rounded-prime-md absolute transition-all duration-200"
         :class="isOuterStyle()"
         :style="{
           width: fitKeySize(kleProps.width2),
           height: fitKeySize(kleProps.height2),
-          ...(kleProps.y2 !== 0 && { top: `${kleProps.y2 * defaultKeySize}px` }),
-          ...(kleProps.x2 !== 0 && { left: `${kleProps.x2 * defaultKeySize}px` }),
+          top: `${kleProps.y2 * defaultKeySize}px`,
+          left: `${kleProps.x2 * defaultKeySize}px`,
         }"
         @click.stop="emit('click', 'outer')"
       />
-      <div v-if="keys[0]" class="relative">
-        <div
-          class="rounded-prime-md absolute flex cursor-pointer justify-center pt-[3px] transition-all duration-200"
+      <div v-if="keys[0]">
+        <button
+          class="rounded-prime-md absolute flex justify-center pt-[3px] transition-all duration-200"
           :class="isOuterStyle()"
           :style="{
             width: fitKeySize(kleProps.width),
@@ -128,20 +128,7 @@ function isInnerStyle() {
           @click.stop="emit('click', 'outer')"
         >
           <span>{{ keyBreaks(keys[0]) }}</span>
-        </div>
-        <div
-          class="rounded-prime-md absolute flex cursor-pointer items-center justify-center border-surface-800 transition-all duration-200 dark:border-surface-200"
-          :class="isInnerStyle()"
-          :style="{
-            top: `${defaultKeySize / 3}px`,
-            left: `${keyMargin / 2}px`,
-            width: `${kleProps.width * defaultKeySize - keyMargin * 2}px`,
-            height: `${kleProps.height * defaultKeySize - keyMargin * 1.5 - defaultKeySize / 3}px`,
-          }"
-          @click.stop="emit('click', 'inner')"
-        >
-          <span>{{ keyBreaks(keys[1]) }}</span>
-        </div>
+        </button>
         <div
           class="absolute bg-surface-500 dark:bg-surface-400"
           :style="{
@@ -152,9 +139,9 @@ function isInnerStyle() {
           }"
         />
       </div>
-      <div
+      <button
         v-else
-        class="rounded-prime-md absolute flex cursor-pointer items-center justify-center transition-all duration-200"
+        class="rounded-prime-md absolute flex items-center justify-center transition-all duration-200"
         :class="isOuterStyle()"
         :style="{
           width: fitKeySize(kleProps.width),
@@ -163,7 +150,21 @@ function isInnerStyle() {
         @click.stop="emit('click', 'outer')"
       >
         <span>{{ keyBreaks(keys[1]) }}</span>
-      </div>
-    </label>
+      </button>
+    </div>
+    <button
+      v-if="keys[0]"
+      class="rounded-prime-md absolute flex items-center justify-center border-surface-800 transition-all duration-200 dark:border-surface-200"
+      :class="isInnerStyle()"
+      :style="{
+        top: `${defaultKeySize / 3}px`,
+        left: `${keyMargin / 2}px`,
+        width: `${kleProps.width * defaultKeySize - keyMargin * 2}px`,
+        height: `${kleProps.height * defaultKeySize - keyMargin * 1.5 - defaultKeySize / 3}px`,
+      }"
+      @click.stop="emit('click', 'inner')"
+    >
+      <span>{{ keyBreaks(keys[1]) }}</span>
+    </button>
   </div>
 </template>
