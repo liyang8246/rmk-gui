@@ -1,4 +1,4 @@
-use std::fs::{self, OpenOptions};
+use std::fs;
 use std::path::PathBuf;
 
 use hidapi::{DeviceInfo, HidDevice};
@@ -41,11 +41,7 @@ pub fn config_file() -> PathBuf {
     fs::create_dir_all(&rmk_dir).unwrap();
     let config_file_path = rmk_dir.join("config.toml");
     if !config_file_path.exists() {
-        OpenOptions::new()
-            .create(true)
-            .truncate(false)
-            .open(&config_file_path)
-            .unwrap();
+        fs::File::create(&config_file_path).unwrap();
     }
     config_file_path
 }
