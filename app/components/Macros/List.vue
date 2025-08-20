@@ -23,13 +23,13 @@ function selectKeycode(row: number, col: number) {
     v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
     :animation="150"
     group="people"
-    handle=".handle"
+    handle=".cursor-move"
     class="rounded-prime-md flex min-h-full w-full flex-col gap-2 p-1"
   >
     <div
       v-for="i, index in keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
       :key="i.type"
-      class="  rounded-prime-md flex min-h-14 w-full items-center justify-between gap-3 bg-surface-200 px-2 dark:bg-surface-900"
+      class="rounded-prime-md flex min-h-14 w-full items-center justify-between gap-3 bg-surface-200 px-2 dark:bg-surface-900"
     >
       <div class="flex h-full w-40 items-center justify-start gap-2">
         <span class="flex size-8 cursor-move items-center justify-center transition-all duration-200 hover:text-surface-700 dark:hover:text-surface-300">
@@ -37,7 +37,7 @@ function selectKeycode(row: number, col: number) {
         </span>
         <MacrosSelect :index="index" />
       </div>
-      <div class=" size-full overflow-hidden">
+      <div class="size-full overflow-hidden">
         <div v-if="(i as { text: string | null }).text !== undefined" class=" flex size-full items-center justify-start gap-2">
           <InputText
             v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.text"
@@ -54,7 +54,7 @@ function selectKeycode(row: number, col: number) {
             type="number"
           />
         </div>
-        <div v-else class=" relative m-1 flex size-full items-center justify-start gap-2">
+        <div v-else class="relative m-1 flex size-full items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
             <KeyMapKey
               :keys="keyCode"

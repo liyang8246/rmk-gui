@@ -18,16 +18,18 @@ function compare(index: number) {
 </script>
 
 <template>
-  <div class="rounded-prime-md flex select-none items-center gap-1 bg-surface-300 px-3 py-1 text-sm shadow-sm shadow-surface-400 dark:bg-surface-600 dark:shadow-surface-950">
-    <span class="text-surface-700 dark:text-surface-300">{{ text }} </span>
-    <ul v-for="index in indices" :key="index">
-      <label>
-        <li
-          class="rounded-prime-md flex h-6 w-7 cursor-pointer items-center justify-center border-0 transition-all duration-300"
-          :class="compare(index)"
-        >
-          <button class="font-medium" @click="emit('change', index)">{{ index }}</button>
-        </li></label>
+  <div class="rounded-prime-md flex select-none items-center gap-3 bg-surface-300 px-3 py-1 font-semibold shadow-sm shadow-surface-400 dark:bg-surface-600 dark:shadow-surface-950">
+    <span class="text-sm text-surface-700 dark:text-surface-300">{{ text }} </span>
+    <ul class="flex items-center justify-center gap-1 text-xs">
+      <li
+        v-for="index in indices" :key="index"
+        class="rounded-prime-md flex h-6 w-7 cursor-pointer items-center justify-center transition-all duration-300"
+        :class="compare(index)"
+      >
+        <button @click="emit('change', index)">
+          <span>{{ index }}</span>
+        </button>
+      </li>
     </ul>
   </div>
 </template>
