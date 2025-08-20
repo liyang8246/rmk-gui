@@ -237,7 +237,7 @@ watch(() => area, () => {
 <template>
   <Tabs v-model:value="activeTab" class=" flex size-full flex-col items-center justify-start" scrollable>
     <TabList class=" flex h-10 w-full items-start justify-start">
-      <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="!bg-suface-0 h-10 !p-3 !pt-2 text-sm dark:!bg-surface-900">
+      <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="h-10 !p-3 !pt-2 text-sm">
         {{ tab.title }}
       </Tab>
     </TabList>

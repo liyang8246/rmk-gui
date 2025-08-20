@@ -18,7 +18,7 @@ function compare(index: number) {
 </script>
 
 <template>
-  <div class="text-md rounded-prime-md flex select-none items-center gap-1 bg-surface-300 px-3 py-1 shadow-sm shadow-surface-400 dark:bg-surface-600 dark:shadow-surface-950">
+  <div class="rounded-prime-md flex select-none items-center gap-1 bg-surface-300 px-3 py-1 text-sm shadow-sm shadow-surface-400 dark:bg-surface-600 dark:shadow-surface-950">
     <span class="text-surface-700 dark:text-surface-300">{{ text }} </span>
     <ul v-for="index in indices" :key="index">
       <label>

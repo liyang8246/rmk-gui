@@ -19,7 +19,7 @@ const cardClasses = computed(() => {
 <template>
   <div
     v-ripple
-    class="ripple-box cardClasses rounded-prime-xl w-full border-0 p-3 transition-all duration-100" :class="[cardClasses]"
+    class="rounded-prime-xl w-full border-0 p-3 transition-all duration-100" :class="[cardClasses]"
   >
     <div class="flex ">
       <Icon :name="icon" class="mr-2 text-2xl" />

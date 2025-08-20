@@ -6,7 +6,8 @@ function delMacro(index: number) {
   keyboardStore.keyMacros[pageMacrosStore.currMacro]!.splice(index, 1)
 }
 function addKeyCode(index: number) {
-  keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCodeMap[1]!.symbol)
+  const keyCode = structuredClone(keyCodeMap[1]!.symbol)
+  keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCode)
 }
 function setKeycode(zone: 'outer' | 'inner', row: number, col: number) {
   pageMacrosStore.currKey = [pageMacrosStore.currMacro, row, col, zone]
@@ -30,8 +31,10 @@ function selectKeycode(row: number, col: number) {
       :key="i.type"
       class="  rounded-prime-md flex min-h-14 w-full items-center justify-between gap-3 bg-surface-200 px-2 dark:bg-surface-900"
     >
-      <div class="w-42 flex h-full items-center justify-start gap-2">
-        <span class=" handle size-8 cursor-move"><i class="pi pi-sort-alt size-4 p-2 text-2xl" /></span>
+      <div class="flex h-full w-40 items-center justify-start gap-2">
+        <span class="flex size-8 cursor-move items-center justify-center transition-all duration-200 hover:text-surface-700 dark:hover:text-surface-300">
+          <Icon name="tabler:arrows-down-up" />
+        </span>
         <MacrosSelect :index="index" />
       </div>
       <div class=" size-full overflow-hidden">
@@ -61,19 +64,19 @@ function selectKeycode(row: number, col: number) {
             />
           </template>
           <div
-            class="rounded-prime-md flex size-8 items-center justify-center bg-surface-300 shadow-sm transition-all duration-200 hover:text-surface-700 hover:shadow-surface-400 dark:bg-surface-600 dark:hover:text-surface-300 dark:hover:shadow-surface-900"
+            class="rounded-prime-md flex size-8 items-center justify-center transition-all duration-200 hover:text-surface-700 dark:hover:text-surface-300"
             @click="addKeyCode(index)"
           >
-            <i class="pi pi-plus size-4 text-2xl" />
+            <Icon name="tabler:plus" size="1.2rem" />
           </div>
         </div>
       </div>
-      <span
-        class="rounded-prime-md flex size-6 cursor-pointer items-center justify-center p-4 transition-colors duration-200 hover:text-surface-400"
+      <div
+        class="rounded-prime-md flex h-8 min-w-8 cursor-pointer items-center justify-center transition-colors duration-200 hover:text-surface-400 dark:hover:text-surface-300"
         @click="delMacro(index)"
       >
-        <i class="pi pi-times size-4 text-2xl" />
-      </span>
+        <Icon name="tabler:trash-x-filled" />
+      </div>
     </div>
   </VueDraggable>
 </template>

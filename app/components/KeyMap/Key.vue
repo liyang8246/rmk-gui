@@ -79,7 +79,7 @@ function isInnerStyle() {
 
 <template>
   <div
-    class="raletive rounded-prime-md group cursor-pointer select-none text-center font-bold"
+    class="rounded-prime-md group relative cursor-pointer select-none text-center font-bold"
     :style="{
       width: fitKeySize(maxKeySize(kleProps.width, kleProps.width2)),
       height: fitKeySize(maxKeySize(kleProps.height, kleProps.height2)),

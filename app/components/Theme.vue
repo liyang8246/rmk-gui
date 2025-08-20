@@ -2,9 +2,9 @@
 const themeStore = useThemeStore()
 
 const options = [
-  { icon: 'pi pi-sun text-base', label: 'light' },
-  { icon: 'pi pi-moon text-base', label: 'dark' },
-  { icon: 'pi pi-cog text-base', label: 'system' },
+  { icon: 'tabler:sun', label: 'light' },
+  { icon: 'tabler:moon-stars', label: 'dark' },
+  { icon: 'tabler:settings', label: 'system' },
 ]
 const value = ref(options.find(option => option.label === useColorMode().preference) || options[0]!)
 </script>
@@ -28,10 +28,12 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
               hideOnOutsideClick: true,
             }"
             icon="pi pi-palette"
-            class="h-9 w-28 !justify-start"
-            :label="themeStore.primary"
+            class="h-9 w-28 justify-start gap-2 pl-2"
             aria-label="Settings"
-          />
+          >
+            <Icon name="tabler:color-filter" />
+            <span>{{ themeStore.primary }}</span>
+          </Button>
           <div
             class="absolute right-0 top-10 z-50 hidden w-64 origin-top rounded-md border border-surface-200 bg-surface-0 p-4 shadow-lg dark:border-surface-700 dark:bg-surface-900"
           >
@@ -64,10 +66,12 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
               hideOnOutsideClick: true,
             }"
             icon="pi pi-desktop"
-            class="h-9 w-28 !justify-start !border-surface-500 !bg-surface-500"
-            :label="themeStore.surface"
+            class="h-9 w-28 justify-start gap-2 !border-surface-500 !bg-surface-500 pl-2"
             aria-label="Settings"
-          />
+          >
+            <Icon name="tabler:color-swatch" />
+            <span>{{ themeStore.surface }}</span>
+          </Button>
           <div
             class="absolute right-0 top-10 z-50 hidden w-64 origin-top rounded-md border border-surface-200 bg-surface-0 p-4 shadow-lg dark:border-surface-700 dark:bg-surface-900"
           >
@@ -89,7 +93,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
       </div>
       <div class="flex items-center justify-between">
         <span class="text-sm font-semibold text-surface-600 dark:text-surface-300">Mode</span>
-        <div class="card flex justify-start">
+        <div class="flex justify-start">
           <SelectButton
             v-model="value"
             :options="options"
@@ -98,7 +102,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
             @click="$colorMode.preference = value.label"
           >
             <template #option="slotProps">
-              <i :class="slotProps.option.icon" />
+              <Icon :name="slotProps.option.icon" />
               <span class="text-sm font-semibold text-surface-600 dark:text-surface-400">{{ slotProps.option.label }}</span>
             </template>
           </SelectButton>

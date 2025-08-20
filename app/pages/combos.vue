@@ -47,9 +47,9 @@ function selectKeycode(row: number, col: number) {
       <div v-for="list, list_index in keyList[currCombos]" :key="list_index" class="grid grid-cols-2 gap-2">
         <div class="flex flex-col items-center justify-around gap-2">
           <template v-for="(keyCode, keyCodes_index) in list" :key="keyCodes_index">
-            <span v-if="keyCodes_index < list.length - 1" class="h-42px flex items-center justify-center">key{{ keyCodes_index }}</span>
+            <span v-if="keyCodes_index < list.length - 1" class="flex h-[42px] items-center justify-center">key{{ keyCodes_index }}</span>
           </template>
-          <span class="h-42px flex items-center justify-center">outputKey</span>
+          <span class="flex h-[42px] items-center justify-center">outputKey</span>
         </div>
         <div class="flex flex-col items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in list" :key="keyCodes_index">
