@@ -37,7 +37,7 @@ pub fn hid_write_read(device: &HidDevice, data: &[u8]) -> Result<[u8; 32], Strin
 
 pub fn config_file() -> PathBuf {
     let config_dir = dirs::config_dir().unwrap();
-    let rmk_dir = config_dir.join("RmkGui");
+    let rmk_dir = config_dir.join("RMK-GUI");
     fs::create_dir_all(&rmk_dir).unwrap();
     let config_file_path = rmk_dir.join("config.toml");
     if !config_file_path.exists() {
