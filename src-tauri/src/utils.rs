@@ -1,3 +1,6 @@
+use std::fs::{self, OpenOptions};
+use std::path::PathBuf;
+
 use hidapi::{DeviceInfo, HidDevice};
 
 use crate::models::{MSG_LEN, VIAL_SERIAL_NUMBER_MAGIC, VIAL_USAGE_MAGIC, VIAL_USAGE_PAGE_MAGIC};
@@ -30,4 +33,19 @@ pub fn hid_write_read(device: &HidDevice, data: &[u8]) -> Result<[u8; 32], Strin
         .map_err(|e| format!("Device read failed: {e}"))?;
 
     Ok(read_buffer)
+}
+
+pub fn config_file() -> PathBuf {
+    let config_dir = dirs::config_dir().unwrap();
+    let rmk_dir = config_dir.join("RmkGui");
+    fs::create_dir_all(&rmk_dir).unwrap();
+    let config_file_path = rmk_dir.join("config.toml");
+    if !config_file_path.exists() {
+        OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&config_file_path)
+            .unwrap();
+    }
+    config_file_path
 }
