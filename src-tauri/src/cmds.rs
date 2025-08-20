@@ -1,10 +1,10 @@
-use std::ffi::CString;
 use std::collections::HashMap;
+use std::ffi::CString;
 use std::fs;
 
 use crate::{
     models::{AppState, VialDevice},
-    utils::{hid_write_read, is_vial_device, config_file},
+    utils::{config_file, hid_write_read, is_vial_device},
 };
 
 #[tauri::command]
