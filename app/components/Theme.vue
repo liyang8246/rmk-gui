@@ -7,6 +7,11 @@ const options = [
   { icon: 'tabler:settings', label: 'system' },
 ]
 const value = ref(options.find(option => option.label === useColorMode().preference) || options[0]!)
+const opSuface = ref()
+const opPrimary = ref()
+function toggle(value: any, event: MouseEvent) {
+  value.toggle(event)
+}
 </script>
 
 <template>
@@ -19,16 +24,10 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
         <span class="text-sm font-semibold text-surface-600 dark:text-surface-300">Primary</span>
         <div class="relative">
           <Button
-            v-styleclass="{
-              selector: '@next',
-              enterFromClass: 'hidden',
-              enterActiveClass: 'animate-scalein',
-              leaveToClass: 'hidden',
-              leaveActiveClass: 'animate-fadeout',
-              hideOnOutsideClick: true,
-            }"
+            type="button"
             aria-label="primary-setting"
             class="h-9 w-28 pl-2"
+            @click="toggle(opPrimary, $event)"
           >
             <template #default>
               <div class="flex size-full items-center justify-start gap-2">
@@ -37,10 +36,8 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
               </div>
             </template>
           </Button>
-          <div
-            class="absolute right-0 top-10 z-50 hidden w-64 origin-top rounded-md border border-surface-200 bg-surface-0 p-4 shadow-lg dark:border-surface-700 dark:bg-surface-900"
-          >
-            <div class="flex flex-wrap justify-between gap-2">
+          <Popover ref="opPrimary">
+            <div class="flex w-56 flex-wrap justify-start gap-2">
               <button
                 v-for="pc of primaryColors"
                 :key="pc.name"
@@ -53,23 +50,17 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
                 @click="themeStore.primary = pc.name"
               />
             </div>
-          </div>
+          </Popover>
         </div>
       </div>
       <div class="flex items-center justify-between">
         <span class="text-sm font-semibold text-surface-600 dark:text-surface-300">Surface</span>
         <div class="relative">
           <Button
-            v-styleclass="{
-              selector: '@next',
-              enterFromClass: 'hidden',
-              enterActiveClass: 'animate-scalein',
-              leaveToClass: 'hidden',
-              leaveActiveClass: 'animate-fadeout',
-              hideOnOutsideClick: true,
-            }"
+            type="button"
             aria-label="surface-setting"
             class="h-9 w-28 !border-surface-500 !bg-surface-500 pl-2"
+            @click="toggle(opSuface, $event)"
           >
             <template #default>
               <div class="flex size-full items-center justify-start gap-2">
@@ -78,10 +69,8 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
               </div>
             </template>
           </Button>
-          <div
-            class="absolute right-0 top-10 z-50 hidden w-64 origin-top rounded-md border border-surface-200 bg-surface-0 p-4 shadow-lg dark:border-surface-700 dark:bg-surface-900"
-          >
-            <div class="flex flex-wrap justify-between gap-2">
+          <Popover ref="opSuface">
+            <div class="flex w-56 flex-wrap justify-start gap-2">
               <button
                 v-for="surface of surfaces"
                 :key="surface.name"
@@ -94,7 +83,7 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
                 @click="themeStore.surface = surface.name"
               />
             </div>
-          </div>
+          </Popover>
         </div>
       </div>
       <div class="flex items-center justify-between">
