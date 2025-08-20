@@ -37,21 +37,21 @@ function selectKeycode(row: number, col: number) {
 
 <template>
   <div
-    class="flex flex-col justify-around items-center flex-auto gap-3 p-3 w-full h-full text-surface-500 dark:text-surface-400 overflow-hidden"
+    class="flex size-full flex-auto flex-col items-center justify-around gap-3 overflow-hidden p-3 text-surface-500 dark:text-surface-400"
     @click="clearSelectedProps()"
   >
-    <div class="flex justify-start items-start w-full">
+    <div class="flex w-full items-start justify-start">
       <Switcher text="Combos" :count="combosCount" :layer="currCombos" @change="currCombos = $event" />
     </div>
-    <div class="rounded-prime-md h-full w-full flex justify-center items-center gap-6 overflow-hidden transition-all duration-200">
+    <div class="rounded-prime-md flex size-full items-center justify-center gap-6 overflow-hidden transition-all duration-200">
       <div v-for="list, list_index in keyList[currCombos]" :key="list_index" class="grid grid-cols-2 gap-2">
-        <div class="flex flex-col justify-around items-center gap-2">
+        <div class="flex flex-col items-center justify-around gap-2">
           <template v-for="(keyCode, keyCodes_index) in list" :key="keyCodes_index">
-            <span v-if="keyCodes_index < list.length - 1" class="h-42px flex justify-center items-center">key{{ keyCodes_index }}</span>
+            <span v-if="keyCodes_index < list.length - 1" class="h-42px flex items-center justify-center">key{{ keyCodes_index }}</span>
           </template>
-          <span class="h-42px flex justify-center items-center">outputKey</span>
+          <span class="h-42px flex items-center justify-center">outputKey</span>
         </div>
-        <div class="flex flex-col justify-start items-center gap-2">
+        <div class="flex flex-col items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in list" :key="keyCodes_index">
             <KeyMapKey
               :keys="keyCode"

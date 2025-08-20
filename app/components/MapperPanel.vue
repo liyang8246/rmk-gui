@@ -235,21 +235,21 @@ watch(() => area, () => {
 </script>
 
 <template>
-  <Tabs v-model:value="activeTab" class=" flex flex-col items-center justify-start h-full w-full" scrollable>
-    <TabList class=" flex justify-start items-start h-10 w-full">
-      <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="h-10 !p-3 !pt-2 text-sm !bg-suface-0 dark:!bg-surface-900">
+  <Tabs v-model:value="activeTab" class=" flex size-full flex-col items-center justify-start" scrollable>
+    <TabList class=" flex h-10 w-full items-start justify-start">
+      <Tab v-for="tab in tabs" :key="tab.title" :value="tab.value" class="!bg-suface-0 h-10 !p-3 !pt-2 text-sm dark:!bg-surface-900">
         {{ tab.title }}
       </Tab>
     </TabList>
-    <TabPanels class="!p-3 h-[calc(100%-40px)] w-full">
-      <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="h-full w-full">
+    <TabPanels class="h-[calc(100%-40px)] w-full !p-3">
+      <TabPanel v-for="tab in tabs" :key="tab.value" :value="tab.value" class="size-full">
         <ScrollPanel
-          class="w-full h-full overflow-hidden"
+          class="size-full overflow-hidden"
           pt:barx:class="!hidden"
         >
           <div class="m-1 w-[calc(100%-8px)]">
             <template v-if="tab.title === 'base'">
-              <div class="h-full w-full flex justify-center items-start mb-8">
+              <div class="mb-8 flex size-full items-start justify-center">
                 <KeyMapKeyboardCanvas
                   :key-board-keys="baseKeyboard"
                   :key-board-keys-map="baseKeymap"
@@ -258,7 +258,7 @@ watch(() => area, () => {
               </div>
             </template>
             <template v-else-if="tab.title === 'ISO/JIS'">
-              <div class="h-full w-full flex justify-center items-start mb-5 pb-5">
+              <div class="mb-5 flex size-full items-start justify-center pb-5">
                 <KeyMapKeyboardCanvas
                   :key-board-keys="ISOKeyboard"
                   :key-board-keys-map="ISOKeymap"
@@ -266,7 +266,7 @@ watch(() => area, () => {
                 />
               </div>
             </template>
-            <div class="h-full w-full flex flex-wrap items-start justify-start gap-2">
+            <div class="flex size-full flex-wrap items-start justify-start gap-2">
               <template v-for="[, value] in tab.content" :key="value">
                 <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
               </template>

@@ -65,15 +65,15 @@ async function setMapperKeycode(key: number) {
 </script>
 
 <template>
-  <div class="flex flex-col justify-start items-center w-full h-full p-3">
-    <div class="flex flex-col items-center justify-start w-full h-full" @click="clearSelectedProps()">
+  <div class="flex size-full flex-col items-center justify-start p-3">
+    <div class="flex size-full flex-col items-center justify-start" @click="clearSelectedProps()">
       <div class="flex w-full items-center justify-start gap-3">
         <Switcher text="Layer" :count="keyboardStore.layerCount!" :layer="currLayer" @change="currLayer = $event" />
-        <div class="rounded-prime-xl card flex items-center justify-center h-5 bg-surface-200 dark:bg-surface-700 shadow-sm shadow-surface-400 dark:shadow-surface-950 px-[10px]">
-          <Slider v-model="keyBoardKeySize" class="w-40 !h-2" :min="30" :max="78" :step="1" />
+        <div class="rounded-prime-xl flex h-5 items-center justify-center bg-surface-200 px-[10px] shadow-sm shadow-surface-400 dark:bg-surface-700 dark:shadow-surface-950">
+          <Slider v-model="keyBoardKeySize" class="!h-2 w-40" :min="30" :max="78" :step="1" />
         </div>
       </div>
-      <div class="h-full w-full flex justify-center items-start">
+      <div class="flex size-full items-start justify-center">
         <KeyMapKeyboardCanvas
           :key-board-key-size="keyBoardKeySize"
           :key-board-keys="keyboardStore.kleDefinition?.keys!"
@@ -84,8 +84,8 @@ async function setMapperKeycode(key: number) {
         />
       </div>
     </div>
-    <div class="rounded-prime-md p-3 bg-surface-0 dark:bg-surface-900 overflow-hidden w-full h-full border border-surface-300 dark:border-surface-600">
-      <div class="rounded-prime-md overflow-hidden w-full h-full">
+    <div class="rounded-prime-md size-full overflow-hidden border border-surface-300 bg-surface-0 p-3 dark:border-surface-600 dark:bg-surface-900">
+      <div class="rounded-prime-md size-full overflow-hidden">
         <MapperPanel :area="currKey[3]" @set-keycode="setMapperKeycode" />
       </div>
     </div>

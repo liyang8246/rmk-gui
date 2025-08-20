@@ -71,7 +71,7 @@ function getSelectValue(key: InstanceType<typeof KleKey>): 'outer' | 'inner' | n
 </script>
 
 <template>
-  <div class="rounded-prime-md relative h-full w-full overflow-hidden" :style="{ width, height }">
+  <div class="rounded-prime-md relative size-full overflow-hidden" :style="{ width, height }">
     <template
       v-for="keys in keyBoardKeys"
       :key="keys"

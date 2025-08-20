@@ -24,7 +24,7 @@ const pageMacrosStore = usePageMacrosStore()
   <Dialog
     v-model:visible="visible"
     header="Select Key"
-    class="overflow-hidden h-[430px] p-3 !m-0"
+    class="!m-0 h-[430px] overflow-hidden p-3"
     :style="{ width: screenWidth > 1225 ? '1000px' : screenWidth > 1050 ? '830px' : '730px' }"
     position="bottom"
     maximizable

@@ -28,7 +28,7 @@ const displayName = computed(() => keyboardStore.productName ?? keyboardStore.vi
     <InputGroupAddon>
       <Button
         :severity="keyboardStore.isConnected ? 'secondary' : 'primary'"
-        class="h-full w-full !p-0"
+        class="size-full !p-0"
         :loading="isConnecting"
         @click="connect()"
       >

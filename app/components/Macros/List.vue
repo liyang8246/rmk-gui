@@ -23,27 +23,27 @@ function selectKeycode(row: number, col: number) {
     :animation="150"
     group="people"
     handle=".handle"
-    class="flex flex-col p-1 gap-2 w-full rounded-prime-md min-h-full"
+    class="rounded-prime-md flex min-h-full w-full flex-col gap-2 p-1"
   >
     <div
       v-for="i, index in keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
       :key="i.type"
-      class="  rounded-prime-md flex min-h-14 w-full px-2 items-center justify-between gap-3 bg-surface-200 dark:bg-surface-900"
+      class="  rounded-prime-md flex min-h-14 w-full items-center justify-between gap-3 bg-surface-200 px-2 dark:bg-surface-900"
     >
-      <div class="flex items-center justify-start gap-2 w-42 h-full">
-        <span class=" w-8 h-8 handle cursor-move"><i class="pi pi-sort-alt w-4 h-4 p-2 text-2xl" /></span>
+      <div class="w-42 flex h-full items-center justify-start gap-2">
+        <span class=" handle size-8 cursor-move"><i class="pi pi-sort-alt size-4 p-2 text-2xl" /></span>
         <MacrosSelect :index="index" />
       </div>
-      <div class=" w-full h-full overflow-hidden">
-        <div v-if="(i as { text: string | null }).text !== undefined" class=" w-full h-full flex items-center justify-start gap-2">
+      <div class=" size-full overflow-hidden">
+        <div v-if="(i as { text: string | null }).text !== undefined" class=" flex size-full items-center justify-start gap-2">
           <InputText
             v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.text"
             variant="filled"
-            class="w-full h-8"
+            class="h-8 w-full"
             type="text"
           />
         </div>
-        <div v-else-if="(i as { delay: number | null }).delay !== undefined" class=" w-full h-full flex items-center justify-start gap-2">
+        <div v-else-if="(i as { delay: number | null }).delay !== undefined" class=" flex size-full items-center justify-start gap-2">
           <InputNumber
             v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.delay"
             suffix=" ms"
@@ -51,7 +51,7 @@ function selectKeycode(row: number, col: number) {
             type="number"
           />
         </div>
-        <div v-else class=" w-full h-full flex items-center justify-start gap-2 m-1 relative">
+        <div v-else class=" relative m-1 flex size-full items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
             <KeyMapKey
               :keys="keyCode"
@@ -61,18 +61,18 @@ function selectKeycode(row: number, col: number) {
             />
           </template>
           <div
-            class="rounded-prime-md h-8 w-8 bg-surface-300 dark:bg-surface-600 shadow-sm hover:shadow-surface-400 dark:hover:shadow-surface-900 hover:text-surface-700 dark:hover:text-surface-300 transition-all duration-200 flex justify-center items-center"
+            class="rounded-prime-md flex size-8 items-center justify-center bg-surface-300 shadow-sm transition-all duration-200 hover:text-surface-700 hover:shadow-surface-400 dark:bg-surface-600 dark:hover:text-surface-300 dark:hover:shadow-surface-900"
             @click="addKeyCode(index)"
           >
-            <i class="pi pi-plus w-4 h-4 text-2xl" />
+            <i class="pi pi-plus size-4 text-2xl" />
           </div>
         </div>
       </div>
       <span
-        class="rounded-prime-md p-4 w-6 h-6 flex justify-center items-center cursor-pointer transition-colors duration-200 hover:text-surface-400"
+        class="rounded-prime-md flex size-6 cursor-pointer items-center justify-center p-4 transition-colors duration-200 hover:text-surface-400"
         @click="delMacro(index)"
       >
-        <i class="pi pi-times w-4 h-4 text-2xl" />
+        <i class="pi pi-times size-4 text-2xl" />
       </span>
     </div>
   </VueDraggable>

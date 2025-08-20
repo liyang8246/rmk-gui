@@ -79,7 +79,7 @@ function isInnerStyle() {
 
 <template>
   <div
-    class="raletive cursor-pointer select-none text-center font-bold rounded-prime-md group"
+    class="raletive rounded-prime-md group cursor-pointer select-none text-center font-bold"
     :style="{
       width: fitKeySize(maxKeySize(kleProps.width, kleProps.width2)),
       height: fitKeySize(maxKeySize(kleProps.height, kleProps.height2)),
@@ -89,7 +89,7 @@ function isInnerStyle() {
   >
     <label>
       <div
-        class="absolute rounded-prime-md transition-all duration-200"
+        class="rounded-prime-md absolute transition-all duration-200"
         :class="isOuterShadow()"
         :style="{
           width: fitKeySize(kleProps.width2),
@@ -99,7 +99,7 @@ function isInnerStyle() {
         }"
       />
       <div
-        class="absolute rounded-prime-md transition-all duration-200"
+        class="rounded-prime-md absolute transition-all duration-200"
         :class="isOuterShadow()"
         :style="{
           width: fitKeySize(kleProps.width),
@@ -107,7 +107,7 @@ function isInnerStyle() {
         }"
       />
       <div
-        class="absolute rounded-prime-md transition-all duration-200 cursor-pointer"
+        class="rounded-prime-md absolute cursor-pointer transition-all duration-200"
         :class="isOuterStyle()"
         :style="{
           width: fitKeySize(kleProps.width2),
@@ -119,7 +119,7 @@ function isInnerStyle() {
       />
       <div v-if="keys[0]" class="relative">
         <div
-          class="absolute flex justify-center pt-[3px] rounded-prime-md transition-all duration-200 cursor-pointer"
+          class="rounded-prime-md absolute flex cursor-pointer justify-center pt-[3px] transition-all duration-200"
           :class="isOuterStyle()"
           :style="{
             width: fitKeySize(kleProps.width),
@@ -130,7 +130,7 @@ function isInnerStyle() {
           <span>{{ keyBreaks(keys[0]) }}</span>
         </div>
         <div
-          class="absolute flex items-center justify-center border-surface-800 dark:border-surface-200 rounded-prime-md transition-all duration-200 cursor-pointer"
+          class="rounded-prime-md absolute flex cursor-pointer items-center justify-center border-surface-800 transition-all duration-200 dark:border-surface-200"
           :class="isInnerStyle()"
           :style="{
             top: `${defaultKeySize / 3}px`,
@@ -154,7 +154,7 @@ function isInnerStyle() {
       </div>
       <div
         v-else
-        class="absolute flex items-center justify-center rounded-prime-md transition-all duration-200 cursor-pointer"
+        class="rounded-prime-md absolute flex cursor-pointer items-center justify-center transition-all duration-200"
         :class="isOuterStyle()"
         :style="{
           width: fitKeySize(kleProps.width),
