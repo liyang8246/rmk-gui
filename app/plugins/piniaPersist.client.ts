@@ -51,9 +51,16 @@ function piniaPersist({ store, options }: PiniaPluginContext) {
     options.afterRestore?.(store)
   })
 
-  store.$subscribe(() => {
-    storage.write(key, JSON.stringify(store.$state))
-  })
+  if (isTauri()) {
+    store.$subscribe(() => {
+      storage.write(key, JSON.stringify(store.$state))
+    })
+  }
+  else {
+    window.addEventListener('beforeunload', () => {
+      storage.write(key, JSON.stringify(store.$state))
+    })
+  }
 }
 
 export default defineNuxtPlugin((nuxtApp) => {
