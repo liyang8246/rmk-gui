@@ -42,8 +42,8 @@ pub fn config_file() -> PathBuf {
     let config_file_path = rmk_dir.join("config.toml");
     if !config_file_path.exists() {
         OpenOptions::new()
-            .write(true)
             .create(true)
+            .truncate(false)
             .open(&config_file_path)
             .unwrap();
     }
