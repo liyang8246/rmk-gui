@@ -7,6 +7,7 @@ const emit = defineEmits<{
   (e: 'setKeycode', key: number): void
 }>()
 
+const keyboard = useKeyboardStore()
 const { width: screenWidth } = useWindowSize()
 const activeTab = ref('0')
 
@@ -185,7 +186,14 @@ const ISOCodeMap = computed(() => {
     || (value.code >= 0x00E0 && value.code <= 0x00E7))
 })
 const LayersCodeMap = computed(() => {
-  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0x4000 && value.code <= 0x52FF)
+  const layerKeys = ['LT', 'MO', 'DF', 'TG', 'TT', 'TO', 'OSL', 'PDF']
+  const layerCount = keyboard.layerCount || 32
+
+  return layerKeys.flatMap(key =>
+    Object.entries(keyCodeMap)
+      .filter(([, value]) => value.rmk.includes(key))
+      .slice(0, layerCount),
+  )
 })
 const QuantumCodeMap = computed(() => {
   return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
@@ -200,11 +208,15 @@ const ToolsCodeMap = computed(() => {
   )
 })
 const UserCodeMap = computed(() => {
-  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0x0840 && value.code <= 0x085F)
+  // const User = Object.entries(keyCodeMap)
+  //   .filter(([, value]) => value.rmk.includes('User'))
+  //   .slice(0, keyboard.layerCount || 8)
+  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
 })
 const MacroCodeMap = computed(() => {
+  const maxMacro = 0x7700 + (keyboard.macroCount || 8)
   return Object.entries(keyCodeMap).filter(([, value]) =>
-    (value.code >= 0x7700 && value.code <= 0x771F)
+    (value.code >= 0x7700 && value.code < maxMacro)
     || (value.code >= 0x0753 && value.code <= 0x0757))
 })
 

@@ -1,42 +1,34 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore()
 const pageMacrosStore = usePageMacrosStore()
-const replaceMacroKey = ref<number | null>(null)
-function setMapperKeycode(key: number) {
-  replaceMacroKey.value = key
-
-  // 替换键后清空操作
-  pageMacrosStore.clearSelectedProps()
-  replaceMacroKey.value = null
-}
 
 const addList = ref<MacroAction[]>([
-  {
-    type: 0,
-    name: 'Tap',
-    keyCodes: [],
-  },
-  {
-    type: 2,
-    name: 'Down',
-    keyCodes: [],
-  },
-  {
-    type: 3,
-    name: 'Up',
-    keyCodes: [],
-  },
-  {
-    type: 4,
-    name: 'Delay',
-    keyCodes: [],
-  },
-  {
-    type: 9,
-    name: 'Text',
-    text: null,
-  },
+  { type: 0, name: 'Tap', keyCodes: [] },
+  { type: 2, name: 'Down', keyCodes: [] },
+  { type: 3, name: 'Up', keyCodes: [] },
+  { type: 4, name: 'Delay', keyCodes: [] },
+  { type: 9, name: 'Text', text: null },
 ])
+
+function setMapperKeycode(key: number) {
+  if (!keyCodeMap[key]) {
+    throw new Error('Keycode not found')
+  }
+  if (!keyboardStore.keyMacros) {
+    throw new Error('keyMacros not found')
+  }
+
+  const [layer, col, row, zone] = pageMacrosStore.currKey
+
+  if (zone === 'outer') {
+    keyboardStore.keyMacros[layer]![col]!.keyCodes![row]! = structuredClone(keyCodeMap[key].symbol)
+  }
+  else if (zone === 'inner') {
+    keyboardStore.keyMacros[layer]![col]!.keyCodes![row]![1]! = structuredClone(keyCodeMap[key].symbol[1]!)
+  }
+
+  pageMacrosStore.clearSelectedProps()
+}
 </script>
 
 <template>
