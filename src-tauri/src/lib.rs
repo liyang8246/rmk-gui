@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use tauri::{async_runtime::Mutex, Manager, RunEvent};
+use tauri::{Manager, RunEvent, async_runtime::Mutex};
 
 use crate::{
     cmds::*,
