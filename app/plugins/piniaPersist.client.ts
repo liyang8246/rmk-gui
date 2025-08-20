@@ -51,7 +51,7 @@ function piniaPersist({ store, options }: PiniaPluginContext) {
     options.afterRestore?.(store)
   })
 
-  window.addEventListener('beforeunload', () => {
+  store.$subscribe(() => {
     storage.write(key, JSON.stringify(store.$state))
   })
 }
