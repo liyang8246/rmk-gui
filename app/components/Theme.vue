@@ -27,12 +27,15 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
               leaveActiveClass: 'animate-fadeout',
               hideOnOutsideClick: true,
             }"
-            icon="pi pi-palette"
-            class="h-9 w-28 justify-start gap-2 pl-2"
-            aria-label="Settings"
+            aria-label="primary-setting"
+            class="h-9 w-28 pl-2"
           >
-            <Icon name="tabler:color-filter" />
-            <span>{{ themeStore.primary }}</span>
+            <template #default>
+              <div class="flex size-full items-center justify-start gap-2">
+                <Icon name="tabler:color-filter" />
+                <span>{{ themeStore.primary }}</span>
+              </div>
+            </template>
           </Button>
           <div
             class="absolute right-0 top-10 z-50 hidden w-64 origin-top rounded-md border border-surface-200 bg-surface-0 p-4 shadow-lg dark:border-surface-700 dark:bg-surface-900"
@@ -65,12 +68,15 @@ const value = ref(options.find(option => option.label === useColorMode().prefere
               leaveActiveClass: 'animate-fadeout',
               hideOnOutsideClick: true,
             }"
-            icon="pi pi-desktop"
-            class="h-9 w-28 justify-start gap-2 !border-surface-500 !bg-surface-500 pl-2"
-            aria-label="Settings"
+            aria-label="surface-setting"
+            class="h-9 w-28 !border-surface-500 !bg-surface-500 pl-2"
           >
-            <Icon name="tabler:color-swatch" />
-            <span>{{ themeStore.surface }}</span>
+            <template #default>
+              <div class="flex size-full items-center justify-start gap-2">
+                <Icon name="tabler:color-swatch" />
+                <span>{{ themeStore.surface }}</span>
+              </div>
+            </template>
           </Button>
           <div
             class="absolute right-0 top-10 z-50 hidden w-64 origin-top rounded-md border border-surface-200 bg-surface-0 p-4 shadow-lg dark:border-surface-700 dark:bg-surface-900"
