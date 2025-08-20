@@ -217,7 +217,7 @@ export class VialDevice implements VialInterface {
             keymapResult.set([layer, row, col].toString(), keycode)
           }
           else {
-            console.warn(
+            console.error(
               `Keymap data out of bounds for layer ${layer}, row ${row}, col ${col}. Raw data length: ${rawData.length}`,
             )
           }
