@@ -7,7 +7,7 @@ const pageMacrosStore = usePageMacrosStore()
 
 const originalObject = ref<MacroAction>()
 watch(originalObject, (newValue) => {
-  if (newValue) {
+  if (newValue && keyboardStore.keyMacros) {
     keyboardStore.keyMacros[pageMacrosStore.currMacro]![index] = JSON.parse(JSON.stringify(newValue))
   }
 })
@@ -16,7 +16,7 @@ watch(originalObject, (newValue) => {
 <template>
   <Select
     v-model="originalObject"
-    :placeholder="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.name"
+    :placeholder="keyboardStore.keyMacros![pageMacrosStore.currMacro]![index]!.name"
     :options="pageMacrosStore.operationData"
     option-label="name"
     class="w-32"

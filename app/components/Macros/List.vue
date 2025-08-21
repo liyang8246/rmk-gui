@@ -3,11 +3,11 @@ const keyboardStore = useKeyboardStore()
 const pageMacrosStore = usePageMacrosStore()
 
 function delMacro(index: number) {
-  keyboardStore.keyMacros[pageMacrosStore.currMacro]!.splice(index, 1)
+  keyboardStore.keyMacros![pageMacrosStore.currMacro]!.splice(index, 1)
 }
 function addKeyCode(index: number) {
   const keyCode = structuredClone(keyCodeMap[1]!.symbol)
-  keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCode)
+  keyboardStore.keyMacros![pageMacrosStore.currMacro]![index]!.keyCodes!.push(keyCode)
 }
 function setKeycode(zone: 'outer' | 'inner', row: number, col: number) {
   pageMacrosStore.currKey = [pageMacrosStore.currMacro, row, col, zone]
@@ -20,14 +20,14 @@ function selectKeycode(row: number, col: number) {
 
 <template>
   <VueDraggable
-    v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
+    v-model="keyboardStore.keyMacros![pageMacrosStore.currMacro]!"
     :animation="150"
     group="people"
     handle=".cursor-move"
     class="rounded-prime-md flex min-h-full w-full flex-col gap-2 p-1"
   >
     <div
-      v-for="i, index in keyboardStore.keyMacros[pageMacrosStore.currMacro]!"
+      v-for="i, index in keyboardStore.keyMacros![pageMacrosStore.currMacro]!"
       :key="i.type"
       class="rounded-prime-md flex min-h-14 w-full items-center justify-between gap-3 bg-surface-200 px-2 dark:bg-surface-900"
     >
@@ -40,7 +40,7 @@ function selectKeycode(row: number, col: number) {
       <div class="size-full overflow-hidden">
         <div v-if="(i as { text: string | null }).text !== undefined" class=" flex size-full items-center justify-start gap-2">
           <InputText
-            v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.text"
+            v-model="keyboardStore.keyMacros![pageMacrosStore.currMacro]![index]!.text"
             variant="filled"
             class="h-8 w-full"
             type="text"
@@ -48,14 +48,14 @@ function selectKeycode(row: number, col: number) {
         </div>
         <div v-else-if="(i as { delay: number | null }).delay !== undefined" class=" flex size-full items-center justify-start gap-2">
           <InputNumber
-            v-model="keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.delay"
+            v-model="keyboardStore.keyMacros![pageMacrosStore.currMacro]![index]!.delay"
             suffix=" ms"
             variant="filled"
             type="number"
           />
         </div>
         <div v-else class="relative m-1 flex size-full items-center justify-start gap-2">
-          <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros[pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
+          <template v-for="(keyCode, keyCodes_index) in keyboardStore.keyMacros![pageMacrosStore.currMacro]![index]!.keyCodes" :key="keyCodes_index">
             <KeyMapKey
               :keys="keyCode"
               :select="selectKeycode(index, keyCodes_index)"

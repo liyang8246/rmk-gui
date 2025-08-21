@@ -81,7 +81,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value, layerCount.value)
   }
 
-  const keyMacros = ref<Array<Array<MacroAction>>>([])
+  const keyMacros = ref<Array<Array<MacroAction>> | null>(null)
   async function fetchMacros() {
     if (!vialDevice.value) {
       throw new Error('Vial device not available')
@@ -119,6 +119,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     kleDefinition.value = null
     keymap.value = null
     layoutKeymap.value = null
+    keyMacros.value = null
   }
 
   function initializeApi() {
