@@ -23,7 +23,8 @@
     "web:preview": "run-s web:build web:serve-static",
     "web:tun": "nuxt dev --tunnel",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "clean": "rimraf .nuxt dist .output app/types/keycode.ts src-tauri/target node_modules"
   },
   "dependencies": {
     "@kcf-hub/kle-serial": "0.17.0",
@@ -53,6 +54,7 @@
     "npm-run-all": "^4.1.5",
     "nuxt": "^4.0.3",
     "prettier-plugin-tailwindcss": "0.6.13",
+    "rimraf": "^6.0.1",
     "serve": "^14.2.4"
   }
 }
