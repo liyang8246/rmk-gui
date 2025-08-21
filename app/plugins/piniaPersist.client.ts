@@ -37,19 +37,18 @@ function storageAdapter(): StorageAdapter {
   return isTauri() ? new TauriStorageAdapter() : new LocalStorageAdapter()
 }
 
-function piniaPersist({ store, options }: PiniaPluginContext) {
+async function piniaPersist({ store, options }: PiniaPluginContext) {
   if (!options.persist)
     return
 
   const storage = storageAdapter()
   const key = `pinia-${store.$id}`
 
-  storage.read(key).then((data) => {
-    if (data) {
-      store.$patch(JSON.parse(data))
-    }
-    options.afterRestore?.(store)
-  })
+  const data = await storage.read(key)
+  if (data) {
+    store.$patch(JSON.parse(data))
+  }
+  options.afterRestore?.(store)
 
   if (isTauri()) {
     store.$subscribe(() => {
