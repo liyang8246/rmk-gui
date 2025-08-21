@@ -19,6 +19,8 @@
     "lint:fix": "run-s js:fix rust:fix",
     "web:dev": "nuxt dev",
     "web:build": "nuxt generate",
+    "web:serve": "serve .output/public",
+    "web:preview": "run-s web:build web:serve-static",
     "web:tun": "nuxt dev --tunnel",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
@@ -50,6 +52,7 @@
     "eslint-plugin-tailwindcss": "^3.18.2",
     "npm-run-all": "^4.1.5",
     "nuxt": "^4.0.3",
-    "prettier-plugin-tailwindcss": "0.6.13"
+    "prettier-plugin-tailwindcss": "0.6.13",
+    "serve": "^14.2.4"
   }
 }
