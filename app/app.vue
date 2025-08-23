@@ -14,4 +14,5 @@ useThemeStore()
       </div>
     </div>
   </div>
+  <HidUnsupport />
 </template>
