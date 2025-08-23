@@ -55,12 +55,10 @@ function setMapperKeycode(key: number) {
           {{ item.name }}
         </div>
       </VueDraggable>
-      <div class="rounded-prime-md relative size-full overflow-hidden bg-surface-0 shadow-sm shadow-surface-300 dark:bg-surface-600 dark:shadow-surface-950">
-        <div class="absolute right-0 top-0 z-50 size-3 bg-surface-0 dark:bg-surface-600" />
-        <div class="absolute bottom-0 right-0 z-50 size-3 bg-surface-0 dark:bg-surface-600" />
-        <div class="rounded-prime-md size-full overflow-y-scroll p-3 pr-0 scrollbar scrollbar-track-surface-0 scrollbar-thumb-surface-300 dark:scrollbar-track-surface-600 dark:scrollbar-thumb-surface-800">
+      <div class="rounded-prime-md relative size-full overflow-hidden bg-surface-0 p-2 shadow-sm shadow-surface-300 dark:bg-surface-600 dark:shadow-surface-950">
+        <ScrollPanel class="size-full" pt:content:class="!p-0 !w-full !h-full">
           <MacrosList />
-        </div>
+        </ScrollPanel>
       </div>
     </div>
   </div>
