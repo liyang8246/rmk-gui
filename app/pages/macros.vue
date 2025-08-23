@@ -6,7 +6,7 @@ const addList = ref<MacroAction[]>([
   { type: 0, name: 'Tap', keyCodes: [] },
   { type: 2, name: 'Down', keyCodes: [] },
   { type: 3, name: 'Up', keyCodes: [] },
-  { type: 4, name: 'Delay', keyCodes: [] },
+  { type: 4, name: 'Delay', delay: null },
   { type: 9, name: 'Text', text: null },
 ])
 
