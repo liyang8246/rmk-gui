@@ -38,10 +38,11 @@ function selectKeycode(row: number, col: number) {
         <MacrosSelect :index="index" />
       </div>
       <div class="size-full overflow-hidden">
-        <div v-if="(i as { text: string | null }).text !== undefined" class=" flex size-full items-center justify-start gap-2">
+        <div v-if="(i as { text: string | null }).text !== undefined" class="flex size-full items-center justify-start gap-2">
           <InputText
             v-model="keyboardStore.keyMacros![pageMacrosStore.currMacro]![index]!.text"
             variant="filled"
+            placeholder="Hello World!"
             class="h-8 w-full"
             type="text"
           />
@@ -49,8 +50,10 @@ function selectKeycode(row: number, col: number) {
         <div v-else-if="(i as { delay: number | null }).delay !== undefined" class=" flex size-full items-center justify-start gap-2">
           <InputNumber
             v-model="keyboardStore.keyMacros![pageMacrosStore.currMacro]![index]!.delay"
-            suffix=" ms"
+            suffix="ms"
+            placeholder="100ms"
             variant="filled"
+            class="h-8"
             type="number"
           />
         </div>
