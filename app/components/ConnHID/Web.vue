@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 const keyboardStore = useKeyboardStore()
-const router = useRouter()
 
 const { isLoading: isConnecting, execute: toggleConnection } = useAsyncState(
   async () => {
-    router.push('/')
     if (keyboardStore.isConnected) {
       await keyboardStore.disconnect()
       keyboardStore.cleanAll()
+      return navigateTo('/')
     }
     else {
       const device = (await keyboardStore.list()) as HIDDevice[]
