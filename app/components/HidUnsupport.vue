@@ -4,7 +4,7 @@ const visible = !hidSupport()
 
 <template>
   <Dialog
-    :visible="visible" modal :maximized="true" header="Unsupported Browser"
+    :visible="visible" modal :closable="false" :maximized="true" header="Unsupported Browser"
   >
     <p> Your current browser does not support WebHID. </p>
     <p> Please use <a href="https://www.google.com/chrome" target="_blank" class="underline">Chrome</a> or <a href="https://www.microsoft.com/edge" target="_blank" class="underline">Edge</a>. </p>
