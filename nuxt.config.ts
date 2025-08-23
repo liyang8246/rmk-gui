@@ -85,7 +85,6 @@ export default defineNuxtConfig({
     autoImport: true,
   },
   icon: {
-    provider: 'none',
     clientBundle: {
       scan: true,
     },
