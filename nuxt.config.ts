@@ -51,6 +51,15 @@ export default defineNuxtConfig({
       },
     ],
   },
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: () => 'app',
+        },
+      },
+    },
+  },
   // Module Configurations
   modules: [
     '@nuxtjs/tailwindcss',
@@ -74,5 +83,11 @@ export default defineNuxtConfig({
       ripple: true,
     },
     autoImport: true,
+  },
+  icon: {
+    provider: 'none',
+    clientBundle: {
+      scan: true,
+    },
   },
 })
