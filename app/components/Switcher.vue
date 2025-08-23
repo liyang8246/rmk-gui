@@ -22,11 +22,13 @@ function compare(index: number) {
     <span class="text-sm text-surface-700 dark:text-surface-300">{{ text }} </span>
     <ul class="flex items-center justify-center gap-1 text-xs">
       <li
-        v-for="index in indices" :key="index"
+        v-for="index in indices"
+        :key="index"
+        v-ripple
         class="rounded-prime-md flex h-6 w-7 cursor-pointer items-center justify-center transition-all duration-300"
         :class="compare(index)"
       >
-        <button @click="emit('change', index)">
+        <button class="size-full" @click="emit('change', index)">
           <span>{{ index }}</span>
         </button>
       </li>
