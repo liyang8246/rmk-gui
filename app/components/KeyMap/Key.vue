@@ -89,7 +89,7 @@ function isInnerStyle() {
   >
     <div class="group">
       <div
-        class="rounded-prime-md absolute transition-all duration-200"
+        class="rounded-prime-md absolute transition-colors duration-200"
         :class="isOuterShadow()"
         :style="{
           width: fitKeySize(kleProps.width2),
@@ -99,7 +99,7 @@ function isInnerStyle() {
         }"
       />
       <div
-        class="rounded-prime-md absolute transition-all duration-200"
+        class="rounded-prime-md absolute transition-colors duration-200"
         :class="isOuterShadow()"
         :style="{
           width: fitKeySize(kleProps.width),
@@ -107,7 +107,7 @@ function isInnerStyle() {
         }"
       />
       <button
-        class="rounded-prime-md absolute transition-all duration-200"
+        class="rounded-prime-md absolute transition-colors duration-200"
         :class="isOuterStyle()"
         :style="{
           width: fitKeySize(kleProps.width2),
@@ -119,7 +119,7 @@ function isInnerStyle() {
       />
       <div v-if="keys[0]">
         <button
-          class="rounded-prime-md absolute flex justify-center pt-[3px] transition-all duration-200"
+          class="rounded-prime-md absolute flex justify-center pt-[3px] transition-colors duration-200"
           :class="isOuterStyle()"
           :style="{
             width: fitKeySize(kleProps.width),
@@ -141,7 +141,7 @@ function isInnerStyle() {
       </div>
       <button
         v-else
-        class="rounded-prime-md absolute flex items-center justify-center transition-all duration-200"
+        class="rounded-prime-md absolute flex items-center justify-center transition-colors duration-200"
         :class="isOuterStyle()"
         :style="{
           width: fitKeySize(kleProps.width),
@@ -154,7 +154,7 @@ function isInnerStyle() {
     </div>
     <button
       v-if="keys[0]"
-      class="rounded-prime-md absolute flex items-center justify-center border-surface-800 transition-all duration-200 dark:border-surface-200"
+      class="rounded-prime-md absolute flex items-center justify-center border-surface-800 transition-colors duration-200 dark:border-surface-200"
       :class="isInnerStyle()"
       :style="{
         top: `${defaultKeySize / 3}px`,

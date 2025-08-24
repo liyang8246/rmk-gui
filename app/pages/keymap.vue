@@ -6,6 +6,9 @@ const keyBoardKeySize = ref(56)
 const currLayer = ref(0)
 const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
 
+const target = ref(null)
+const keyBoardMaxSize = useElementSize(target)
+
 function clearSelectedProps() {
   currKey.value = [0, 0, 0, null]
 }
@@ -65,16 +68,17 @@ async function setMapperKeycode(key: number) {
 </script>
 
 <template>
-  <div class="flex size-full flex-col items-center justify-between p-3">
-    <div class="flex max-h-[70%] w-full flex-col items-center justify-start" @click="clearSelectedProps()">
-      <div class="flex w-full items-center justify-start gap-3">
+  <div ref="target" class="flex size-full flex-col items-center justify-between gap-3 p-3">
+    <div class="flex size-full max-h-[70%] flex-col items-center justify-start gap-3" @click="clearSelectedProps()">
+      <div class="flex h-8 w-full items-center justify-start gap-3">
         <Switcher text="Layer" :count="keyboardStore.layerCount!" :layer="currLayer" @change="currLayer = $event" />
         <div class="rounded-prime-xl flex h-5 items-center justify-center bg-surface-200 px-[10px] shadow-sm shadow-surface-400 dark:bg-surface-700 dark:shadow-surface-950">
           <Slider v-model="keyBoardKeySize" class="!h-2 w-40" :min="30" :max="78" :step="1" />
         </div>
       </div>
-      <div class="flex size-full items-start justify-center overflow-hidden">
+      <div class="flex size-full items-center justify-center overflow-hidden">
         <KeyMapKeyboardCanvas
+          :key-board-max-size="keyBoardMaxSize"
           :key-board-key-size="keyBoardKeySize"
           :key-board-keys="keyboardStore.kleDefinition?.keys!"
           :layer="currLayer"
@@ -84,7 +88,7 @@ async function setMapperKeycode(key: number) {
         />
       </div>
     </div>
-    <div class="rounded-prime-md min-h-[30%] w-full overflow-hidden border border-surface-300 bg-surface-0 p-3 dark:border-surface-600 dark:bg-surface-900">
+    <div class="rounded-prime-md size-full min-h-[30%] overflow-hidden border border-surface-300 bg-surface-0 p-3 dark:border-surface-600 dark:bg-surface-900">
       <div class="rounded-prime-md size-full overflow-hidden">
         <MapperPanel :area="currKey[3]" @set-keycode="setMapperKeycode" />
       </div>
