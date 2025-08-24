@@ -5,7 +5,6 @@ const { isLoading: isConnecting, execute: toggleConnection } = useAsyncState(
   async () => {
     if (keyboardStore.isConnected) {
       await keyboardStore.disconnect()
-      keyboardStore.cleanAll()
       return navigateTo('/')
     }
     else {
