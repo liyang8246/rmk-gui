@@ -6,8 +6,8 @@ const selected = ref<any>(null)
 const { isLoading: isConnecting, execute: toggleConnection } = useAsyncState(
   async () => {
     if (keyboardStore.isConnected) {
+      navigateTo('/')
       await keyboardStore.disconnect()
-      return navigateTo('/')
     }
     else if (selected.value) {
       await keyboardStore.connect(selected.value.path)

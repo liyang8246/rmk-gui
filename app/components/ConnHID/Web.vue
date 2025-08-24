@@ -4,8 +4,8 @@ const keyboardStore = useKeyboardStore()
 const { isLoading: isConnecting, execute: toggleConnection } = useAsyncState(
   async () => {
     if (keyboardStore.isConnected) {
+      navigateTo('/')
       await keyboardStore.disconnect()
-      return navigateTo('/')
     }
     else {
       const device = (await keyboardStore.list()) as HIDDevice[]
