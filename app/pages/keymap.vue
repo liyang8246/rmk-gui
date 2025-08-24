@@ -6,8 +6,18 @@ const keyBoardKeySize = ref(56)
 const currLayer = ref(0)
 const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
 
-const target = ref(null)
-const keyBoardMaxSize = useElementSize(target)
+const pageKeymapContainerRef = ref(null)
+const keyBoardMaxSize = computed(() => {
+  const pagekeymapSize = useElementSize(pageKeymapContainerRef)
+
+  const keyBoardMaxWidth = Math.round(pagekeymapSize.width.value)
+  const keyBoardMaxHeight = Math.round(pagekeymapSize.height.value * 0.7 - 56)
+
+  return {
+    width: keyBoardMaxWidth,
+    height: keyBoardMaxHeight,
+  }
+})
 
 function clearSelectedProps() {
   currKey.value = [0, 0, 0, null]
@@ -68,7 +78,7 @@ async function setMapperKeycode(key: number) {
 </script>
 
 <template>
-  <div ref="target" class="flex size-full flex-col items-center justify-between gap-3 p-3">
+  <div ref="pageKeymapContainerRef" class="flex size-full flex-col items-center justify-between gap-3 p-3">
     <div class="flex size-full max-h-[70%] flex-col items-center justify-start gap-3" @click="clearSelectedProps()">
       <div class="flex h-8 w-full items-center justify-start gap-3">
         <Switcher text="Layer" :count="keyboardStore.layerCount!" :layer="currLayer" @change="currLayer = $event" />
@@ -78,7 +88,7 @@ async function setMapperKeycode(key: number) {
       </div>
       <div class="flex size-full items-center justify-center overflow-hidden">
         <KeyMapKeyboardCanvas
-          :key-board-max-size="keyBoardMaxSize"
+          :container-max-size="keyBoardMaxSize"
           :key-board-key-size="keyBoardKeySize"
           :key-board-keys="keyboardStore.kleDefinition?.keys!"
           :layer="currLayer"

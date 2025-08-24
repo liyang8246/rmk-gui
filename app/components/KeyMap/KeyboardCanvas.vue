@@ -1,9 +1,12 @@
 <script lang="ts" setup>
-const { keyBoardKeySize = 42, keyBoardKeys, layer = 0, keyBoardKeysMap, keyBoardMaxSize, selectKeycodeHandler } = defineProps<{
+const { keyBoardKeySize = 42, keyBoardKeys, layer = 0, keyBoardKeysMap, containerMaxSize, selectKeycodeHandler } = defineProps<{
   keyBoardKeySize?: number
   keyBoardKeys: InstanceType<typeof KleKey>[]
   keyBoardKeysMap: Map<string, number> | null
-  keyBoardMaxSize?: ReturnType<typeof useElementSize>
+  containerMaxSize?: {
+    width: number
+    height: number
+  }
   layer?: number
   selectKeycodeHandler?: (key: InstanceType<typeof KleKey>) => 'outer' | 'inner' | null
 }>()
@@ -58,7 +61,7 @@ const position = computed(() => {
 })
 
 const computedSizes = computed(() => {
-  const hasMaxSize = !!keyBoardMaxSize
+  const hasMaxSize = !!containerMaxSize
   const totalWidth = position.value.maxX + position.value.minX + position.value.lastWidth
   const totalHeight = position.value.maxY + position.value.minY + position.value.lastHeight
 
@@ -66,13 +69,12 @@ const computedSizes = computed(() => {
   let calculatedSize = keyBoardKeySize
 
   if (hasMaxSize) {
-    const maxHeight = Math.round(keyBoardMaxSize!.height.value * 0.7 - 56)
     maxSize = Math.min(
-      Math.round(keyBoardMaxSize!.width.value / totalWidth),
-      Math.round(maxHeight / totalHeight),
+      Math.round(containerMaxSize.width / totalWidth),
+      Math.round(containerMaxSize.height / totalHeight),
     )
-    calculatedSize = (totalWidth * keyBoardKeySize + 2) > keyBoardMaxSize!.width.value
-      || (totalHeight * keyBoardKeySize + 2) > maxHeight
+    calculatedSize = (totalWidth * keyBoardKeySize + 2) > containerMaxSize.width
+      || (totalHeight * keyBoardKeySize + 2) > containerMaxSize.height
       ? maxSize
       : keyBoardKeySize
   }
