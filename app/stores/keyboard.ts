@@ -112,8 +112,6 @@ export const useKeyboardStore = defineStore('keyboard', () => {
   }
 
   function cleanAll() {
-    hidDevice.value = null
-    vialDevice.value = null
     productName.value = null
     layerCount.value = null
     macroCount.value = null
@@ -155,6 +153,8 @@ export const useKeyboardStore = defineStore('keyboard', () => {
   async function disconnect() {
     if (hidDevice.value) {
       await hidDevice.value.disconnect()
+      hidDevice.value = null
+      vialDevice.value = null
       cleanAll()
     }
   }
