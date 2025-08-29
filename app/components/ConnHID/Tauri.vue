@@ -28,13 +28,13 @@ onMounted(async () => {
 </script>
 
 <template>
-  <InputGroup>
+  <InputGroup class="!w-60">
     <Select
       v-model="selected"
       :options="devices"
       :disabled="keyboardStore.isConnected"
       option-label="product_string"
-      placeholder="等待连接键盘"
+      :placeholder="$t('waitingForKeyboard')"
     />
     <InputGroupAddon>
       <Button
