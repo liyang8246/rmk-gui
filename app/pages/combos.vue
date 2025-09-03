@@ -53,7 +53,7 @@ function selectKeycode(row: number, col: number) {
         </div>
         <div class="flex flex-col items-center justify-start gap-2">
           <template v-for="(keyCode, keyCodes_index) in list" :key="keyCodes_index">
-            <KeyMapKey
+            <Key
               :keys="keyCode"
               :select="selectKeycode(list_index, keyCodes_index)"
               @click="setKeycode($event, list_index, keyCodes_index)"

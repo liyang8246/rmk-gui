@@ -262,7 +262,7 @@ watch(() => area, () => {
           <div class="m-1 w-[calc(100%-8px)]">
             <template v-if="tab.title === 'base'">
               <div class="mb-8 flex size-full items-start justify-center">
-                <KeyMapKeyboardCanvas
+                <Keyboard
                   :key-board-keys="baseKeyboard"
                   :key-board-keys-map="baseKeymap"
                   @set-keycode="setBaseKeyBoardKeycode"
@@ -271,7 +271,7 @@ watch(() => area, () => {
             </template>
             <template v-else-if="tab.title === 'ISO/JIS'">
               <div class="mb-5 flex size-full items-start justify-center pb-5">
-                <KeyMapKeyboardCanvas
+                <Keyboard
                   :key-board-keys="ISOKeyboard"
                   :key-board-keys-map="ISOKeymap"
                   @set-keycode="setISOKeyBoardKeycode"
@@ -280,7 +280,7 @@ watch(() => area, () => {
             </template>
             <div class="flex size-full flex-wrap items-start justify-start gap-2">
               <template v-for="[, value] in tab.content" :key="value">
-                <KeyMapKey :keys="value.symbol" @click="emit('setKeycode', value.code)" />
+                <Key :keys="value.symbol" @click="emit('setKeycode', value.code)" />
               </template>
             </div>
           </div>
