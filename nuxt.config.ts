@@ -68,6 +68,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxtjs/color-mode',
     '@vueuse/nuxt',
+    '@nuxtjs/i18n',
   ],
   tailwindcss: {
     configPath: 'tailwind.config.ts',
@@ -88,5 +89,13 @@ export default defineNuxtConfig({
     clientBundle: {
       scan: true,
     },
+  },
+  i18n: {
+    defaultLocale: 'en',
+    detectBrowserLanguage: false,
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'zh', name: 'Chinese', file: 'zh.json' },
+    ],
   },
 })

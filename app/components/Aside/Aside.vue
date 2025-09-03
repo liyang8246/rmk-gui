@@ -3,12 +3,12 @@ const route = useRoute()
 const keyboardStore = useKeyboardStore()
 
 const pages = computed(() => [
-  { name: 'Home', icon: 'tabler:home-filled', to: '/' },
-  { name: 'Keymap', icon: 'tabler:keyboard-filled', to: '/keymap', disabled: !keyboardStore.keymap },
-  { name: 'Macros', icon: 'tabler:circle-letter-a-filled', to: '/macros', disabled: !keyboardStore.keyMacros },
-  { name: 'Combos', icon: 'tabler:circle-letter-k-filled', to: '/combos' },
-  { name: 'Export', icon: 'tabler:file-export', to: '/export' },
-  { name: 'Settings', icon: 'tabler:settings-filled', to: '/settings' },
+  { name: $t('aside.home'), icon: 'tabler:home-filled', to: '/' },
+  { name: $t('aside.keymap'), icon: 'tabler:keyboard-filled', to: '/keymap', disabled: !keyboardStore.keymap },
+  { name: $t('aside.macros'), icon: 'tabler:circle-letter-a-filled', to: '/macros', disabled: !keyboardStore.keyMacros },
+  { name: $t('aside.combos'), icon: 'tabler:circle-letter-k-filled', to: '/combos' },
+  { name: $t('aside.export'), icon: 'tabler:file-export', to: '/export' },
+  { name: $t('aside.settings'), icon: 'tabler:settings-filled', to: '/settings' },
 ])
 
 function isActive(path: string) {

@@ -1,0 +1,21 @@
+{
+  "header": {
+    "waitingForKeyboard": "等待键盘连接"
+  },
+  "aside": {
+    "home": "Home",
+    "keymap": "Keymap",
+    "macros": "Macros",
+    "combos": "Combos",
+    "export": "Export",
+    "settings": "Settings"
+  },
+  "settings": {
+    "theme": {
+      "title": "主题",
+      "primary": "强调色",
+      "Surface": "背景色",
+      "mode": "主题模式"
+    }
+  }
+}
