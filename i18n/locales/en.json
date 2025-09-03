@@ -7,5 +7,13 @@
     "combos": "Combos",
     "export": "Export",
     "settings": "Settings"
+  },
+  "settings": {
+    "theme": {
+      "title": "Theme",
+      "primary": "Primary Color",
+      "Surface": "Surface Color",
+      "mode": "Theme Mode"
+    }
   }
 }
