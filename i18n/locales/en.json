@@ -1,3 +1,11 @@
 {
-  "waitingForKeyboard": "Waiting for keyboard"
+  "header": { "waitingForKeyboard": "Waiting for keyboard" },
+  "aside": {
+    "home": "Home",
+    "keymap": "Keymap",
+    "macros": "Macros",
+    "combos": "Combos",
+    "export": "Export",
+    "settings": "Settings"
+  }
 }

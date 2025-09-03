@@ -25,7 +25,7 @@ const displayName = computed(() => keyboardStore.productName ?? keyboardStore.vi
 <template>
   <InputGroup class="!w-60">
     <InputText
-      :placeholder="keyboardStore.isConnected ? displayName : $t('waitingForKeyboard')"
+      :placeholder="keyboardStore.isConnected ? displayName : $t('header.waitingForKeyboard')"
       class="cursor-default"
       readonly
     />

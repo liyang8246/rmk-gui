@@ -34,7 +34,7 @@ onMounted(async () => {
       :options="devices"
       :disabled="keyboardStore.isConnected"
       option-label="product_string"
-      :placeholder="$t('waitingForKeyboard')"
+      :placeholder="$t('header.waitingForKeyboard')"
     />
     <InputGroupAddon>
       <Button
