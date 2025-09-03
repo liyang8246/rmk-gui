@@ -14,9 +14,6 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/main.css'],
   // Development Config
-  future: {
-    compatibilityVersion: 4,
-  },
   compatibilityDate: '2025-06-23',
   devtools: { enabled: true },
   ssr: false,
@@ -51,6 +48,10 @@ export default defineNuxtConfig({
       },
     ],
   },
+  components: [{
+    path: '~/components',
+    pathPrefix: false,
+  }],
   vite: {
     build: {
       rollupOptions: {

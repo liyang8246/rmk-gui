@@ -114,7 +114,7 @@ function getSelectValue(key: InstanceType<typeof KleKey>): 'outer' | 'inner' | n
           transformOrigin: `calc(${(-keys.x + keys.rotation_x) * computedKeySize}px)` + `calc(${(-keys.y + keys.rotation_y) * computedKeySize}px)`,
         }"
       >
-        <KeyMapKey
+        <Key
           :keys="labelToDisplay(keys, layer)"
           :kle-props="keys"
           :select="getSelectValue(keys)"

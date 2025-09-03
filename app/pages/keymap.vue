@@ -87,7 +87,7 @@ async function setMapperKeycode(key: number) {
         </div>
       </div>
       <div class="flex size-full items-center justify-center overflow-hidden">
-        <KeyMapKeyboardCanvas
+        <Keyboard
           :container-max-size="keyBoardMaxSize"
           :key-board-key-size="keyBoardKeySize"
           :key-board-keys="keyboardStore.kleDefinition?.keys!"
