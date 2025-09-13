@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const themeStore = useThemeStore()
+const themeStore = useSettingStore()
 
 const themeModeOptions = [
   { icon: 'tabler:sun', label: 'light' },

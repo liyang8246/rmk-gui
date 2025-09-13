@@ -1,6 +1,6 @@
 import { updatePrimaryPalette, updateSurfacePalette } from '@primeuix/themes'
 
-export const useThemeStore = defineStore('theme', () => {
+export const useSettingStore = defineStore('setting', () => {
   const primary = ref('emerald')
   const surface = ref('slate')
   const darkMode = ref('system')
