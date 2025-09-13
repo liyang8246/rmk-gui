@@ -11,9 +11,10 @@
   "settings": {
     "general": {
       "title": "General Settings",
+      "language": "Language",
+      "mode": "Theme Mode",
       "primary": "Primary Color",
-      "surface": "Surface Color",
-      "mode": "Theme Mode"
+      "surface": "Surface Color"
     }
   }
 }

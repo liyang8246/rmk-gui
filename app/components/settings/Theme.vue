@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 const themeStore = useSettingStore()
+const { locales } = useI18n()
 
 const themeModeOptions = [
   { icon: 'tabler:sun', label: 'light' },
@@ -13,6 +14,10 @@ const surfaceOptions = surfaceColors.map(color => color.name)
 
 <template>
   <ThemeCard :title="$t('settings.general.title')">
+    <div class="flex h-9 items-center justify-between">
+      <h2> {{ $t("settings.general.language") }} </h2>
+      <Select v-model="themeStore.language" :options="locales" option-label="name" option-value="code" size="small" class="w-32" />
+    </div>
     <div class="flex h-9 items-center justify-between">
       <h2> {{ $t("settings.general.mode") }} </h2>
       <Select v-model="themeStore.darkMode" :options="themeModeOptions" option-label="label" option-value="label" size="small" class="w-32" />
