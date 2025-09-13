@@ -3,7 +3,7 @@ import { updatePrimaryPalette, updateSurfacePalette } from '@primeuix/themes'
 export const useThemeStore = defineStore('theme', () => {
   const primary = ref('emerald')
   const surface = ref('slate')
-  const darkMode = ref(false)
+  const darkMode = ref('system')
 
   watch(primary, (newPrimary) => {
     const color = primaryColors.find(c => c.name === newPrimary)
@@ -17,6 +17,10 @@ export const useThemeStore = defineStore('theme', () => {
     if (surfaceColor) {
       updateSurfacePalette(surfaceColor.palette)
     }
+  })
+
+  watch(darkMode, (newDarkMode) => {
+    useColorMode().preference = newDarkMode
   })
 
   return {

@@ -68,7 +68,7 @@ function isOuterStyle() {
 function isOuterShadow() {
   return select && select === 'outer'
     ? 'shadow-[0_1px_1px_1px] shadow-primary-600 dark:shadow-primary-900'
-    : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900 group-active:shadow-surface-600 group-active:dark:shadow-surface-950'
+    : 'shadow-[0_1px_1px_1px] shadow-surface-400 dark:shadow-surface-900 group-active:shadow-surface-600'
 }
 function isInnerStyle() {
   return select && select === 'inner'

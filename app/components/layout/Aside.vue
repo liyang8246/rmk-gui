@@ -19,7 +19,7 @@ function isActive(path: string) {
 <template>
   <div class=" flex h-screen w-48 flex-col border-r-2 bg-surface-50 p-3 dark:border-surface-800 dark:bg-surface-950">
     <div class="relative mb-3 min-h-[54px]">
-      <div class="absolute left-[34px] top-[5px] h-[38px] w-[98px] bg-gradient-to-b from-surface-100 to-surface-300 shadow-lg shadow-surface-300 dark:from-surface-400 dark:to-surface-600 dark:shadow-surface-600" />
+      <div class="absolute left-[34px] top-[5px] h-[38px] w-[98px] bg-gradient-to-b from-surface-100 to-surface-300 shadow-lg dark:from-surface-400 dark:to-surface-600 dark:shadow-surface-600" />
       <img src="~/assets/rmk_logo.svg" class="absolute left-[29px] h-[54px] w-[109px]">
     </div>
     <div

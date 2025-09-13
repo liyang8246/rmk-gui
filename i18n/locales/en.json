@@ -9,10 +9,10 @@
     "settings": "Settings"
   },
   "settings": {
-    "theme": {
-      "title": "Theme",
+    "general": {
+      "title": "General Settings",
       "primary": "Primary Color",
-      "Surface": "Surface Color",
+      "surface": "Surface Color",
       "mode": "Theme Mode"
     }
   }
