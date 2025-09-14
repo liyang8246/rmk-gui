@@ -288,7 +288,7 @@ export const primaryColors = [
     },
   },
 ]
-export const surfaces = [
+export const surfaceColors = [
   {
     name: 'slate',
     palette: {

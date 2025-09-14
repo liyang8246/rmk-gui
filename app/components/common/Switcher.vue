@@ -18,7 +18,7 @@ function compare(index: number) {
 </script>
 
 <template>
-  <div class="rounded-prime-md flex select-none items-center gap-3 bg-surface-300 px-3 py-1 font-semibold shadow-sm shadow-surface-400 dark:bg-surface-600 dark:shadow-surface-950">
+  <div class="rounded-prime-md flex select-none items-center gap-3 bg-surface-300 px-3 py-1 font-semibold shadow-sm shadow-surface-400 dark:bg-surface-600 ">
     <span class="text-sm text-surface-700 dark:text-surface-300">{{ text }} </span>
     <ul class="flex items-center justify-center gap-1 text-xs">
       <li

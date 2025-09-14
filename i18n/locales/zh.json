@@ -11,11 +11,12 @@
     "settings": "Settings"
   },
   "settings": {
-    "theme": {
-      "title": "主题",
+    "general": {
+      "title": "通用设置",
+      "language": "显示语言",
+      "mode": "主题模式",
       "primary": "强调色",
-      "Surface": "背景色",
-      "mode": "主题模式"
+      "surface": "背景色"
     }
   }
 }
