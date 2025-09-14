@@ -13,7 +13,7 @@ const surfaceOptions = surfaceColors.map(color => color.name)
 </script>
 
 <template>
-  <ThemeCard :title="$t('settings.general.title')">
+  <SettingCard :title="$t('settings.general.title')">
     <div class="flex h-9 items-center justify-between">
       <h2> {{ $t("settings.general.language") }} </h2>
       <Select v-model="themeStore.language" :options="locales" option-label="name" option-value="code" size="small" class="w-32" />
@@ -30,5 +30,5 @@ const surfaceOptions = surfaceColors.map(color => color.name)
       <h2> {{ $t("settings.general.surface") }} </h2>
       <Select v-model="themeStore.surface" :options="surfaceOptions" size="small" class="w-32" />
     </div>
-  </ThemeCard>
+  </SettingCard>
 </template>
