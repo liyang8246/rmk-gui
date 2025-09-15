@@ -6,7 +6,7 @@ updates:
       interval: daily
     groups:
       npm-dependencies:
-        patterns: ["*"]
+        patterns: ['*']
     labels:
       - dependencies
       - js
@@ -17,7 +17,7 @@ updates:
       interval: daily
     groups:
       cargo-dependencies:
-        patterns: ["*"]
+        patterns: ['*']
     labels:
       - dependencies
       - rust
