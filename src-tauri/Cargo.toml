@@ -20,7 +20,7 @@ crate-type = [
 ]
 
 [build-dependencies]
-tauri-build = { version = "2.4.0", features = [] }
+tauri-build = { version = "2.4.1", features = [] }
 
 [dependencies]
 tauri = { version = "2.8.2", features = [] }
