@@ -4,6 +4,9 @@ updates:
     directory: /
     schedule:
       interval: daily
+    groups:
+      npm-dependencies:
+        patterns: ["*"]
     labels:
       - dependencies
       - js
@@ -12,6 +15,9 @@ updates:
     directory: /src-tauri
     schedule:
       interval: daily
+    groups:
+      cargo-dependencies:
+        patterns: ["*"]
     labels:
       - dependencies
       - rust
