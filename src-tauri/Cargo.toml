@@ -20,14 +20,14 @@ crate-type = [
 ]
 
 [build-dependencies]
-tauri-build = { version = "2.4.0", features = [] }
+tauri-build = { version = "2.4.1", features = [] }
 
 [dependencies]
-tauri = { version = "2.8.2", features = [] }
+tauri = { version = "2.8.4", features = [] }
 tauri-plugin-opener = "2.5.0"
-serde = { version = "1.0.219", features = [ "derive" ] }
-serde_json = "1.0.143"
+serde = { version = "1.0.224", features = [ "derive" ] }
+serde_json = "1.0.145"
 hidapi = "2.6.3"
 anyhow = "1.0.99"
 dirs = "6.0.0"
-toml = "0.9.5"
+toml = "0.9.6"
