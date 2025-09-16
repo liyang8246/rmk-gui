@@ -1,4 +1,5 @@
 import Aura from '@primeuix/themes/aura'
+import wasm from 'vite-plugin-wasm'
 
 export default defineNuxtConfig({
   app: {
@@ -53,6 +54,9 @@ export default defineNuxtConfig({
     pathPrefix: false,
   }],
   vite: {
+    plugins: [
+      wasm(),
+    ],
     build: {
       rollupOptions: {
         output: {

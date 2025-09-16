@@ -2,6 +2,10 @@
 src-tauri/target/
 src-tauri/gen/schemas
 
+# Wasm
+wasm/target
+app/assets/wasm
+
 # Nuxt dev/build outputs
 .output
 .data

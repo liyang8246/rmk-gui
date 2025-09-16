@@ -6,7 +6,8 @@
   "scripts": {
     "nuxt:prepare": "nuxt prepare",
     "keycode:gen": "python3 codegen/gen.py",
-    "postinstall": "run-s keycode:gen nuxt:prepare",
+    "wasm:build": "cd wasm && wasm-pack build --target bundler --out-dir ../app/wasm --out-name index",
+    "postinstall": "run-s keycode:gen wasm:build nuxt:prepare",
     "js:lint": "eslint",
     "js:fix": "eslint --fix",
     "rust:fmt:check": "cargo fmt --check --manifest-path src-tauri/Cargo.toml",
@@ -58,6 +59,7 @@
     "nuxt": "4.0.3",
     "prettier-plugin-tailwindcss": "0.6.14",
     "rimraf": "6.0.1",
-    "serve": "14.2.4"
+    "serve": "14.2.4",
+    "vite-plugin-wasm": "^3.5.0"
   }
 }
