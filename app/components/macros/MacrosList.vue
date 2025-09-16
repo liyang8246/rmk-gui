@@ -29,7 +29,7 @@ function selectKeycode(row: number, col: number) {
     <div
       v-for="i, index in keyboardStore.keyMacros![pageMacrosStore.currMacro]!"
       :key="i.type"
-      class="rounded-prime-md flex min-h-14 w-full items-center justify-between gap-3 bg-surface-200 px-2 dark:bg-surface-900"
+      class="rounded-prime-md flex min-h-12 w-full items-center justify-between gap-3 bg-surface-200 px-2 dark:bg-surface-900"
     >
       <div class="flex h-full w-40 items-center justify-start gap-2">
         <span class="flex size-8 cursor-move items-center justify-center transition-all duration-200 hover:text-surface-700 dark:hover:text-surface-300">
@@ -62,7 +62,7 @@ function selectKeycode(row: number, col: number) {
             <Key
               :keys="keyCode"
               :select="selectKeycode(index, keyCodes_index)"
-              :default-key-size="42"
+              :default-key-size="38"
               @click="setKeycode($event, index, keyCodes_index)"
             />
           </template>
