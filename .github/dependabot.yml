@@ -9,7 +9,6 @@ updates:
         patterns: ['*']
     labels:
       - dependencies
-      - js
 
   - package-ecosystem: cargo
     directory: /src-tauri
@@ -20,4 +19,3 @@ updates:
         patterns: ['*']
     labels:
       - dependencies
-      - rust
