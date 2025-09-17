@@ -1,6 +1,6 @@
 [package]
 name = "rmk-gui"
-version = "0.5.0"
+version = "0.6.0"
 description = "Gui configuration for RMK based on Tauri and Nuxt"
 authors = [ "LiYang" ]
 repository = "https://github.com/liyang8246/rmk-gui"
