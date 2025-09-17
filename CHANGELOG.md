@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://github.com/liyang8246/rmk-gui/compare/v0.5.0...v0.6.0) (2025-09-17)
+
+
+### Features
+
+* **app:** Add HID support check and unsupported browser dialog ([#61](https://github.com/liyang8246/rmk-gui/issues/61)) ([74ddd39](https://github.com/liyang8246/rmk-gui/commit/74ddd3966d3dffe701701b1a3ed86fa711716e89))
+* **build:** add clean script and serve capabilities, perf(pinia): optimize persistence ([#55](https://github.com/liyang8246/rmk-gui/issues/55)) ([4af871b](https://github.com/liyang8246/rmk-gui/commit/4af871b9e7d0e783093ce0d949f1f4ce23007870))
+* **components:** implement dynamic navigation and macros functionality ([#56](https://github.com/liyang8246/rmk-gui/issues/56)) ([cc66ead](https://github.com/liyang8246/rmk-gui/commit/cc66ead5f6560fdd9d77111aa331cdb2aabe8b3a))
+* **ConnHID:** implement toggle connection ([#58](https://github.com/liyang8246/rmk-gui/issues/58)) ([2894072](https://github.com/liyang8246/rmk-gui/commit/289407298a050375c1015f7cced57e42c369dd2f))
+* **i18n:** add i18n support using @nuxtjs/i18n ([#64](https://github.com/liyang8246/rmk-gui/issues/64)) ([9b23a6f](https://github.com/liyang8246/rmk-gui/commit/9b23a6f7736b1ef4fdf4bf83f5a5737860c302ef))
+* **store:** add pinia persistent (web only) ([#49](https://github.com/liyang8246/rmk-gui/issues/49)) ([26e5995](https://github.com/liyang8246/rmk-gui/commit/26e59958129c4b7c65612ebcff7ebcc68b02505e))
+
+
+### Bug Fixes
+
+* **tauri:** fix create config file ([#51](https://github.com/liyang8246/rmk-gui/issues/51)) ([62df06a](https://github.com/liyang8246/rmk-gui/commit/62df06af5f84d63ef2313e5fdc1ecf4ab3a84f6e))
+
 ## [0.5.0](https://github.com/liyang8246/rmk-gui/compare/v0.4.0...v0.5.0) (2025-08-10)
 
 
