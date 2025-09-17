@@ -1,22 +1,19 @@
+export type IndexMap = StringMap<[number, number, number], number>
+
 export interface VialInterface {
   productName: () => Promise<string>
   layerCount: () => Promise<number>
   marcoCount: () => Promise<number>
   vialJson: () => Promise<VialJson>
   kleDefinition: (vialJson: VialJson) => InstanceType<typeof KleBoard>
-  keymap: (layer: number, rows: number, cols: number) => Promise<Map<string, number>>
+  keymap: (layer: number, rows: number, cols: number) => Promise<IndexMap>
   layoutKeymap: (
     layout: InstanceType<typeof KleBoard>,
-    keymap: Map<string, number>,
+    keymap: IndexMap,
     layerCount: number
-  ) => Map<string, number>
+  ) => IndexMap
   macros: (count: number) => Promise<Array<Array<MacroAction>>>
   setKeycode: (lyrRowCol: [number, number, number], keycode: number) => Promise<void>
-}
-
-export interface Matrix {
-  rows: number
-  cols: number
 }
 
 export interface CustomKeycode {
@@ -45,7 +42,10 @@ export interface VialJson {
   vendorId: string
   productId: string
   lighting: string
-  matrix: Matrix
+  matrix: {
+    rows: number
+    cols: number
+  }
   customKeycodes: CustomKeycode[]
   layouts: Layout
 }

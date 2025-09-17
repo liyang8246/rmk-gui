@@ -202,11 +202,11 @@ export class VialDevice implements VialInterface {
     return data[1]!
   }
 
-  async keymap(layerCount: number, rowCount: number, colCount: number): Promise<Map<string, number>> {
+  async keymap(layerCount: number, rowCount: number, colCount: number): Promise<IndexMap> {
     const size = layerCount * rowCount * colCount * 2
     const rawData = await this.readOffset(VialConstants.Command.GetKeymapBuffer, size, 0)
 
-    const keymapResult = new Map<string, number>()
+    const keymapResult = new StringMap<[number, number, number], number>()
 
     for (let layer = 0; layer < layerCount; layer++) {
       for (let row = 0; row < rowCount; row++) {
@@ -214,7 +214,7 @@ export class VialDevice implements VialInterface {
           const offset = (layer * rowCount * colCount + row * colCount + col) * 2
           if (offset + 1 < rawData.length) {
             const keycode = 256 * rawData[offset]! + rawData[offset + 1]!
-            keymapResult.set([layer, row, col].toString(), keycode)
+            keymapResult.set([layer, row, col], keycode)
           }
           else {
             console.error(
@@ -237,16 +237,16 @@ export class VialDevice implements VialInterface {
 
   layoutKeymap(
     layout: InstanceType<typeof KleBoard>,
-    keymap: Map<string, number>,
+    keymap: IndexMap,
     layerCount: number,
-  ): Map<string, number> {
-    const layoutKeymap = new Map<string, number>()
+  ): IndexMap {
+    const layoutKeymap = new StringMap<[number, number, number], number>()
     for (const key of layout.keys) {
       const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
       for (let layer = 0; layer < layerCount; layer++) {
-        const keycode = keymap.get([layer, row!, col!].toString())
+        const keycode = keymap.get([layer, row!, col!])
         if (keycode !== undefined) {
-          layoutKeymap.set([layer, row!, col!].toString(), keycode)
+          layoutKeymap.set([layer, row!, col!], keycode)
         }
       }
     }
