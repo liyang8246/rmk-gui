@@ -2,13 +2,13 @@
 const keyboardStore = useKeyboardStore()
 const pageMacrosStore = usePageMacrosStore()
 
-const addList = ref<MacroAction[]>([
+const addList: MacroAction[] = [
   { type: 0, name: 'Tap', keyCodes: [] },
   { type: 2, name: 'Down', keyCodes: [] },
   { type: 3, name: 'Up', keyCodes: [] },
   { type: 4, name: 'Delay', delay: null },
   { type: 9, name: 'Text', text: null },
-])
+]
 
 function setMapperKeycode(key: number) {
   if (!keyCodeMap[key]) {
@@ -50,15 +50,26 @@ function setMapperKeycode(key: number) {
         <div
           v-for="item in addList"
           :key="item.type"
-          class="rounded-prime-md cursor-move bg-surface-0 p-3 text-surface-500 shadow-sm shadow-surface-300 dark:bg-surface-600 dark:text-surface-400 dark:shadow-surface-950"
+          class="rounded-prime-md cursor-move bg-surface-0 p-3 text-surface-500 shadow-sm  dark:bg-surface-600 dark:text-surface-300"
         >
           {{ item.name }}
         </div>
       </VueDraggable>
-      <div class="rounded-prime-md relative size-full overflow-hidden bg-surface-0 p-2 shadow-sm shadow-surface-300 dark:bg-surface-600 dark:shadow-surface-950">
-        <ScrollPanel class="size-full" pt:content:class="!p-0 !w-full !h-full">
-          <MacrosList />
-        </ScrollPanel>
+      <div class="rounded-prime-md relative flex size-full flex-col gap-3 overflow-hidden p-2">
+        <div class="rounded-prime-md relative h-[calc(100%-60px)] w-full bg-surface-0 p-2 shadow-sm dark:bg-surface-600">
+          <ScrollPanel class="size-full" pt:content:class="!p-0 !w-full !h-full">
+            <MacrosList />
+          </ScrollPanel>
+        </div>
+
+        <div class="flex h-12 w-full items-center justify-start gap-3">
+          <button v-ripple class="rounded-prime-md h-10 w-24 border-0 bg-surface-0 px-3 py-2 text-surface-700 hover:text-surface-500 dark:bg-surface-600 dark:text-surface-300" @click="keyboardStore.keyMacros![pageMacrosStore.currMacro]?.push({ type: 9, name: 'Text', text: null })">
+            add text
+          </button>
+          <button v-ripple class="rounded-prime-md h-10 w-24 border-0 bg-surface-0 px-3 py-2 text-surface-700 hover:text-surface-500 dark:bg-surface-600 dark:text-surface-300" @click="keyboardStore.keyMacros![pageMacrosStore.currMacro] = []">
+            clean all
+          </button>
+        </div>
       </div>
     </div>
   </div>
