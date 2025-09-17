@@ -1,5 +1,3 @@
-packages:
-  - .
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - esbuild
