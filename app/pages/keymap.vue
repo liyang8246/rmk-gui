@@ -7,9 +7,9 @@ const currLayer = ref(0)
 const currKey = ref<[number, number, number, 'outer' | 'inner' | null]>([0, 0, 0, null])
 
 const pageKeymapContainerRef = ref(null)
-const keyBoardMaxSize = computed(() => {
-  const pagekeymapSize = useElementSize(pageKeymapContainerRef)
+const pagekeymapSize = useElementSize(pageKeymapContainerRef)
 
+const keyBoardMaxSize = computed(() => {
   const keyBoardMaxWidth = Math.round(pagekeymapSize.width.value)
   const keyBoardMaxHeight = Math.round(pagekeymapSize.height.value * 0.7 - 56)
 
