@@ -7,9 +7,6 @@ const themeModeOptions = [
   { icon: 'tabler:moon-stars', label: 'dark' },
   { icon: 'tabler:settings', label: 'system' },
 ]
-
-const primaryOptions = primaryColors
-const surfaceOptions = surfaceColors
 </script>
 
 <template>
@@ -24,10 +21,10 @@ const surfaceOptions = surfaceColors
     </div>
     <div class="flex h-9 items-center justify-between">
       <h2> {{ $t("settings.general.primary") }} </h2>
-      <Select v-model="themeStore.primary" :options="primaryOptions" option-label="name" option-value="name" size="small" class="w-32">
+      <Select v-model="themeStore.primary" :options="primaryColors" option-label="name" option-value="name" size="small" class="w-32">
         <template #option="{ option }">
           <div class="flex items-center">
-            <div class="size-4 rounded-full" :style="{ backgroundColor: option.palette[500] }" />
+            <div class="size-2 rounded-full" :style="{ backgroundColor: option.palette[500] }" />
             <span class="ml-2"> {{ option.name }} </span>
           </div>
         </template>
@@ -35,10 +32,10 @@ const surfaceOptions = surfaceColors
     </div>
     <div class="flex h-9 items-center justify-between">
       <h2> {{ $t("settings.general.surface") }} </h2>
-      <Select v-model="themeStore.surface" :options="surfaceOptions" option-label="name" option-value="name" size="small" class="w-32">
+      <Select v-model="themeStore.surface" :options="surfaceColors" option-label="name" option-value="name" size="small" class="w-32">
         <template #option="{ option }">
           <div class="flex items-center">
-            <div class="size-4 rounded-full" :style="{ backgroundColor: option.palette[500] }" />
+            <div class="size-2 rounded-full" :style="{ backgroundColor: option.palette[500] }" />
             <span class="ml-2"> {{ option.name }} </span>
           </div>
         </template>
