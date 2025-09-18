@@ -81,7 +81,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value as IndexMap, layerCount.value)
   }
 
-  function fetchKeyList(layer: number) {
+  function fetchKeyList(layer: number): Key[] {
     if (!layerCount.value) {
       throw new Error('Layer count not available')
     }
@@ -99,15 +99,14 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     return kleDefinition.value.keys.map((k) => {
       const [row, col] = k.labels[0]!.split(',').map(Number)
       const keycode = layoutKeymap.value!.get([layer, row!, col!])!
-      const keyInfo = keyCodeMap[keycode]!
       return {
         geometry: pikeGeo(k),
         position: { row, col },
         key: {
           code: keycode,
-          symbol: [...keyInfo.symbol],
+          symbol: [...keyToLable(keycode)],
         },
-      }
+      } as Key
     })
   }
 
