@@ -37,6 +37,30 @@ export interface Layout {
   keymap: KeymapItem[][]
 }
 
+export interface Key {
+  geometry: {
+    x: number
+    y: number
+    width: number
+    height: number
+    x2: number
+    y2: number
+    width2: number
+    height2: number
+    rotation_x: number
+    rotation_y: number
+    rotation_angle: number
+  }
+  position: {
+    row: number
+    col: number
+  }
+  key: {
+    code: number
+    symbol: [string | null, string | null]
+  }
+}
+
 export interface VialJson {
   name: string
   vendorId: string

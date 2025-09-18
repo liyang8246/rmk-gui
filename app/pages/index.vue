@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+
 const keyboardStore = useKeyboardStore()
 const value = ref('LayerCount')
 
@@ -11,7 +12,7 @@ const displayOptions: Record<string, DisplayItem> = {
   LayerCount: { label: 'LayerCount', value: () => keyboardStore.layerCount },
   MacroCount: { label: 'MacroCount', value: () => keyboardStore.macroCount },
   VialJson: { label: 'VialJson', value: () => keyboardStore.vialJson },
-  Keymap: { label: 'Keymap', value: () => keyboardStore.keymap },
+  Keymap: { label: 'Keymap', value: () => keyboardStore.layoutKeymap },
   KleDefinition: { label: 'KleDefinition', value: () => keyboardStore.kleDefinition },
   getMacros: { label: 'getMacros', value: () => keyboardStore.keyMacros },
 }

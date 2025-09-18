@@ -22,7 +22,11 @@ export class StringMap<K extends Stringable, V> {
   }
 
   clear(): void {
-    this.inner.clear()
+    return this.inner.clear()
+  }
+
+  entries(): MapIterator<[string, V]> {
+    return this.inner.entries()
   }
 
   get size(): number {
