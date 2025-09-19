@@ -55,7 +55,7 @@ export interface Key {
     row: number
     col: number
   }
-  key: {
+  info: {
     code: number
     symbol: [string | null, string | null]
   }

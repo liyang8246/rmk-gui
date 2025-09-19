@@ -11,6 +11,6 @@ function loadKeys() {
     btn
   </button>
   <div>
-    {{ keys }}
+    <keyboard :keys="keys" />
   </div>
 </template>

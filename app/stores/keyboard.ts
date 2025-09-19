@@ -102,7 +102,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
       return {
         geometry: pikeGeo(k),
         position: { row, col },
-        key: {
+        info: {
           code: keycode,
           symbol: [...keyToLable(keycode)],
         },
