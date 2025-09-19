@@ -4,6 +4,11 @@ const { keys, keySize = 50 } = defineProps<{
   highlight?: StringSet<[[number, number], 'outer' | 'inner']>
   keySize?: number
 }>()
+
+const emit = defineEmits<{
+  (e: 'click', key: Key, zone: 'outer' | 'inner'): void
+}>()
+
 const keyPadding = computed(() => keySize * 0.13) // Magic Keyboard`s margin ratio
 
 function getKeyCorners(key: Key) {
@@ -45,7 +50,7 @@ const kbdSize = computed(() => {
 
 <template>
   <div
-    class="relative bg-red-500" :style="kbdSize"
+    class="relative" :style="kbdSize"
   >
     <key
       v-for="key in keys" :key="`${key.position}`" :keys="key.info.symbol" :kle-props="key.geometry" :key-margin="0" :default-key-size="keySize - keyPadding" :style="{
@@ -55,7 +60,7 @@ const kbdSize = computed(() => {
         transform: `rotate(${key.geometry.rotation_angle}deg)`,
         transformOrigin: `calc(${(key.geometry.rotation_x - key.geometry.x) * keySize}px)` + `calc(${(key.geometry.rotation_y - key.geometry.y) * keySize}px)`,
       }"
-      @click="(e) => console.log(key.position, e)"
+      @click="(e) => emit('click', key, e)"
     />
   </div>
 </template>
