@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { keys, keySize = 50 } = defineProps<{
+const { keys, keySize = 64 } = defineProps<{
   keys: Key[]
   highlight?: StringSet<[[number, number], 'outer' | 'inner']>
   keySize?: number
@@ -9,7 +9,7 @@ const emit = defineEmits<{
   (e: 'click', key: Key, zone: 'outer' | 'inner'): void
 }>()
 
-const keyPadding = computed(() => keySize * 0.13) // Magic Keyboard`s margin ratio
+const keyPadding = computed(() => keySize * 0.065) // Magic Keyboard`s margin ratio
 
 function getKeyCorners(key: Key) {
   const { x, y, width, height, x2, y2, width2, height2, rotation_x, rotation_y, rotation_angle } = key.geometry
@@ -53,7 +53,7 @@ const kbdSize = computed(() => {
     class="relative" :style="kbdSize"
   >
     <key
-      v-for="key in keys" :key="`${key.position}`" :keys="key.info.symbol" :kle-props="key.geometry" :key-margin="0" :default-key-size="keySize - keyPadding" :style="{
+      v-for="key in keys" :key="`${key}`" :key-info="key" :size="keySize" :padding="keyPadding" :style="{
         position: 'absolute',
         top: `${key.geometry.y * keySize}px`,
         left: `${key.geometry.x * keySize}px`,
