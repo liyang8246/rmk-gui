@@ -1,128 +1,66 @@
 <script lang="ts" setup>
-const { keyBoardKeySize = 42, keyBoardKeys, layer = 0, keyBoardKeysMap, containerMaxSize, selectKeycodeHandler } = defineProps<{
-  keyBoardKeySize?: number
-  keyBoardKeys: InstanceType<typeof KleKey>[]
-  keyBoardKeysMap: Map<string, number> | null
-  containerMaxSize?: {
-    width: number
-    height: number
-  }
-  layer?: number
-  selectKeycodeHandler?: (key: InstanceType<typeof KleKey>) => 'outer' | 'inner' | null
+const { keys, keySize = 64 } = defineProps<{
+  keys: Key[]
+  highlight?: StringSet<[[number, number], 'outer' | 'inner']>
+  keySize?: number
 }>()
+
 const emit = defineEmits<{
-  (e: 'setKeycode', zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>): void
+  (e: 'click', key: Key, zone: 'outer' | 'inner'): void
 }>()
 
-function indexToDisplay(index: [number, number, number]): [string | null, string | null] {
-  if (!keyBoardKeysMap) {
-    throw new Error('Layout keymap not available')
+const keyPadding = computed(() => keySize * 0.065) // Magic Keyboard`s margin ratio
+
+function getKeyCorners(key: Key) {
+  const { x, y, width, height, x2, y2, width2, height2, rotation_x, rotation_y, rotation_angle } = key.geometry
+  const corners: [number, number][] = [
+    [x, y],
+    [x + width, y],
+    [x, y + height],
+    [x + width, y + height],
+    [x + x2, y + y2],
+    [x + x2 + width2, y + y2],
+    [x + x2, y + y2 + height2],
+    [x + x2 + width2, y + y2 + height2],
+  ]
+
+  const rotate = (x: number, y: number, cx: number, cy: number, angle: number): [number, number] => {
+    const rad = -angle * Math.PI / 180
+    const cos = Math.cos(rad)
+    const sin = Math.sin(rad)
+    return [
+      cos * (x - cx) + sin * (y - cy) + cx,
+      cos * (y - cy) - sin * (x - cx) + cy,
+    ]
   }
-  const keyValue = keyBoardKeysMap.get(index.toString())
-  if (keyValue === undefined) {
-    throw new Error(`Keymap value for index ${index.toString()} not found`)
-  }
-  return keyToLable(keyValue)
+
+  return corners.map(([px, py]) => rotate(px, py, rotation_x, rotation_y, rotation_angle))
 }
 
-function labelToDisplay(
-  key: InstanceType<typeof KleKey>,
-  layer: number,
-): [string | null, string | null] {
-  const [row, col] = key.labels[0]!.split(',').map(n => Number.parseInt(n, 10))
-  return indexToDisplay([layer, row!, col!])
-}
-
-const position = computed(() => {
-  if (!keyBoardKeys) {
-    throw new Error('No KLE definition')
-  }
-  const keys = keyBoardKeys
-  let maxX = 0
-  let maxY = 0
-  let minX = Infinity
-  let minY = Infinity
-  for (let i = 0; i < keys.length; i++) {
-    maxX = Math.max(keys[i]!.x, maxX)
-    maxY = Math.max(keys[i]!.y, maxY)
-    minX = Math.min(keys[i]!.x, minX)
-    minY = Math.min(keys[i]!.y, minY)
-  }
-  const lastWidth = keys[keys.findIndex(key => key.x === maxX)]!.width
-  const lastHeight = keys[keys.findIndex(key => key.y === maxY)]!.height
-  return {
-    maxX,
-    maxY,
-    minX,
-    minY,
-    lastWidth,
-    lastHeight,
-  }
+const kbdSize = computed(() => {
+  const size = { width: 0, height: 0 }
+  keys.forEach((key) => {
+    const corners = getKeyCorners(key)
+    size.width = Math.max(size.width, ...corners.map(c => c[0] * keySize))
+    size.height = Math.max(size.height, ...corners.map(c => c[1] * keySize))
+  })
+  return { width: `${size.width}px`, height: `${size.height}px` }
 })
-
-const computedSizes = computed(() => {
-  const hasMaxSize = !!containerMaxSize
-  const totalWidth = position.value.maxX + position.value.minX + position.value.lastWidth
-  const totalHeight = position.value.maxY + position.value.minY + position.value.lastHeight
-
-  let maxSize = keyBoardKeySize
-  let calculatedSize = keyBoardKeySize
-
-  if (hasMaxSize) {
-    maxSize = Math.min(
-      Math.round(containerMaxSize.width / totalWidth),
-      Math.round(containerMaxSize.height / totalHeight),
-    )
-    calculatedSize = (totalWidth * keyBoardKeySize + 2) > containerMaxSize.width
-      || (totalHeight * keyBoardKeySize + 2) > containerMaxSize.height
-      ? maxSize
-      : keyBoardKeySize
-  }
-
-  return {
-    maxSize,
-    calculatedSize,
-    width: `${totalWidth * calculatedSize + 2}px`,
-    height: `${totalHeight * calculatedSize + 2}px`,
-  }
-})
-
-const computedKeySize = computed(() => computedSizes.value.calculatedSize)
-const width = computed(() => computedSizes.value.width)
-const height = computed(() => computedSizes.value.height)
-
-function getSelectValue(key: InstanceType<typeof KleKey>): 'outer' | 'inner' | null {
-  if (selectKeycodeHandler) {
-    return selectKeycodeHandler(key)
-  }
-  return null
-}
 </script>
 
 <template>
-  <div class="rounded-prime-md relative overflow-hidden" :style="{ width, height }">
-    <template
-      v-for="keys in keyBoardKeys"
-      :key="keys"
-    >
-      <div
-        class="rounded-prime-md absolute z-10 "
-        :style="{
-          top: `${keys.y * computedKeySize + 2}px`,
-          left: `${keys.x * computedKeySize + 2}px`,
-          transform: `rotate(${keys.rotation_angle}deg)`,
-          transformOrigin: `calc(${(-keys.x + keys.rotation_x) * computedKeySize}px)` + `calc(${(-keys.y + keys.rotation_y) * computedKeySize}px)`,
-        }"
-      >
-        <Key
-          :keys="labelToDisplay(keys, layer)"
-          :kle-props="keys"
-          :select="getSelectValue(keys)"
-          :default-key-size="computedKeySize"
-          :key-margin="computedKeySize / 8"
-          @click="emit('setKeycode', $event, keys)"
-        />
-      </div>
-    </template>
+  <div
+    class="relative" :style="kbdSize"
+  >
+    <key
+      v-for="key in keys" :key="`${key}`" :key-info="key" :size="keySize" :padding="keyPadding" :style="{
+        position: 'absolute',
+        top: `${key.geometry.y * keySize}px`,
+        left: `${key.geometry.x * keySize}px`,
+        transform: `rotate(${key.geometry.rotation_angle}deg)`,
+        transformOrigin: `calc(${(key.geometry.rotation_x - key.geometry.x) * keySize}px)` + `calc(${(key.geometry.rotation_y - key.geometry.y) * keySize}px)`,
+      }"
+      @click="(e) => emit('click', key, e)"
+    />
   </div>
 </template>

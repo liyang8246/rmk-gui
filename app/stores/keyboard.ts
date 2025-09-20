@@ -48,7 +48,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     kleDefinition.value = vialDevice.value.kleDefinition(vialJson.value)
   }
 
-  const keymap = ref<Map<string, number> | null>(null)
+  const keymap = ref<IndexMap | null>(null)
   async function fetchKeymap() {
     if (!vialDevice.value) {
       throw new Error('Device not connected')
@@ -64,7 +64,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     keymap.value = await vialDevice.value.keymap(layer, rows, cols)
   }
 
-  const layoutKeymap = ref<Map<string, number> | null>(null)
+  const layoutKeymap = ref<IndexMap | null>(null)
   function fetchLayoutKeymap() {
     if (!vialDevice.value) {
       throw new Error('Vial device not available')
@@ -78,7 +78,36 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     if (!layerCount.value) {
       throw new Error('Layer count not available')
     }
-    layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value, layerCount.value)
+    layoutKeymap.value = vialDevice.value.layoutKeymap(kleDefinition.value, keymap.value as IndexMap, layerCount.value)
+  }
+
+  function fetchKeyList(layer: number): Key[] {
+    if (!layerCount.value) {
+      throw new Error('Layer count not available')
+    }
+    if (!kleDefinition.value) {
+      throw new Error('KLE definition not available')
+    }
+    if (!layoutKeymap.value) {
+      throw new Error('Layout keymap not available')
+    }
+    if (layer >= layerCount.value) {
+      throw new Error('Invalid layer')
+    }
+
+    const pikeGeo = (k: any) => pick(k, ['x', 'y', 'width', 'height', 'x2', 'y2', 'width2', 'height2', 'rotation_x', 'rotation_y', 'rotation_angle'])
+    return kleDefinition.value.keys.map((k) => {
+      const [row, col] = k.labels[0]!.split(',').map(Number)
+      const keycode = layoutKeymap.value!.get([layer, row!, col!])!
+      return {
+        geometry: pikeGeo(k),
+        position: { row, col },
+        info: {
+          code: keycode,
+          symbol: [...keyToLable(keycode)],
+        },
+      } as Key
+    })
   }
 
   const keyMacros = ref<Array<Array<MacroAction>> | null>(null)
@@ -171,10 +200,10 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     fetchVialJson,
     kleDefinition,
     fetchKleDefinition,
-    keymap,
     fetchKeymap,
     layoutKeymap,
     fetchLayoutKeymap,
+    fetchKeyList,
     keyMacros,
     fetchAll,
     cleanAll,
