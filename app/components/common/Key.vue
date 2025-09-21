@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { keyInfo, padding = 0, size = 50 } = defineProps<{
+const { keyInfo, highlight = 'inner', padding = 0, size = 50 } = defineProps<{
   keyInfo: Key
   highlight?: 'outer' | 'inner'
   padding?: number
@@ -12,11 +12,12 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div>
-    <div class="group relative text-surface-900 dark:text-surface-100" @click="console.log('click', 'outer')">
+  <div class="font-mono text-surface-900 dark:text-surface-100">
+    <div class="group relative" @click="emit('click', 'outer')">
       <!-- 边框 -->
       <div
-        class="rounded-prime-md absolute bg-surface-400 shadow-sm dark:bg-surface-800"
+        class="rounded-prime-md absolute bg-surface-400 shadow dark:bg-surface-800"
+        :class="{ '!bg-primary-400': highlight === 'outer' }"
         :style="{
           top: `${padding + 2}px`,
           left: `${padding - 1}px`,
@@ -25,7 +26,8 @@ const emit = defineEmits<{
         }"
       />
       <div
-        class="rounded-prime-md absolute bg-surface-400 shadow-sm dark:bg-surface-800"
+        class="rounded-prime-md absolute bg-surface-400 shadow dark:bg-surface-800"
+        :class="{ '!bg-primary-400': highlight === 'outer' }"
         :style="{
           top: `${padding + keyInfo.geometry.y2 * size + 2}px`,
           left: `${padding + keyInfo.geometry.x2 * size - 1}px`,
@@ -36,6 +38,7 @@ const emit = defineEmits<{
       <!-- 主按键 -->
       <div
         class="rounded-prime-md absolute bg-surface-300 group-active:opacity-0 dark:bg-surface-700"
+        :class="{ '!bg-primary-100': highlight === 'outer' }"
         :style="{
           top: `${padding}px`,
           left: `${padding}px`,
@@ -45,6 +48,7 @@ const emit = defineEmits<{
       />
       <div
         class="rounded-prime-md absolute bg-surface-300 group-active:opacity-0 dark:bg-surface-700"
+        :class="{ '!bg-primary-100': highlight === 'outer' }"
         :style="{
           top: `${padding + keyInfo.geometry.y2 * size}px`,
           left: `${padding + keyInfo.geometry.x2 * size}px`,
@@ -52,10 +56,10 @@ const emit = defineEmits<{
           height: `${keyInfo.geometry.height2 * size - padding * 2}px`,
         }"
       />
-
+      <!-- 按键名 -->
       <span
         v-if="keyInfo.info.symbol[0] === null"
-        class="absolute" style="transform: translate(-50%, -50%)"
+        class="absolute" :class="{ 'text-xl': keyInfo.info.symbol[1]!.length === 1 }" style="transform: translate(-50%, -50%)"
         :style="{
           top: `${keyInfo.geometry.height / 2 * size}px`,
           left: `${keyInfo.geometry.width / 2 * size}px`,
@@ -63,10 +67,9 @@ const emit = defineEmits<{
       >
         {{ keyInfo.info.symbol[1] }}
       </span>
-
       <span
         v-else
-        class="absolute whitespace-nowrap text-sm" style="transform: translate(-50%, -50%)"
+        class="absolute whitespace-nowrap" style="transform: translate(-50%, -50%)"
         :style="{
           top: `${padding + (keyInfo.geometry.height * size - 2 * padding) / 5}px`,
           left: `${keyInfo.geometry.width / 2 * size}px`,
@@ -75,18 +78,21 @@ const emit = defineEmits<{
         {{ keyInfo.info.symbol[0] }}
       </span>
     </div>
-    <template
+    <!-- 副按键 -->
+    <div
       v-if="keyInfo.info.symbol[0] !== null"
+      class="group relative"
+       @click="emit('click', 'inner')"
     >
       <div
-        class="rounded-prime-md absolute bg-surface-400 opacity-0 active:opacity-100 dark:bg-surface-800"
+        class="rounded-prime-md absolute bg-surface-400 opacity-0 group-active:opacity-100 dark:bg-surface-800"
+        :class="{ '!bg-primary-200': highlight === 'inner', '!opacity-100': highlight === 'inner' }"
         style="transform: translate(-50%, -50%)" :style="{
           top: `${padding + (keyInfo.geometry.height * size - 2 * padding) / 5 * 3.5}px`,
           left: `${keyInfo.geometry.width / 2 * size}px`,
           width: `${keyInfo.geometry.width * size - padding * 2}px`,
           height: `${(keyInfo.geometry.height * size - 2 * padding) / 5 * 3}px`,
         }"
-        @click.stop="console.log('click', 'inner')"
       />
       <span
         class="absolute h-[2px] rounded-full bg-surface-500 dark:bg-surface-400" style="transform: translate(-50%, -50%)"
@@ -106,6 +112,6 @@ const emit = defineEmits<{
       >
         {{ keyInfo.info.symbol[1] }}
       </span>
-    </template>
+    </div>
   </div>
 </template>

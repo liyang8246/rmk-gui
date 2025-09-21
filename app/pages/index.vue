@@ -11,6 +11,6 @@ function loadKeys() {
     btn
   </button>
   <div>
-    <keyboard :keys="keys" />
+    <keyboard :keys="keys" @click="(key, zone) => console.log(zone, key)"/>
   </div>
 </template>
