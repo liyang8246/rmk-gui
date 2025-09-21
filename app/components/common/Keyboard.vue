@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-const { keys, keySize = 64 } = defineProps<{
+const { keys, keySize = 64, highlight } = defineProps<{
   keys: Key[]
-  highlight?: StringSet<[[number, number], 'outer' | 'inner']>
+  highlight?: StringMap<[number, number], 'outer' | 'inner'>
   keySize?: number
 }>()
 
@@ -53,7 +53,7 @@ const kbdSize = computed(() => {
     class="relative" :style="kbdSize"
   >
     <key
-      v-for="key in keys" :key="`${key}`" :key-info="key" :size="keySize" :padding="keyPadding" :style="{
+      v-for="key in keys" :key="`${key}`" :key-info="key" :highlight="highlight?.get([key.position.row, key.position.col])" :size="keySize" :padding="keyPadding" :style="{
         position: 'absolute',
         top: `${key.geometry.y * keySize}px`,
         left: `${key.geometry.x * keySize}px`,

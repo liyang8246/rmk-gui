@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { keyInfo, highlight = 'inner', padding = 0, size = 50 } = defineProps<{
+const { keyInfo, highlight, padding = 0, size = 50 } = defineProps<{
   keyInfo: Key
   highlight?: 'outer' | 'inner'
   padding?: number
@@ -86,7 +86,7 @@ const emit = defineEmits<{
     >
       <div
         class="rounded-prime-md absolute bg-surface-400 opacity-0 group-active:opacity-100 dark:bg-surface-800"
-        :class="{ '!bg-primary-200': highlight === 'inner', '!opacity-100': highlight === 'inner' }"
+        :class="{ '!bg-primary-100': highlight === 'inner', '!opacity-100': highlight === 'inner' }"
         style="transform: translate(-50%, -50%)" :style="{
           top: `${padding + (keyInfo.geometry.height * size - 2 * padding) / 5 * 3.5}px`,
           left: `${keyInfo.geometry.width / 2 * size}px`,

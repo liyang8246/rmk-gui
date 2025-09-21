@@ -3,7 +3,7 @@ interface Stringable {
 }
 
 export class StringMap<K extends Stringable, V> {
-  private inner: Map<string, V> = new Map()
+  inner: Map<string, V> = new Map()
 
   set(key: K, value: V): void {
     this.inner.set(key.toString(), value)
