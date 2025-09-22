@@ -82,7 +82,7 @@ const emit = defineEmits<{
     <div
       v-if="keyInfo.info.symbol[0] !== null"
       class="group relative"
-       @click="emit('click', 'inner')"
+      @click="emit('click', 'inner')"
     >
       <div
         class="rounded-prime-md absolute bg-surface-400 opacity-0 group-active:opacity-100 dark:bg-surface-800"

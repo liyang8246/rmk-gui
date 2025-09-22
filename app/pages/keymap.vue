@@ -12,7 +12,8 @@ function handleSelected(key: Key, zone: 'outer' | 'inner') {
   const pos: [number, number] = [key.position.row, key.position.col]
   if (currKey.value.has(pos)) {
     currKey.value.clear()
-  } else {
+  }
+  else {
     currKey.value.clear()
     currKey.value.set(pos, zone)
   }
