@@ -29,16 +29,18 @@ const baseKeys = parseKleLayout(layout68)
 </script>
 
 <template>
-  <Tabs value="base">
-    <TabList>
-      <Tab v-for="tab in keyTabs" :key="tab.value" :value="tab.value!" class="py-3 text-sm">
-        {{ tab.title }}
-      </Tab>
-    </TabList>
-    <TabPanels>
-      <TabPanel value="base">
-        <Keyboard :keys="baseKeys" style="zoom: 0.75;" @click="(key, zone) => emit('setKey', key, zone)" />
-      </TabPanel>
-    </TabPanels>
-  </Tabs>
+  <div class="rounded-prime-md w-full border px-3 py-2 shadow bg-white dark:bg-surface-900">
+    <Tabs value="base">
+      <TabList>
+        <Tab v-for="tab in keyTabs" :key="tab.value" :value="tab.value!" class="py-3 text-sm">
+          {{ tab.title }}
+        </Tab>
+      </TabList>
+      <TabPanels>
+        <TabPanel value="base">
+          <Keyboard :keys="baseKeys" style="zoom: 0.75;" @click="(key, zone) => emit('setKey', key, zone)" />
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
+  </div>
 </template>
