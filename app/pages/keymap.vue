@@ -21,8 +21,11 @@ function handleSelected(key: Key, zone: 'outer' | 'inner') {
 </script>
 
 <template>
-  <SelectButton v-model="currLayer" :allow-empty="false" :options="layerOption" size="small" />
-  <div class="flex justify-center">
-    <Keyboard :keys="keys" :highlight="currKey" @click="handleSelected" />
+  <div class="p-3">
+    <SelectButton v-model="currLayer" :allow-empty="false" :options="layerOption" size="small" />
+    <div class="flex h-full flex-col items-center justify-around">
+      <Keyboard :keys="keys" :highlight="currKey" @click="handleSelected" />
+      <MapperPanel />
+    </div>
   </div>
 </template>
