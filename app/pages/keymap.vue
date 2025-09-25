@@ -18,8 +18,18 @@ function handleSelected(key: Key, zone: 'outer' | 'inner') {
   currKey.value = isCurr ? null : [[row, col], zone]
 }
 
-function handleSetKey(_key: Key) {
-  // console.log(key)
+function handleSetKey(key: Key) {
+  if (!currKey.value) {
+    return
+  }
+  const currKeyPos: [number, number, number] = [Number.parseInt(currLayer.value), ...currKey.value![0]]
+  if (currKey.value[1] === 'outer') {
+    keyboardStore.setKeycode(currKeyPos, key.info.code)
+  }
+  else {
+    const currKeyCode = keyboardStore.layoutKeymap!.get(currKeyPos)!
+    keyboardStore.setKeycode(currKeyPos, (currKeyCode & 0xFF00) + key.info.code)
+  }
 }
 </script>
 
