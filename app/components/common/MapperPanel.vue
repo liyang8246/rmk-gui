@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 const emit = defineEmits<{
-  (e: 'setKey', key: Key, zone: 'outer' | 'inner'): void
+  (e: 'setKey', key: Key): void
 }>()
 
 const keyTabs = [
@@ -38,7 +38,7 @@ const baseKeys = parseKleLayout(layout68)
       </TabList>
       <TabPanels class="flex justify-center">
         <TabPanel value="base">
-          <Keyboard :keys="baseKeys" style="zoom: 0.75;" @click="(key, zone) => emit('setKey', key, zone)" />
+          <Keyboard :keys="baseKeys" style="zoom: 0.75;" @click="(key, _zone) => emit('setKey', key)" />
         </TabPanel>
       </TabPanels>
     </Tabs>
