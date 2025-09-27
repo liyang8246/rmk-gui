@@ -19,14 +19,7 @@ const baseDataBase = [
   [{ w: 2.25 }, 'LShift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift'],
   [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 6.25 }, 'Space', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl'],
 ]
-const ISODataBase = [
-  ['Escape', { x: 1 }, 'F1', 'F2', 'F3', 'F4', { x: 0.5 }, 'F5', 'F6', 'F7', 'F8', { x: 0.5 }, 'F9', 'F10', 'F11', 'F12'],
-  [{ y: 0.25 }, 'Grave', 'Kc1', 'Kc2', 'Kc3', 'Kc4', 'Kc5', 'Kc6', 'Kc7', 'Kc8', 'Kc9', 'Kc0', 'Minus', 'Equal', 'International3', 'Backspace'],
-  [{ w: 1.5 }, 'Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'LeftBracket', 'RightBracket', { x: 0.25, w: 1.25, h: 2, w2: 1.5, h2: 1, x2: -0.25 }, 'Enter'],
-  [{ w: 1.75 }, 'CapsLock', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Semicolon', 'Quote', 'Backslash'],
-  [{ w: 1.25 }, 'LShift', 'Backslash', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Comma', 'Dot', 'Slash', { w: 2.75 }, 'RShift'],
-  [{ w: 1.25 }, 'LCtrl', { w: 1.25 }, 'LGui', { w: 1.25 }, 'LAlt', { w: 1.25 }, 'International5', { w: 2.5 }, 'Space', { w: 1.25 }, 'International4', { w: 1.25 }, 'International2', { w: 1.25 }, 'RAlt', { w: 1.25 }, 'RGui', { w: 1.25 }, 'Application', { w: 1.25 }, 'RCtrl'],
-]
+
 const extraKeys = {
   1050: {
     base: [[], [], [], [], [], []] as (string | Record<string, any>)[][],
@@ -73,11 +66,6 @@ const extraKeys = {
 const getBaseData = computed(() => {
   const extra: (string | Record<string, any>)[][] = screenWidth.value >= 1225 ? extraKeys.all.base : screenWidth.value >= 1050 ? extraKeys[1225].base : extraKeys[1050].base
   return baseDataBase.map((row, index) => [...row, ...(extra[index] ?? [])])
-})
-
-const getISOData = computed(() => {
-  const extra: (string | Record<string, any>)[][] = screenWidth.value >= 1225 ? extraKeys.all.iso : screenWidth.value >= 1050 ? extraKeys[1225].iso : extraKeys[1050].iso
-  return ISODataBase.map((row, index) => [...row, ...(extra[index] ?? [])])
 })
 
 function generateKeyboard(data: (string | Record<string, any>)[][]) {
@@ -169,8 +157,6 @@ function generateKeymap(data: (string | Record<string, any>)[][]) {
 
 const baseKeyboard = computed(() => generateKeyboard(getBaseData.value))
 const baseKeymap = computed(() => generateKeymap(getBaseData.value))
-const ISOKeyboard = computed(() => generateKeyboard(getISOData.value))
-const ISOKeymap = computed(() => generateKeymap(getISOData.value))
 
 const BaseCodeMap = computed(() => {
   return Object.entries(keyCodeMap).filter(([, value]) =>
@@ -179,12 +165,7 @@ const BaseCodeMap = computed(() => {
     || (value.code >= 0x0085 && value.code <= 0x0086),
   )
 })
-const ISOCodeMap = computed(() => {
-  return Object.entries(keyCodeMap).filter(([, value]) =>
-    (value.code >= 0x0000 && value.code <= 0x0067)
-    || (value.code >= 0x0085 && value.code <= 0x0098)
-    || (value.code >= 0x00E0 && value.code <= 0x00E7))
-})
+
 const LayersCodeMap = computed(() => {
   const layerKeys = ['LT', 'MO', 'DF', 'TG', 'TT', 'TO', 'OSL', 'PDF']
   const layerCount = keyboard.layerCount || 32
@@ -195,12 +176,7 @@ const LayersCodeMap = computed(() => {
       .slice(0, layerCount),
   )
 })
-const QuantumCodeMap = computed(() => {
-  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
-})
-const BacklightCodeMap = computed(() => {
-  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
-})
+
 const ToolsCodeMap = computed(() => {
   return Object.entries(keyCodeMap).filter(([, value]) =>
     (value.code >= 0x0068 && value.code <= 0x0084)
@@ -208,37 +184,31 @@ const ToolsCodeMap = computed(() => {
   )
 })
 const UserCodeMap = computed(() => {
-  // const User = Object.entries(keyCodeMap)
-  //   .filter(([, value]) => value.rmk.includes('User'))
-  //   .slice(0, keyboard.layerCount || 8)
   return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
 })
 const MacroCodeMap = computed(() => {
   const maxMacro = 0x7700 + (keyboard.macroCount || 8)
   return Object.entries(keyCodeMap).filter(([, value]) =>
-    (value.code >= 0x7700 && value.code < maxMacro)
-    || (value.code >= 0x0753 && value.code <= 0x0757))
+    (value.code >= 0x7700 && value.code < maxMacro))
 })
 
 const BaseCodeMapFliter = computed(() => BaseCodeMap.value.filter(item => !baseKeymap.value.entries().find(key => item[1].code === key[1])))
-const ISOCodeMapFliter = computed(() => ISOCodeMap.value.filter(item => !ISOKeymap.value.entries().find(key => item[1].code === key[1])))
+
+const MultiRoleCodeMap = computed(() => {
+  return Object.entries(keyCodeMap).filter(([, value]) => value.code >= 0 && value.code <= 0)
+})
 
 const tabs = computed(() => [
   { area: 'any', title: 'base', content: BaseCodeMapFliter.value, value: '0' },
-  { area: 'any', title: 'ISO/JIS', content: ISOCodeMapFliter.value, value: '1' },
-  { area: 'outer', title: 'Layers', content: LayersCodeMap.value, value: '2' },
-  { area: 'outer', title: 'Quantum', content: QuantumCodeMap.value, value: '3' },
-  { area: 'outer', title: 'Backlight', content: BacklightCodeMap.value, value: '4' },
-  { area: 'any', title: 'App,Media and Mouse', content: ToolsCodeMap.value, value: '5' },
-  { area: 'outer', title: 'User', content: UserCodeMap.value, value: '6' },
-  { area: 'outer', title: 'Macro', content: MacroCodeMap.value, value: '7' },
+  { area: 'outer', title: 'Layers', content: LayersCodeMap.value, value: '1' },
+  { area: 'any', title: 'App,Media and Mouse', content: ToolsCodeMap.value, value: '2' },
+  { area: 'outer', title: 'User', content: UserCodeMap.value, value: '3' },
+  { area: 'outer', title: 'Macro', content: MacroCodeMap.value, value: '4' },
+  { area: 'outer', title: 'multi-role', content: MultiRoleCodeMap.value, value: '5' },
 ].filter(tab => tab.area === 'any' || tab.area === area || area === null))
 
 function setBaseKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
   emit('setKeycode', baseKeymap.value.get(`0,${key.labels[0]!}`)!)
-}
-function setISOKeyBoardKeycode(zone: 'outer' | 'inner', key: InstanceType<typeof KleKey>) {
-  emit('setKeycode', ISOKeymap.value.get(`0,${key.labels[0]!}`)!)
 }
 
 watch(() => area, () => {
@@ -266,15 +236,6 @@ watch(() => area, () => {
                   :key-board-keys="baseKeyboard"
                   :key-board-keys-map="baseKeymap"
                   @set-keycode="setBaseKeyBoardKeycode"
-                />
-              </div>
-            </template>
-            <template v-else-if="tab.title === 'ISO/JIS'">
-              <div class="mb-5 flex size-full items-start justify-center pb-5">
-                <Keyboard
-                  :key-board-keys="ISOKeyboard"
-                  :key-board-keys-map="ISOKeymap"
-                  @set-keycode="setISOKeyBoardKeycode"
                 />
               </div>
             </template>
