@@ -34,10 +34,14 @@ function handleSetKey(key: Key) {
 </script>
 
 <template>
-  <div class="p-3">
-    <SelectButton v-model="currLayer" :allow-empty="false" :options="layerOption" size="small" />
-    <div class="flex h-full flex-col items-center justify-around">
-      <Keyboard :keys="keys" :highlight="highlight" @click="handleSelected" />
+  <div class="size-full p-3">
+    <div class="flex h-full flex-col items-center justify-between">
+      <div class="flex w-full justify-start">
+        <SelectButton v-model="currLayer" :allow-empty="false" :options="layerOption" size="small" />
+      </div>
+      <div class="overflow-hidden">
+        <Keyboard :keys="keys" :highlight="highlight" @click="handleSelected" />
+      </div>
       <MapperPanel @set-key="handleSetKey" />
     </div>
   </div>
