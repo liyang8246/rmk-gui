@@ -23,13 +23,16 @@ function handleSetKey(key: Key) {
     return
   }
   const currKeyPos: [number, number, number] = [Number.parseInt(currLayer.value), ...currKey.value![0]]
-  if (currKey.value[1] === 'outer') {
-    keyboardStore.setKeycode(currKeyPos, key.info.code)
-  }
-  else {
+  let code = key.info.code
+
+  if (currKey.value[1] === 'inner') {
     const currKeyCode = keyboardStore.layoutKeymap!.get(currKeyPos)!
-    keyboardStore.setKeycode(currKeyPos, (currKeyCode & 0xFF00) + key.info.code)
+    code = (currKeyCode & 0xFF00) + key.info.code
   }
+  keyboardStore.setKeycode(currKeyPos, code)
+
+  // 页面优化操作
+  keyboardStore.layoutKeymap!.set(currKeyPos, code)
 }
 </script>
 
