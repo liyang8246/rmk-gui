@@ -16,7 +16,7 @@ const emit = defineEmits<{
     <div class="group relative" @click="emit('click', 'outer')">
       <!-- 边框 -->
       <div
-        class="rounded-prime-md absolute bg-surface-400 shadow dark:bg-surface-800"
+        class="rounded-prime-md absolute bg-surface-400 shadow-sm shadow-surface-400 dark:bg-surface-800 dark:shadow-surface-800"
         :class="{ '!bg-primary-400': highlight === 'outer' }"
         :style="{
           top: `${padding + 2}px`,
@@ -26,7 +26,7 @@ const emit = defineEmits<{
         }"
       />
       <div
-        class="rounded-prime-md absolute bg-surface-400 shadow dark:bg-surface-800"
+        class="rounded-prime-md absolute bg-surface-400 shadow-sm shadow-surface-400 dark:bg-surface-800 dark:shadow-surface-800"
         :class="{ '!bg-primary-400': highlight === 'outer' }"
         :style="{
           top: `${padding + keyInfo.geometry.y2 * size + 2}px`,

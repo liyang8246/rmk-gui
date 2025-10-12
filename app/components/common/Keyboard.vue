@@ -49,9 +49,7 @@ const kbdSize = computed(() => {
 </script>
 
 <template>
-  <div
-    class="relative" :style="kbdSize"
-  >
+  <div class="relative" :style="kbdSize">
     <key
       v-for="key in keys" :key="`${key}`" :key-info="key" :highlight="highlight?.get([key.position.row, key.position.col])" :size="keySize" :padding="keyPadding" :style="{
         position: 'absolute',
