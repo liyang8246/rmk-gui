@@ -90,7 +90,7 @@ const baseKeys = parseKleLayout(layout68)
           <Keyboard :keys="baseKeys" style="zoom: 0.75;" @click="(key, _zone) => emit('setKey', key)" />
         </TabPanel>
         <TabPanel value="layer">
-          <div v-for="(key, index) in layerKeyCode" :key="index" class="flex gap-3 mb-3">
+          <div v-for="(key, index) in layerKeyCode" :key="index" class="flex gap-2 mb-2">
             <Key v-for="code in key.value" :key="code" :key-info="codeToKey(code)" @click="(_zone) => emit('setKey', codeToKey(code))" />
           </div>
         </TabPanel>
