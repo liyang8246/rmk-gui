@@ -12,7 +12,13 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="font-mono text-surface-900 dark:text-surface-100">
+  <div
+    class="font-mono text-surface-900 dark:text-surface-100"
+    :style="{
+      width: `${Math.max(keyInfo.geometry.width, keyInfo.geometry.width2) * size}px`,
+      height: `${Math.max(keyInfo.geometry.height, keyInfo.geometry.height2) * size}px`,
+    }"
+  >
     <div class="group relative" @click="emit('click', 'outer')">
       <!-- 边框 -->
       <div
