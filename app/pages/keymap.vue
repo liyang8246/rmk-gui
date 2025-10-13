@@ -30,8 +30,6 @@ function handleSetKey(key: Key) {
     code = (currKeyCode & 0xFF00) + key.info.code
   }
   keyboardStore.setKeycode(currKeyPos, code)
-
-  // 页面优化操作
   keyboardStore.layoutKeymap!.set(currKeyPos, code)
 }
 </script>
