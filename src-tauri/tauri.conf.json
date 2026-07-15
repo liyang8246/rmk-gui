@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tauri-solid-app",
+  "productName": "RMK GUI",
   "version": "0.1.0",
-  "identifier": "com.tauri-solid-app.dev",
+  "identifier": "rs.rmk.gui",
   "build": {
     "beforeDevCommand": "pnpm dev:web",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "Tauri Solid App",
+        "title": "RMK GUI",
         "width": 800,
         "height": 600,
         "resizable": true,

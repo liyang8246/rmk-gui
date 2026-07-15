@@ -1,5 +1,5 @@
 {
-  "name": "tauri-solid-app",
+  "name": "rmk-gui",
   "type": "module",
   "private": true,
   "scripts": {

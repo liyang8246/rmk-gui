@@ -1,12 +1,12 @@
 [package]
-name = "tauri-solid-app"
+name = "rmk-gui"
 version = "0.1.0"
-description = "Tauri + Solid App"
+description = "RMK GUI"
 authors = [ "you" ]
 edition = "2021"
 
 [lib]
-name = "tauri_solid_app_lib"
+name = "rmk_gui_lib"
 crate-type = [
   "staticlib",
   "cdylib",
