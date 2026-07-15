@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: #f2f2f2;
+  --color-base-300: #e5e6e6;
+  --color-base-content: #1f2937;
+  --color-primary: oklch(49.12% 0.3096 275.75);
+  --color-primary-content: oklch(98.71% 0.0106 342.55);
+}
+
+@utility grid-canvas {
+  background-color: var(--color-base-100);
+  background-image:
+    linear-gradient(to right, var(--color-base-200) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-base-200) 1px, transparent 1px);
+  background-size: 64px 64px;
+}

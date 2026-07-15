@@ -1,34 +1,32 @@
-# Tauri
-src-tauri/target/
-src-tauri/gen/schemas
-
-# Nuxt dev/build outputs
+# Nuxt (legacy)
+.nuxt
 .output
 .data
-.nuxt
 .nitro
 .cache
+
+# Vite / Solid
 dist
 
-# Node dependencies
+# Dependencies
 node_modules
 
-# Python cache
-codegen/__pycache__/
-
-# Code gen
-app/types/keycode.ts
-
 # Logs
-logs
 *.log
+logs
 
-# Misc
+# Editor
 .DS_Store
-.fleet
 .idea
+*.suo
+*.ntuser*
 
-# Local env files
+# Tauri
+src-tauri/target
+src-tauri/Cargo.lock
+src-tauri/gen
+
+# Env
 .env
 .env.*
 !.env.example
