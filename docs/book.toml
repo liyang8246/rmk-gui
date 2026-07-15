@@ -1,0 +1,9 @@
+[book]
+title = "RMK GUI Documentation"
+authors = ["RMK GUI Contributors"]
+language = "en"
+src = "src"
+
+[output.html]
+default-theme = "ayu"
+git-repository-url = "https://github.com/HaoboGu/rmk"

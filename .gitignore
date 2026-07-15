@@ -34,3 +34,9 @@ src-tauri/gen
 # BEGIN oh-my-opencode-slim clonedeps
 .slim/clonedeps/repos/
 # END oh-my-opencode-slim clonedeps
+
+# Deepwork state
+.slim/deepwork/
+
+# mdBook build output
+docs/book
