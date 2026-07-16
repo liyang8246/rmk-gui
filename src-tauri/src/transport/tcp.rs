@@ -1,4 +1,8 @@
 use serde::Serialize;
+use std::time::Duration;
+use tauri::State;
+
+use super::{Sessions, spawn_tokio_io};
 
 #[derive(Serialize)]
 pub struct TcpDeviceInfo {
@@ -6,20 +10,25 @@ pub struct TcpDeviceInfo {
     pub name: String,
 }
 
+const QEMU_ADDR: &str = "127.0.0.1:7965";
+
 #[tauri::command]
-pub async fn rynk_discover_tcp() -> Result<Vec<TcpDeviceInfo>, String> {
-    // Probe the default QEMU port — connect succeeds if QEMU is running.
-    let addr = "127.0.0.1:7965";
-    match tokio::net::TcpStream::connect(addr).await {
-        Ok(_) => Ok(vec![TcpDeviceInfo { addr: addr.into(), name: "QEMU".into() }]),
-        Err(_) => Ok(vec![]),
+pub async fn rynk_discover_tcp() -> Vec<TcpDeviceInfo> {
+    #[cfg(debug_assertions)]
+    {
+        match tokio::time::timeout(Duration::from_millis(300), tokio::net::TcpStream::connect(QEMU_ADDR)).await {
+            Ok(Ok(_)) => vec![TcpDeviceInfo { addr: QEMU_ADDR.into(), name: "QEMU".into() }],
+            _ => vec![],
+        }
     }
+    #[cfg(not(debug_assertions))]
+    { vec![] }
 }
 
 #[tauri::command]
-pub async fn rynk_connect_tcp(addr: String, sessions: tauri::State<'_, super::Sessions>) -> Result<String, String> {
+pub async fn rynk_connect_tcp(addr: String, sessions: State<'_, Sessions>) -> Result<String, String> {
     let stream = tokio::net::TcpStream::connect(&addr).await.map_err(|e| e.to_string())?;
     let (read, write) = tokio::io::split(stream);
-    let id = super::spawn_tokio_io(sessions, read, write).await;
+    let id = spawn_tokio_io(sessions, read, write).await;
     Ok(id)
 }
