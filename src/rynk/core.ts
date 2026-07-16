@@ -30,58 +30,56 @@ export interface JsByteLink {
   close: () => Promise<void>
 }
 
-/// Wraps a `JsByteLink` to probe the device's protocol version before the
-/// version-matched wasm is loaded, then passes through as the `JsByteLink`
-/// for wasm's `connect()`. Leftover buffered bytes from probing are returned
-/// first on `recv()` so no data is lost.
-class ProbeLink implements JsByteLink {
-  private link: JsByteLink
-  private buf: Uint8Array = new Uint8Array(0)
+/// Probes the device protocol version, returning `{ major, minor }` and any
+/// leftover bytes buffered during the probe (to feed into the wasm link).
+async function probeVersion(link: JsByteLink) {
+  await link.send(frame(CMD_GET_VERSION, 1, new Uint8Array(0)))
 
-  constructor(link: JsByteLink) {
-    this.link = link
-  }
-
-  private async fill(n: number): Promise<void> {
-    while (this.buf.length < n) {
-      const chunk = await this.link.recv()
+  // Read frames until we get the GetVersion reply (skip topic pushes).
+  let buf: Uint8Array = new Uint8Array(0)
+  let cmd = 0
+  let payload = new Uint8Array(0)
+  for (;;) {
+    while (buf.length < RYNK_HEADER) {
+      const chunk = await link.recv()
       if (chunk.length === 0) throw new Error('link closed during version probe')
-      this.buf = concat(this.buf, chunk)
+      buf = concat(buf, chunk)
     }
-  }
-
-  private async readFrame(): Promise<{ cmd: number, payload: Uint8Array }> {
-    await this.fill(RYNK_HEADER)
-    const len = this.buf[3] | (this.buf[4] << 8)
-    await this.fill(RYNK_HEADER + len)
-    const cmd = this.buf[0] | (this.buf[1] << 8)
-    const payload = this.buf.slice(RYNK_HEADER, RYNK_HEADER + len)
-    this.buf = this.buf.slice(RYNK_HEADER + len)
-    return { cmd, payload }
-  }
-
-  async probeVersion(): Promise<{ major: number, minor: number }> {
-    await this.link.send(frame(CMD_GET_VERSION, 1, new Uint8Array(0)))
-    let f: { cmd: number, payload: Uint8Array }
-    do {
-      f = await this.readFrame()
-    } while (f.cmd & RYNK_TOPIC_BIT)
-    if (f.payload.length < 3 || f.payload[0] !== 0x00)
-      throw new Error('bad version reply')
-    return { major: f.payload[1], minor: f.payload[2] }
-  }
-
-  async send(data: Uint8Array): Promise<void> { await this.link.send(data) }
-  async recv(): Promise<Uint8Array> {
-    if (this.buf.length > 0) {
-      const c = this.buf
-      this.buf = new Uint8Array(0)
-      return c
+    const len = buf[3] | (buf[4] << 8)
+    while (buf.length < RYNK_HEADER + len) {
+      const chunk = await link.recv()
+      if (chunk.length === 0) throw new Error('link closed during version probe')
+      buf = concat(buf, chunk)
     }
-    return this.link.recv()
+    cmd = buf[0] | (buf[1] << 8)
+    payload = buf.slice(RYNK_HEADER, RYNK_HEADER + len)
+    buf = buf.slice(RYNK_HEADER + len)
+    if (!(cmd & RYNK_TOPIC_BIT)) break
   }
 
-  async close(): Promise<void> { await this.link.close() }
+  if (payload.length < 3 || payload[0] !== 0x00)
+    throw new Error('bad version reply')
+
+  return {
+    major: payload[1],
+    minor: payload[2],
+    leftover: buf,
+  }
+}
+
+/// Wraps a link + pre-buffered bytes so wasm's `connect()` sees a clean stream:
+/// leftover bytes from the probe are returned first, then the real link takes over.
+function makeLink(link: JsByteLink, leftover: Uint8Array): JsByteLink {
+  if (leftover.length === 0) return link
+  let drained = false
+  return {
+    async send(data) { await link.send(data) },
+    async recv() {
+      if (!drained) { drained = true; return leftover }
+      return link.recv()
+    },
+    async close() { await link.close() },
+  }
 }
 
 /// Load the wasm module matching the device's protocol major.
@@ -99,14 +97,12 @@ async function loadCore(major: number) {
 }
 
 /// Full connect flow: probe version → load version-matched wasm → init → connect.
-/// The `link` is wrapped in a `ProbeLink` that buffers framing for the probe,
-/// then delegates to the underlying link for wasm's `connect()`.
+/// Leftover bytes buffered during the probe are fed into wasm's link so no data is lost.
 export async function connectClient(link: JsByteLink, label?: string) {
-  const probe = new ProbeLink(link)
-  const { major, minor } = await probe.probeVersion()
+  const { major, minor, leftover } = await probeVersion(link)
   const core = await loadCore(major)
   await core.default()
-  const client = await core.connect(probe, label ?? null)
+  const client = await core.connect(makeLink(link, leftover), label ?? null)
   return { client, major, minor }
 }
 
