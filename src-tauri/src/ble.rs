@@ -36,7 +36,7 @@ pub async fn rynk_discover_ble() -> Result<Vec<BleDeviceInfo>, String> {
     for p in peripherals {
         let props = p.properties().await.ok().flatten();
         out.push(BleDeviceInfo {
-            id: p.address().to_string(),
+            id: p.id().to_string(),
             name: props.and_then(|p| p.local_name),
         });
     }
@@ -50,7 +50,7 @@ pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Resu
     let adapter = get_adapter().await?;
     let peripherals = adapter.peripherals().await.map_err(|e| e.to_string())?;
     let peripheral = peripherals.into_iter()
-        .find(|p| p.address().to_string() == id)
+        .find(|p| p.id().to_string() == id)
         .ok_or("device not found")?;
 
     peripheral.connect().await.map_err(|e| e.to_string())?;
@@ -88,6 +88,7 @@ pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Resu
                     }
                     Some(SessionCmd::Close) | None => {
                         let _ = peripheral.unsubscribe(&input).await;
+                        let _ = peripheral.disconnect().await;
                         break;
                     }
                 },

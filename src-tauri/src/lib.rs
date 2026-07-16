@@ -44,7 +44,8 @@ pub async fn insert_session(sessions: &State<'_, Sessions>, cmd_tx: mpsc::Sender
 }
 
 /// Spawn a reader/writer task for tokio AsyncRead+AsyncWrite halves (serial/TCP).
-pub async fn spawn_tokio_io<R, W>(sessions: State<'_, Sessions>, read: R, write: W)
+/// Returns the session id.
+async fn spawn_tokio_io<R, W>(sessions: State<'_, Sessions>, read: R, write: W) -> String
 where
     R: tokio::io::AsyncRead + Unpin + Send + 'static,
     W: tokio::io::AsyncWrite + Unpin + Send + 'static,
@@ -69,7 +70,7 @@ where
             }
         }
     });
-    insert_session(&sessions, cmd_tx, data_rx).await;
+    insert_session(&sessions, cmd_tx, data_rx).await
 }
 
 // ── Serial discovery ───────────────────────────────────────────────────────────
@@ -105,8 +106,7 @@ async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Res
     let stream = tokio_serial::new(&path, 115_200).open_native_async().map_err(|e| e.to_string())?;
     let _ = stream.clear(ClearBuffer::Input);
     let (read, write) = tokio::io::split(stream);
-    let id = Uuid::new_v4().to_string();
-    spawn_tokio_io(sessions, read, write).await;
+    let id = spawn_tokio_io(sessions, read, write).await;
     Ok(id)
 }
 
@@ -116,8 +116,7 @@ async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Res
 async fn rynk_connect_tcp(addr: String, sessions: State<'_, Sessions>) -> Result<String, String> {
     let stream = tokio::net::TcpStream::connect(&addr).await.map_err(|e| e.to_string())?;
     let (read, write) = tokio::io::split(stream);
-    let id = Uuid::new_v4().to_string();
-    spawn_tokio_io(sessions, read, write).await;
+    let id = spawn_tokio_io(sessions, read, write).await;
     Ok(id)
 }
 

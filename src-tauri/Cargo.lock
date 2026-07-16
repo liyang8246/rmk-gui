@@ -2657,7 +2657,6 @@ name = "rmk-gui"
 version = "0.1.0"
 dependencies = [
  "btleplug",
- "log",
  "serde",
  "serde_json",
  "tauri",
