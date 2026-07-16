@@ -7,6 +7,7 @@
     "dev:tauri": "tauri dev",
     "build:web": "vite build",
     "build:tauri": "tauri build",
+    "qemu": "node qemu/run.mjs",
     "generate": "vite build",
     "preview": "vite preview",
     "lint": "run-s lint:ts lint:rs",

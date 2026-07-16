@@ -26,6 +26,10 @@ src-tauri/target
 src-tauri/Cargo.lock
 src-tauri/gen
 
+# QEMU firmware build artifacts
+qemu/target
+qemu/Cargo.lock
+
 # Env
 .env
 .env.*
