@@ -12,7 +12,7 @@ export interface JsByteLink {
 /// Frame: cmd=0x0001 LE, seq=1, len=0 → reply payload [0x00, major, minor].
 async function probeVersion(link: JsByteLink) {
   await link.send(new Uint8Array([1, 0, 1, 0, 0]))
-  let buf: number[] = []
+  const buf: number[] = []
   while (buf.length < 8) {
     const c = await link.recv()
     if (!c.length) throw new Error('link closed')
