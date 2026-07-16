@@ -7,8 +7,6 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, Mutex, oneshot};
 use uuid::Uuid;
 
-mod ble;
-
 // ── Device info ────────────────────────────────────────────────────────────────
 
 #[derive(Serialize)]
@@ -78,7 +76,7 @@ where
 const RYNK_SERIAL_MAGIC: &str = "rynk:";
 
 #[tauri::command]
-async fn rynk_discover_serial() -> Result<Vec<SerialDeviceInfo>, String> {
+pub async fn rynk_discover_serial() -> Result<Vec<SerialDeviceInfo>, String> {
     use tokio_serial::{SerialPortType, available_ports};
     let ports = available_ports().map_err(|e| e.to_string())?;
     let mut ports: Vec<_> = ports.into_iter().filter(|p| {
@@ -101,7 +99,7 @@ async fn rynk_discover_serial() -> Result<Vec<SerialDeviceInfo>, String> {
 // ── Connect: serial ────────────────────────────────────────────────────────────
 
 #[tauri::command]
-async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Result<String, String> {
+pub async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Result<String, String> {
     use tokio_serial::{ClearBuffer, SerialPort, SerialPortBuilderExt};
     let stream = tokio_serial::new(&path, 115_200).open_native_async().map_err(|e| e.to_string())?;
     let _ = stream.clear(ClearBuffer::Input);
@@ -113,7 +111,7 @@ async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Res
 // ── Connect: TCP ───────────────────────────────────────────────────────────────
 
 #[tauri::command]
-async fn rynk_connect_tcp(addr: String, sessions: State<'_, Sessions>) -> Result<String, String> {
+pub async fn rynk_connect_tcp(addr: String, sessions: State<'_, Sessions>) -> Result<String, String> {
     let stream = tokio::net::TcpStream::connect(&addr).await.map_err(|e| e.to_string())?;
     let (read, write) = tokio::io::split(stream);
     let id = spawn_tokio_io(sessions, read, write).await;
@@ -123,7 +121,7 @@ async fn rynk_connect_tcp(addr: String, sessions: State<'_, Sessions>) -> Result
 // ── Byte pipe ──────────────────────────────────────────────────────────────────
 
 #[tauri::command]
-async fn rynk_send(session: String, data: Vec<u8>, sessions: State<'_, Sessions>) -> Result<(), String> {
+pub async fn rynk_send(session: String, data: Vec<u8>, sessions: State<'_, Sessions>) -> Result<(), String> {
     let cmd_tx = { sessions.lock().await.get(&session).map(|s| s.cmd_tx.clone()) };
     match cmd_tx {
         Some(tx) => {
@@ -136,7 +134,7 @@ async fn rynk_send(session: String, data: Vec<u8>, sessions: State<'_, Sessions>
 }
 
 #[tauri::command]
-async fn rynk_recv(session: String, sessions: State<'_, Sessions>) -> Result<Vec<u8>, String> {
+pub async fn rynk_recv(session: String, sessions: State<'_, Sessions>) -> Result<Vec<u8>, String> {
     let data_rx = { sessions.lock().await.get(&session).map(|s| s.data_rx.clone()) };
     match data_rx {
         Some(rx) => { let mut rx = rx.lock().await; Ok(rx.recv().await.unwrap_or_default()) }
@@ -145,24 +143,11 @@ async fn rynk_recv(session: String, sessions: State<'_, Sessions>) -> Result<Vec
 }
 
 #[tauri::command]
-async fn rynk_close(session: String, sessions: State<'_, Sessions>) -> Result<(), String> {
+pub async fn rynk_close(session: String, sessions: State<'_, Sessions>) -> Result<(), String> {
     if let Some(s) = sessions.lock().await.remove(&session) {
         let _ = s.cmd_tx.send(SessionCmd::Close).await;
     }
     Ok(())
 }
 
-// ── App entry ──────────────────────────────────────────────────────────────────
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    tauri::Builder::default()
-        .manage(Mutex::new(HashMap::<String, Session>::new()))
-        .invoke_handler(tauri::generate_handler![
-            rynk_discover_serial, ble::rynk_discover_ble,
-            rynk_connect_serial, ble::rynk_connect_ble, rynk_connect_tcp,
-            rynk_send, rynk_recv, rynk_close,
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
