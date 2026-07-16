@@ -24,3 +24,7 @@ export async function discover(): Promise<TransportInfo[]> {
     ...tcps.map(t => ({ kind: 'tcp' as const, label: t.name, connect: () => connectTcp(t.addr) })),
   ]
 }
+
+export { connectClient } from './core'
+export type { JsByteLink } from './core'
+export type * from './wasm/rynk_wasm.js'
