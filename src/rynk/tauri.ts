@@ -21,6 +21,7 @@ export class TauriByteLink {
 // Discovery + connect API.
 export interface SerialDeviceInfo { path: string, name: string | null }
 export interface BleDeviceInfo { id: string, name: string | null }
+export interface TcpDeviceInfo { addr: string, name: string }
 
 export async function discoverSerial(): Promise<SerialDeviceInfo[]> {
   return invoke<SerialDeviceInfo[]>('rynk_discover_serial')
@@ -28,6 +29,10 @@ export async function discoverSerial(): Promise<SerialDeviceInfo[]> {
 
 export async function discoverBle(): Promise<BleDeviceInfo[]> {
   return invoke<BleDeviceInfo[]>('rynk_discover_ble')
+}
+
+export async function discoverTcp(): Promise<TcpDeviceInfo[]> {
+  return invoke<TcpDeviceInfo[]>('rynk_discover_tcp')
 }
 
 export async function connectSerial(path: string): Promise<TauriByteLink> {

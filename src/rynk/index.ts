@@ -13,14 +13,16 @@ export interface TransportInfo {
 export async function discover(): Promise<TransportInfo[]> {
   if (!isTauri())
     return []
-  const { discoverSerial, discoverBle, connectSerial, connectBle } = await import('./tauri')
-  const [serials, bles] = await Promise.all([
+  const { discoverSerial, discoverBle, discoverTcp, connectSerial, connectBle, connectTcp } = await import('./tauri')
+  const [serials, bles, tcps] = await Promise.all([
     discoverSerial().catch(() => []),
     discoverBle().catch(() => []),
+    discoverTcp().catch(() => []),
   ])
   return [
     ...serials.map(s => ({ kind: 'serial' as const, label: s.name ?? s.path, connect: () => connectSerial(s.path) })),
     ...bles.map(b => ({ kind: 'ble' as const, label: b.name ?? b.id, connect: () => connectBle(b.id) })),
+    ...tcps.map(t => ({ kind: 'tcp' as const, label: t.name, connect: () => connectTcp(t.addr) })),
   ]
 }
 
