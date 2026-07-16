@@ -10,6 +10,15 @@
       "path": ".slim/clonedeps/repos/HaoboGu__rmk",
       "packagePath": "",
       "reason": "Rynk protocol source: header+payload protocol, RynkHidService, WASM/TS type generation, command handlers, transports"
+    },
+    {
+      "name": "btleplug",
+      "resolvedVersion": "0.12.0@ee381ac",
+      "repoUrl": "https://github.com/deviceplug/btleplug.git",
+      "ref": "0.12.0",
+      "path": ".slim/clonedeps/repos/deviceplug__btleplug",
+      "packagePath": "",
+      "reason": "BLE API source: Peripheral/Central traits, notification stream, write chunking, platform re-exports"
     }
   ]
 }
