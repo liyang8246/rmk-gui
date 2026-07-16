@@ -1,7 +1,12 @@
-import { discover } from "./rynk"
+import { discover } from './rynk'
+
+async function test() {
+  const devices = await discover()
+  console.log(devices)
+}
 
 function App() {
-  const devices = await discover()
+  test()
   return (
     <div class="
       flex h-screen w-screen flex-col items-center gap-4 grid-canvas bg-base-100

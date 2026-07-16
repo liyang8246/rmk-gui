@@ -19,10 +19,9 @@ export class WebByteLink {
   }
 
   private async pump() {
-    for (;;) {
+    while (true) {
       const { value, done } = await this.reader.read()
-      if (done)
-        break
+      if (done) break
       if (value && value.length) {
         this.rx = concat(this.rx, value)
         this.signal()
@@ -46,7 +45,7 @@ export class WebByteLink {
 
   async recv(): Promise<Uint8Array> {
     while (this.rx.length === 0 && !this.closed)
-      await new Promise<void>(res => { this.wake = res })
+      await new Promise<void>((res) => { this.wake = res })
     if (this.rx.length > 0) {
       const c = this.rx
       this.rx = new Uint8Array(0)

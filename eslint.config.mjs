@@ -6,7 +6,6 @@ export default antfu(
     type: 'app',
     solid: true,
   },
-
   {
     ...betterTailwindcss.configs.recommended,
     files: ['**/*.{tsx,ts,jsx,js}'],
@@ -16,12 +15,16 @@ export default antfu(
       },
     },
   },
-
   {
     name: 'disable-pnpm-workspace-lint',
     files: ['pnpm-workspace.yaml'],
     rules: {
       'pnpm/yaml-enforce-settings': 'off',
     },
+  },
+  {
+    rules: {
+      'antfu/if-newline': 'off',
+    }
   },
 )
