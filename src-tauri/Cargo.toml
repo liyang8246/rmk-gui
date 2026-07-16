@@ -20,3 +20,16 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = [ "derive" ] }
 serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync", "time"] }
+tokio-serial = "5.4"
+bluest = "0.6"
+embedded-io-async = "0.7"
+embedded-io-adapters = { version = "0.7", features = ["tokio-1"] }
+futures-util = "0.3"
+async-stream = "0.3"
+uuid = { version = "1", features = ["v4"] }
+log = "0.4"
+# Rynk transport crates — byte-pipe discovery + connect only (rynk-wasm owns the protocol client)
+rynk = { git = "https://github.com/HaoboGu/rmk.git", branch = "feat/rynk_protocol" }
+rynk-serial = { git = "https://github.com/HaoboGu/rmk.git", branch = "feat/rynk_protocol" }
+rynk-ble = { git = "https://github.com/HaoboGu/rmk.git", branch = "feat/rynk_protocol" }

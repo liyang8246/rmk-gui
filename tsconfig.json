@@ -8,7 +8,7 @@
     "paths": {
       "~/*": ["./src/*"]
     },
-    "types": ["vite/client"],
+    "types": ["vite/client", "@types/w3c-web-serial"],
     "strict": true,
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
