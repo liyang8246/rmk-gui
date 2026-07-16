@@ -5,25 +5,10 @@ pub mod tcp;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use serde::Serialize;
 use tauri::State;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, Mutex, oneshot};
 use uuid::Uuid;
-
-// ── Device info ────────────────────────────────────────────────────────────────
-
-#[derive(Serialize)]
-pub struct SerialDeviceInfo {
-    pub path: String,
-    pub name: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct BleDeviceInfo {
-    pub id: String,
-    pub name: Option<String>,
-}
 
 // ── Session model ───────────────────────────────────────────────────────────────
 

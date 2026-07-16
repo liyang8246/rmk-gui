@@ -1,7 +1,13 @@
-// Keep in sync with rmk-types::protocol::rynk
+use serde::Serialize;
 use tauri::State;
 
-use super::{SerialDeviceInfo, Sessions, spawn_tokio_io};
+use super::{Sessions, spawn_tokio_io};
+
+#[derive(Serialize)]
+pub struct SerialDeviceInfo {
+    pub path: String,
+    pub name: Option<String>,
+}
 
 const RYNK_SERIAL_MAGIC: &str = "rynk:";
 

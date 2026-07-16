@@ -13,7 +13,7 @@ fn main() {
     Builder::default()
         .manage(Mutex::new(HashMap::<String, Session>::new()))
         .invoke_handler(tauri::generate_handler![
-            serial::rynk_discover_serial, ble::rynk_discover_ble,
+            serial::rynk_discover_serial, ble::rynk_discover_ble, tcp::rynk_discover_tcp,
             serial::rynk_connect_serial, ble::rynk_connect_ble, tcp::rynk_connect_tcp,
             transport::rynk_send, transport::rynk_recv, transport::rynk_close,
         ])
