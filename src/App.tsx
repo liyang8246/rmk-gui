@@ -1,45 +1,29 @@
-import { connectClient, discover } from './rynk'
+import { discover } from './rynk'
+import { connectKeyboard, disconnectKeyboard, store } from './store'
 
-async function test() {
+async function testConnect() {
   const devices = await discover()
-  console.warn('discovered', devices.length, 'devices')
+  if (!devices.length) {
+    console.warn('no devices')
+    return
+  }
 
-  // Pick the first device and run a get_key → set_key → get_key cycle.
   const dev = devices[0]
-  if (!dev) return
   const link = await dev.connect()
-  const { client, major, minor } = await connectClient(link, dev.label)
-  console.warn(`connected: protocol v${major}.${minor}, ${client.label()}`)
+  await connectKeyboard(link, dev.kind, dev.label)
 
-  const caps = await client.get_capabilities()
-  console.warn('capabilities', caps.num_layers, caps.num_rows, caps.num_cols)
-
-  const layer = 0
-  const row = 0
-  const col = 0
-
-  const before = await client.get_key(layer, row, col)
-  console.warn('get_key', { layer, row, col }, '=', before)
-
-  // Toggle: if No, set to Transparent; otherwise reset to No.
-  const next = before === 'No' ? 'Transparent' : 'No'
-  await client.set_key(layer, row, col, next)
-  console.warn('set_key', { layer, row, col }, '=', next)
-
-  const after = await client.get_key(layer, row, col)
-  console.warn('get_key', { layer, row, col }, '=', after)
-
-  await link.close()
+  if (store.connection) console.warn('connected:', store.connection.label)
+  if (store.device) console.warn('caps:', store.device.capabilities.num_layers)
+  console.warn('keymap[0][0][0] =', store.config.keymap?.[0]?.[0]?.[0])
+  console.warn('currentLayer =', store.status.currentLayer)
 }
 
 function App() {
-  test()
   return (
-    <div class="
-      flex h-screen w-screen flex-col items-center gap-4 grid-canvas bg-base-100
-      p-8
-    "
-    />
+    <div class="flex h-screen w-screen flex-col items-center gap-4 p-8">
+      <button onClick={() => testConnect()}>Connect</button>
+      <button onClick={() => disconnectKeyboard()}>Disconnect</button>
+    </div>
   )
 }
 
