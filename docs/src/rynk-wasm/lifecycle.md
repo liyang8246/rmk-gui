@@ -25,15 +25,15 @@ The full connect sequence, as implemented by the `index.html` reference shell:
    link (negotiates version, caches capabilities) and returns a `RynkClient`.
 
 ```js
-l = await openLink();
+l = await openLink()
 
-const { major, minor } = await l.probeVersion();
-log(`${label}: protocol v${major}.${minor} — loading rynk-wasm…`);
+const { major, minor } = await l.probeVersion()
+log(`${label}: protocol v${major}.${minor} — loading rynk-wasm…`)
 
-core = await loadCore(major);
-await core.default();            // wasm-bindgen init (idempotent)
+core = await loadCore(major)
+await core.default() // wasm-bindgen init (idempotent)
 
-client = await core.connect(l, device?.productName || null);
+client = await core.connect(l, device?.productName || null)
 ```
 
 Source: `rynk/rynk-wasm/index.html`, lines 270-286 (the `connectVia` function).
@@ -55,9 +55,9 @@ async function loadCore(major) {
   switch (major) {
     case 0: // protocol v0.x (ProtocolVersion::CURRENT = {0, 1})
     case 1:
-      return await import("./pkg/rynk_wasm.js");
+      return await import('./pkg/rynk_wasm.js')
     default:
-      throw new Error(`no rynk-core wasm for protocol major ${major}`);
+      throw new Error(`no rynk-core wasm for protocol major ${major}`)
   }
 }
 ```
@@ -200,10 +200,10 @@ topic values may be stale — re-read critical state with the matching `Get*`
 call instead of trusting the last topic push:
 
 ```js
-const dropped = client.events_dropped();
+const dropped = client.events_dropped()
 if (dropped > 0) {
-  console.warn(`${dropped} topics dropped — re-reading current layer`);
-  const layer = await client.get_current_layer();
+  console.warn(`${dropped} topics dropped — re-reading current layer`)
+  const layer = await client.get_current_layer()
 }
 ```
 
@@ -225,9 +225,14 @@ JS-side teardown:
 ```js
 async function teardown() {
   // Closing the link EOFs the transport, ending any parked next_event() pump.
-  if (l) await l.close();
-  else if (port) { try { await port.close(); } catch {} }
-  port = null; device = null; l = null; core = null; client = null; connected = false;
+  if (l) {
+    await l.close()
+  }
+  else if (port) {
+    try { await port.close() }
+    catch {}
+  }
+  port = null; device = null; l = null; core = null; client = null; connected = false
   // ... reset UI ...
 }
 ```
@@ -244,14 +249,15 @@ a new chooser prompt:
 
 ```js
 async function grantedSerialPort() {
-  try { return navigator.serial ? (await navigator.serial.getPorts())[0] || null : null; }
-  catch { return null; }
+  try { return navigator.serial ? (await navigator.serial.getPorts())[0] || null : null }
+  catch { return null }
 }
 async function grantedHidDevice() {
   try {
-    const devs = navigator.hid ? await navigator.hid.getDevices() : [];
-    return devs.find((d) => (d.collections || []).some((c) => c.usagePage === 0xFF60)) || devs[0] || null;
-  } catch { return null; }
+    const devs = navigator.hid ? await navigator.hid.getDevices() : []
+    return devs.find(d => (d.collections || []).some(c => c.usagePage === 0xFF60)) || devs[0] || null
+  }
+  catch { return null }
 }
 ```
 
@@ -266,11 +272,11 @@ removed:
 
 ```js
 // Reconnect when idle; disconnect on active transport removal.
-navigator.serial?.addEventListener?.("connect", () => { if (!connected) autoConnect(); });
-navigator.hid?.addEventListener?.("connect", () => { if (!connected) autoConnect(); });
-const onDrop = () => { if (connected) teardown().then(() => log("\n— transport disconnected —")); };
-navigator.serial?.addEventListener?.("disconnect", onDrop);
-navigator.hid?.addEventListener?.("disconnect", onDrop);
+navigator.serial?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
+navigator.hid?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
+function onDrop() { if (connected) teardown().then(() => log('\n— transport disconnected —')) }
+navigator.serial?.addEventListener?.('disconnect', onDrop)
+navigator.hid?.addEventListener?.('disconnect', onDrop)
 ```
 
 Source: `rynk/rynk-wasm/index.html`, lines 399-403.
@@ -285,21 +291,26 @@ reconnect.
 The reference shell's teardown function, annotated:
 
 ```js
-let port = null, device = null, l = null, core = null, client = null, connected = false;
+let port = null; let device = null; let l = null; let core = null; let client = null; let connected = false
 
 async function teardown() {
   // Closing the link EOFs the transport, ending any parked next_event() pump.
   // Always close the link first so the topic pump's next_event() rejects.
-  if (l) await l.close();
-  else if (port) { try { await port.close(); } catch {} }
+  if (l) {
+    await l.close()
+  }
+  else if (port) {
+    try { await port.close() }
+    catch {}
+  }
   // Null out all references so the RynkClient (and its WasmTransport) is dropped.
   // WasmTransport::drop also calls link.close() — safe because close is idempotent.
-  port = null; device = null; l = null; core = null; client = null; connected = false;
+  port = null; device = null; l = null; core = null; client = null; connected = false
   // Reset UI state.
-  serialBtn.textContent = "Connect via Serial (USB)";
-  bleBtn.textContent = "Connect via BLE (WebHID)";
-  serialBtn.disabled = false; bleBtn.disabled = false;
-  unlockBtn.hidden = true; unlockBtn.disabled = false;
+  serialBtn.textContent = 'Connect via Serial (USB)'
+  bleBtn.textContent = 'Connect via BLE (WebHID)'
+  serialBtn.disabled = false; bleBtn.disabled = false
+  unlockBtn.hidden = true; unlockBtn.disabled = false
 }
 ```
 
@@ -321,8 +332,9 @@ The topic pump mirrors the native `Client::next_event()` pull. It runs in a
 ```js
 async function pumpTopics(c) {
   try {
-    for (;;) log("topic " + JSON.stringify(await c.next_event()));
-  } catch {
+    for (;;) log(`topic ${JSON.stringify(await c.next_event())}`)
+  }
+  catch {
     // Disconnected/closed — teardown owns the UI reset.
   }
 }

@@ -64,25 +64,25 @@ Import the generated wasm package, create a JS byte link, connect it, then call
 typed client methods:
 
 ```js
-import init, { connect } from "./pkg/rynk_wasm.js";
+import init, { connect } from './pkg/rynk_wasm.js'
 
-await init();
+await init()
 
-const link = await openSerialByteLink();
-const client = await connect(link);
+const link = await openSerialByteLink()
+const client = await connect(link)
 
-console.log("protocol", await client.get_version());
-console.log("capabilities", await client.get_capabilities());
-console.log("current layer", await client.get_current_layer());
+console.log('protocol', await client.get_version())
+console.log('capabilities', await client.get_capabilities())
+console.log('current layer', await client.get_current_layer());
 
 // Pull topic pushes (layer changes, WPM, ...) until the link closes.
 (async () => {
-  try { for (;;) console.log("topic", await client.next_event()); }
-  catch (e) { console.log("disconnected:", e.message); }
-})();
+  try { for (;;) console.log('topic', await client.next_event()) }
+  catch (e) { console.log('disconnected:', e.message) }
+})()
 
 // Disconnect by closing the byte link; the topic loop above then ends.
-await link.close();
+await link.close()
 ```
 
 The object passed to `connect(link)` only needs this shape (the `JsByteLink`
@@ -110,8 +110,9 @@ await rejects with `Disconnected`. This mirrors the native
 ```js
 async function pumpTopics(client) {
   try {
-    for (;;) console.log("topic", await client.next_event());
-  } catch {
+    for (;;) console.log('topic', await client.next_event())
+  }
+  catch {
     // Disconnected/closed — teardown owns the UI reset.
   }
 }

@@ -9,8 +9,9 @@
 //   cargo install wasm-pack
 
 import { execSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -20,7 +21,6 @@ const rynkWasmDir = join(clonedepsRoot, 'rynk', 'rynk-wasm')
 const pkgDir = join(rynkWasmDir, 'pkg')
 const outDir = join(root, 'src', 'rynk', 'wasm')
 
-const CLONEDEPS_JSON = join(root, '.slim', 'clonedeps.json')
 const RYNK_REMOTE_URL = 'https://github.com/HaoboGu/rmk.git'
 const RYNK_BRANCH = 'feat/rynk_protocol'
 
@@ -72,7 +72,7 @@ function copyArtifacts() {
     builtAt: new Date().toISOString(),
   }
   import('node:fs').then(({ writeFileSync }) =>
-    writeFileSync(join(outDir, '.build-meta.json'), JSON.stringify(manifest, null, 2) + '\n'),
+    writeFileSync(join(outDir, '.build-meta.json'), `${JSON.stringify(manifest, null, 2)}\n`),
   )
 
   console.log(`\nDone. Artifacts in src/rynk/wasm/ (from commit ${manifest.commit}).`)
@@ -81,7 +81,9 @@ function copyArtifacts() {
 function main() {
   const shouldFetch = process.argv.includes('--fetch')
 
-  if (shouldFetch) pullRmk()
+  if (shouldFetch) {
+    pullRmk()
+  }
   else if (!existsSync(clonedepsRoot)) {
     console.error('rmk repo not found. Run with --fetch to clone it first.')
     process.exit(1)

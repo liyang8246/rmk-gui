@@ -1,7 +1,7 @@
 // rynk-wasm bootstrap: version probe, multi-major wasm loading, and connect.
 
-const RYNK_HEADER = 5            // cmd:u16 LE, seq:u8, len:u16 LE
-const RYNK_TOPIC_BIT = 0x8000   // CMD high bit: server→host topic push
+const RYNK_HEADER = 5 // cmd:u16 LE, seq:u8, len:u16 LE
+const RYNK_TOPIC_BIT = 0x8000 // CMD high bit: server→host topic push
 const CMD_GET_VERSION = 0x0001
 
 function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
@@ -13,11 +13,11 @@ function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
 
 function frame(cmd: number, seq: number, body: Uint8Array): Uint8Array {
   const out = new Uint8Array(RYNK_HEADER + body.length)
-  out[0] = cmd & 0xff
-  out[1] = (cmd >> 8) & 0xff
+  out[0] = cmd & 0xFF
+  out[1] = (cmd >> 8) & 0xFF
   out[2] = seq
-  out[3] = body.length & 0xff
-  out[4] = (body.length >> 8) & 0xff
+  out[3] = body.length & 0xFF
+  out[4] = (body.length >> 8) & 0xFF
   out.set(body, RYNK_HEADER)
   return out
 }
@@ -25,9 +25,9 @@ function frame(cmd: number, seq: number, body: Uint8Array): Uint8Array {
 /// JS byte link contract that wasm's `WasmTransport` calls into.
 /// Both `TauriByteLink` and `WebByteLink` satisfy this structurally.
 export interface JsByteLink {
-  send(frame: Uint8Array): Promise<void>
-  recv(): Promise<Uint8Array>
-  close(): Promise<void>
+  send: (frame: Uint8Array) => Promise<void>
+  recv: () => Promise<Uint8Array>
+  close: () => Promise<void>
 }
 
 /// Wraps a `JsByteLink` to probe the device's protocol version before the
@@ -63,7 +63,9 @@ class ProbeLink implements JsByteLink {
   async probeVersion(): Promise<{ major: number, minor: number }> {
     await this.link.send(frame(CMD_GET_VERSION, 1, new Uint8Array(0)))
     let f: { cmd: number, payload: Uint8Array }
-    do { f = await this.readFrame() } while (f.cmd & RYNK_TOPIC_BIT)
+    do {
+      f = await this.readFrame()
+    } while (f.cmd & RYNK_TOPIC_BIT)
     if (f.payload.length < 3 || f.payload[0] !== 0x00)
       throw new Error('bad version reply')
     return { major: f.payload[1], minor: f.payload[2] }
@@ -78,6 +80,7 @@ class ProbeLink implements JsByteLink {
     }
     return this.link.recv()
   }
+
   async close(): Promise<void> { await this.link.close() }
 }
 

@@ -62,7 +62,7 @@ Returns the display name supplied at connect time. Read back from the
 transport:
 
 ```js
-console.log(client.label());  // e.g. "RMK Keyboard" (WebHID productName)
+console.log(client.label()) // e.g. "RMK Keyboard" (WebHID productName)
 ```
 
 ## next_event()
@@ -92,8 +92,9 @@ the native `next_event()` pull:
 ```js
 async function pumpTopics(client) {
   try {
-    for (;;) console.log("topic", await client.next_event());
-  } catch {
+    for (;;) console.log('topic', await client.next_event())
+  }
+  catch {
     // Disconnected/closed — teardown owns the UI reset.
   }
 }
@@ -113,9 +114,9 @@ Returns the count of topic pushes the driver dropped because the event queue was
 full. The return type is `f64` so JS receives a `number`.
 
 ```js
-const dropped = client.events_dropped();
+const dropped = client.events_dropped()
 if (dropped > 0) {
-  console.warn(`${dropped} topics dropped — re-read critical state`);
+  console.warn(`${dropped} topics dropped — re-read critical state`)
 }
 ```
 
@@ -279,14 +280,17 @@ Example of branching by `error.name`:
 
 ```js
 try {
-  await client.get_matrix_state();
-} catch (e) {
-  if (e.name === "Rejected") {
-    console.log("locked — hold the unlock keys");
-  } else if (e.name === "Unsupported") {
-    console.log("capability absent on this device");
-  } else {
-    throw e;
+  await client.get_matrix_state()
+}
+catch (e) {
+  if (e.name === 'Rejected') {
+    console.log('locked — hold the unlock keys')
+  }
+  else if (e.name === 'Unsupported') {
+    console.log('capability absent on this device')
+  }
+  else {
+    throw e
   }
 }
 ```

@@ -23,8 +23,23 @@ export default antfu(
     },
   },
   {
+    name: 'ignore-generated-wasm',
+    ignores: [
+      'src/rynk/wasm/rynk_wasm.js',
+      'src/rynk/wasm/rynk_wasm.d.ts',
+      'src/rynk/wasm/rynk_wasm_bg.wasm',
+    ],
+  },
+  {
+    // Docs contain illustrative code snippets (shorthand methods, top-level
+    // return, single-line loops) that are valid as prose examples but not as
+    // standalone programs. SUMMARY.md uses multiple H1 by mdBook convention.
+    name: 'ignore-docs',
+    ignores: ['docs/**/*'],
+  },
+  {
     rules: {
       'antfu/if-newline': 'off',
-    }
+    },
   },
 )

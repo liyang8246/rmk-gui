@@ -15,7 +15,10 @@ The crate builds as both an `rlib` (for native consumers like `rmkit`) and a
 
 ```toml
 [lib]
-crate-type = ["rlib", "cdylib"]
+crate-type = [
+  "rlib",
+  "cdylib"
+]
 ```
 
 ## Forward: KLE to RMK Layout

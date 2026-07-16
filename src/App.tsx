@@ -2,7 +2,7 @@ import { discover } from './rynk'
 
 async function test() {
   const devices = await discover()
-  console.log(devices)
+  console.warn(devices)
 }
 
 function App() {

@@ -1,6 +1,6 @@
 [book]
 title = "RMK GUI Documentation"
-authors = ["RMK GUI Contributors"]
+authors = [ "RMK GUI Contributors" ]
 language = "en"
 src = "src"
 

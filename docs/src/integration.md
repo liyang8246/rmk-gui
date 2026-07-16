@@ -61,12 +61,12 @@ Serial and WebHID both require one for `requestPort()` / `requestDevice()`.
    result.
 
 ```js
-l = await openLink();
-const { major, minor } = await l.probeVersion();
-core = await loadCore(major);
-await core.default();
-client = await core.connect(l, device?.productName || null);
-const caps = await client.get_capabilities();
+l = await openLink()
+const { major, minor } = await l.probeVersion()
+core = await loadCore(major)
+await core.default()
+client = await core.connect(l, device?.productName || null)
+const caps = await client.get_capabilities()
 ```
 
 ## Capability-Based UI Gating
@@ -90,10 +90,11 @@ error):
 ```js
 async function show(label, fn) {
   try {
-    const v = await fn();
+    const v = await fn()
     // render value
-  } catch (e) {
-    const kind = (e && e.name) || "Error";
+  }
+  catch (e) {
+    const kind = (e && e.name) || 'Error'
     // Unsupported -> unavailable (not an error), Rejected -> warning, else error
   }
 }
@@ -109,10 +110,11 @@ topic and rejects with `Disconnected` at EOF.
 async function pumpTopics(client) {
   try {
     for (;;) {
-      const event = await client.next_event();
+      const event = await client.next_event()
       // Update UI: LayerChange -> highlight layer, WpmUpdate -> WPM display, etc.
     }
-  } catch (e) {
+  }
+  catch (e) {
     // Disconnected — teardown owns UI reset
   }
 }
@@ -135,8 +137,8 @@ reject with `Disconnected`. The teardown sequence:
 
 ```js
 async function teardown() {
-  if (l) await l.close();
-  l = null; core = null; client = null; connected = false;
+  if (l) await l.close()
+  l = null; core = null; client = null; connected = false
   // reset UI, re-enable connect buttons
 }
 ```
@@ -153,10 +155,10 @@ both APIs:
   while connected; tear down the active session.
 
 ```js
-navigator.serial?.addEventListener?.("connect", () => { if (!connected) autoConnect(); });
-navigator.hid?.addEventListener?.("connect", () => { if (!connected) autoConnect(); });
-navigator.serial?.addEventListener?.("disconnect", () => { if (connected) teardown(); });
-navigator.hid?.addEventListener?.("disconnect", () => { if (connected) teardown(); });
+navigator.serial?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
+navigator.hid?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
+navigator.serial?.addEventListener?.('disconnect', () => { if (connected) teardown() })
+navigator.hid?.addEventListener?.('disconnect', () => { if (connected) teardown() })
 ```
 
 ## Lock Gate UI
@@ -167,7 +169,7 @@ keyboard is locked, these return `Rejected` with `e.name === "Rejected"`.
 ### Lock states
 
 ```js
-const status = await client.get_lock_status();
+const status = await client.get_lock_status()
 ```
 
 - **`status.locked && status.key_positions.length === 0`** — permanently locked.
