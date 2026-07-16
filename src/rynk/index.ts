@@ -14,7 +14,10 @@ export async function discover(): Promise<TransportInfo[]> {
   if (!isTauri())
     return []
   const { discoverSerial, discoverBle, connectSerial, connectBle } = await import('./tauri')
-  const [serials, bles] = await Promise.all([discoverSerial(), discoverBle()])
+  const [serials, bles] = await Promise.all([
+    discoverSerial().catch(() => []),
+    discoverBle().catch(() => []),
+  ])
   return [
     ...serials.map(s => ({ kind: 'serial' as const, label: s.name ?? s.path, connect: () => connectSerial(s.path) })),
     ...bles.map(b => ({ kind: 'ble' as const, label: b.name ?? b.id, connect: () => connectBle(b.id) })),

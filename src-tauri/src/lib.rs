@@ -1,13 +1,13 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 
-use rynk::RynkDevice;
 use rynk_ble::BleDevice;
 use rynk_serial::SerialDevice;
 use serde::Serialize;
 use tauri::State;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{mpsc, Mutex, oneshot};
 use uuid::Uuid;
 
 // ── Device info ────────────────────────────────────────────────────────────────
@@ -27,20 +27,20 @@ struct BleDeviceInfo {
 // ── Session model ───────────────────────────────────────────────────────────────
 
 enum SessionCmd {
-    Send(Vec<u8>),
+    Send(Vec<u8>, oneshot::Sender<()>),
     Close,
 }
 
 struct Session {
     cmd_tx: mpsc::Sender<SessionCmd>,
-    data_rx: Mutex<mpsc::Receiver<Vec<u8>>>,
+    data_rx: Arc<Mutex<mpsc::Receiver<Vec<u8>>>>,
 }
 
 type Sessions = Mutex<HashMap<String, Session>>;
 
 async fn insert_session(sessions: &State<'_, Sessions>, cmd_tx: mpsc::Sender<SessionCmd>, data_rx: mpsc::Receiver<Vec<u8>>) -> String {
     let id = Uuid::new_v4().to_string();
-    sessions.lock().await.insert(id.clone(), Session { cmd_tx, data_rx: Mutex::new(data_rx) });
+    sessions.lock().await.insert(id.clone(), Session { cmd_tx, data_rx: Arc::new(Mutex::new(data_rx)) });
     id
 }
 
@@ -63,8 +63,9 @@ async fn rynk_discover_ble() -> Result<Vec<BleDeviceInfo>, String> {
 
 #[tauri::command]
 async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Result<String, String> {
-    use tokio_serial::SerialPortBuilderExt;
+    use tokio_serial::{ClearBuffer, SerialPort, SerialPortBuilderExt};
     let stream = tokio_serial::new(&path, 115_200).open_native_async().map_err(|e| e.to_string())?;
+    let _ = stream.clear(ClearBuffer::Input);
     let (read, write) = tokio::io::split(stream);
     let id = spawn_tokio_io(sessions, read, write).await;
     Ok(id)
@@ -96,7 +97,10 @@ where
             tokio::select! {
                 biased;
                 cmd = cmd_rx.recv() => match cmd {
-                    Some(SessionCmd::Send(data)) => { let _ = writer.write_all(&data).await; }
+                    Some(SessionCmd::Send(data, ack)) => {
+                        let _ = writer.write_all(&data).await;
+                        let _ = ack.send(());
+                    }
                     Some(SessionCmd::Close) | None => break,
                 },
                 result = reader.read(&mut buf) => match result {
@@ -115,33 +119,50 @@ where
 async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Result<String, String> {
     let (cmd_tx, mut cmd_rx) = mpsc::channel::<SessionCmd>(64);
     let (data_tx, data_rx) = mpsc::channel::<Vec<u8>>(64);
+    let (setup_tx, setup_rx) = oneshot::channel::<Result<(), String>>();
 
     let id_clone = id.clone();
     std::thread::Builder::new().name("ble-session".into()).spawn(move || {
         let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
         let local = tokio::task::LocalSet::new();
         local.block_on(&rt, async move {
-            let devices = BleDevice::discover().await.unwrap();
-            let device = devices.into_iter().find(|d| format!("{:?}", d.id()) == id_clone).unwrap();
-            let mut transport = device.open().await.unwrap();
-            let mut buf = [0u8; 4096];
-            loop {
-                use embedded_io_async::{Read, Write};
-                tokio::select! {
-                    biased;
-                    cmd = cmd_rx.recv() => match cmd {
-                        Some(SessionCmd::Send(data)) => { let _ = transport.write_all(&data).await; }
-                        Some(SessionCmd::Close) | None => break,
-                    },
-                    result = transport.read(&mut buf) => match result {
-                        Ok(0) | Err(_) => { let _ = data_tx.send(Vec::new()).await; break; }
-                        Ok(n) => { if data_tx.send(buf[..n].to_vec()).await.is_err() { break; } }
-                    },
+            let setup = async {
+                use rynk::RynkDevice;
+                let devices = BleDevice::discover().await.map_err(|e| e.to_string())?;
+                let device = devices.into_iter()
+                    .find(|d| format!("{:?}", d.id()) == id_clone)
+                    .ok_or("device not found")?;
+                let transport = device.open().await.map_err(|e| e.to_string())?;
+                Ok::<_, String>(transport)
+            };
+            match setup.await {
+                Ok(mut transport) => {
+                    let _ = setup_tx.send(Ok(()));
+                    use embedded_io_async::{Read, Write};
+                    let mut buf = [0u8; 4096];
+                    loop {
+                        tokio::select! {
+                            biased;
+                            cmd = cmd_rx.recv() => match cmd {
+                                Some(SessionCmd::Send(data, ack)) => {
+                                    let _ = transport.write_all(&data).await;
+                                    let _ = ack.send(());
+                                }
+                                Some(SessionCmd::Close) | None => break,
+                            },
+                            result = transport.read(&mut buf) => match result {
+                                Ok(0) | Err(_) => { let _ = data_tx.send(Vec::new()).await; break; }
+                                Ok(n) => { if data_tx.send(buf[..n].to_vec()).await.is_err() { break; } }
+                            },
+                        }
+                    }
                 }
+                Err(e) => { let _ = setup_tx.send(Err(e)); }
             }
         });
     }).map_err(|e| e.to_string())?;
 
+    setup_rx.await.map_err(|_| "BLE thread died".to_string())??;
     let id = insert_session(&sessions, cmd_tx, data_rx).await;
     Ok(id)
 }
@@ -150,17 +171,29 @@ async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Result<S
 
 #[tauri::command]
 async fn rynk_send(session: String, data: Vec<u8>, sessions: State<'_, Sessions>) -> Result<(), String> {
-    match sessions.lock().await.get(&session) {
-        Some(s) => s.cmd_tx.send(SessionCmd::Send(data)).await.map_err(|e| e.to_string()),
+    let cmd_tx = {
+        let sessions = sessions.lock().await;
+        sessions.get(&session).map(|s| s.cmd_tx.clone())
+    };
+    match cmd_tx {
+        Some(tx) => {
+            let (ack, rx) = oneshot::channel();
+            tx.send(SessionCmd::Send(data, ack)).await.map_err(|e| e.to_string())?;
+            rx.await.map_err(|_| "session task died".to_string())
+        }
         None => Ok(()),
     }
 }
 
 #[tauri::command]
 async fn rynk_recv(session: String, sessions: State<'_, Sessions>) -> Result<Vec<u8>, String> {
-    match sessions.lock().await.get(&session) {
-        Some(s) => {
-            let mut rx = s.data_rx.lock().await;
+    let data_rx = {
+        let sessions = sessions.lock().await;
+        sessions.get(&session).map(|s| s.data_rx.clone())
+    };
+    match data_rx {
+        Some(rx) => {
+            let mut rx = rx.lock().await;
             Ok(rx.recv().await.unwrap_or_default())
         }
         None => Ok(Vec::new()),
