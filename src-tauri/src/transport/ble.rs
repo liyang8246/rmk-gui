@@ -8,7 +8,7 @@ use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
-use crate::transport::{BleDeviceInfo, SessionCmd, Sessions, insert_session};
+use super::{BleDeviceInfo, SessionCmd, Sessions, insert_session};
 
 const RYNK_SERVICE_UUID: Uuid = Uuid::from_u128(0x10900067_537f_4f0a_9b55_929e271f61ab);
 const RYNK_INPUT_CHAR_UUID: Uuid = Uuid::from_u128(0x80f9319b_0c74_43a5_9738_c59d6dda3db9);
