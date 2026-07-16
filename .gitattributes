@@ -1,0 +1,8 @@
+# Normalize all text files to LF in the repo
+* text=auto eol=lf
+
+# Ensure common source files use LF
+*.{ts,tsx,js,jsx,mjs,css,html,json,yaml,yml,toml,md,rs} text eol=lf
+
+# Binary files — never normalize
+*.{png,ico,icns,jpg,jpeg,gif,svg,woff,woff2,ttf,eot,wasm,pdf} binary
