@@ -1,8 +1,13 @@
 import type { DeviceCapabilities, RynkClient } from '../rynk/wasm/rynk_wasm.js'
 import type { ConfigSlice, PathChange } from './keyboard'
-import { setPath, setStore, shadow, store } from './keyboard'
 
-// ── Re-apply / commit / rollback ─────────────────────────────────────────────
+// ── Send changes to keyboard ────────────────────────────────────────────────
+
+export async function sendChanges(client: RynkClient, changes: PathChange[], caps: DeviceCapabilities) {
+  for (const [slice, sliceChanges] of groupBySlice(changes)) {
+    await sendSlice(client, slice, sliceChanges, caps)
+  }
+}
 
 function groupBySlice(changes: PathChange[]): Map<ConfigSlice, PathChange[]> {
   const map = new Map<ConfigSlice, PathChange[]>()
@@ -11,51 +16,6 @@ function groupBySlice(changes: PathChange[]): Map<ConfigSlice, PathChange[]> {
     map.get(c.slice)!.push(c)
   }
   return map
-}
-
-export function reapplyChanges(changes: PathChange[]) {
-  for (const [slice, sliceChanges] of groupBySlice(changes)) {
-    let clone: unknown = structuredClone(store.config[slice])
-    for (const c of sliceChanges) {
-      if (c.path.length === 0) {
-        clone = structuredClone(c.newValue)
-      } else {
-        setPath(clone, c.path, structuredClone(c.newValue))
-      }
-    }
-    setStore('config', slice as never, clone as never)
-  }
-}
-
-export function commitShadow(changes: PathChange[]) {
-  for (const c of changes) {
-    if (c.path.length === 0) {
-      const target = shadow.config as unknown as Record<string, unknown>
-      target[c.slice] = structuredClone(c.newValue)
-    } else {
-      setPath(shadow.config[c.slice], c.path, structuredClone(c.newValue))
-    }
-  }
-}
-
-export function rollbackToShadow(changes: PathChange[]) {
-  // NOTE: If sendChanges failed mid-way (partial sync), some paths may already
-  // be committed on the keyboard with new values while shadow still holds old
-  // values. This rollback reverts the store to shadow (old values), which is
-  // correct for the UI but may leave the keyboard in a mixed state. Writes are
-  // idempotent so the next successful sync will re-send everything, but shadow
-  // accuracy for partially-succeeded paths is not guaranteed until then.
-  for (const [slice] of groupBySlice(changes)) {
-    setStore('config', slice as never, structuredClone(shadow.config[slice]) as never)
-  }
-}
-
-// ── Send changes to keyboard ────────────────────────────────────────────────
-
-export async function sendChanges(client: RynkClient, changes: PathChange[], caps: DeviceCapabilities) {
-  for (const [slice, sliceChanges] of groupBySlice(changes)) {
-    await sendSlice(client, slice, sliceChanges, caps)
-  }
 }
 
 async function sendSlice(client: RynkClient, slice: ConfigSlice, changes: PathChange[], caps: DeviceCapabilities) {
@@ -85,7 +45,7 @@ async function sendSlice(client: RynkClient, slice: ConfigSlice, changes: PathCh
       }
       break
     case 'behavior':
-      await client.set_behavior(store.config.behavior as never)
+      await client.set_behavior(changes[0].newValue as never)
       break
     case 'defaultLayer': {
       const dl = changes[0]

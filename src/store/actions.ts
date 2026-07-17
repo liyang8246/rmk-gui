@@ -11,10 +11,8 @@ import type {
 import type { KeyboardConfig } from './keyboard'
 import { reconcile } from 'solid-js/store'
 import { connectClient } from '../rynk/core'
-import { startDriver, stopDriver } from './driver'
 import {
   clientHolder,
-  eventQueue,
   resetState,
   setStore,
   syncShadow,
@@ -42,18 +40,14 @@ export async function connectKeyboard(link: ByteLink, transport: 'serial' | 'ble
   const config = await fetchFullConfig(c, caps)
   setStore('config', reconcile(config))
   syncShadow(config)
-
-  startDriver()
 }
 
 export async function disconnectKeyboard() {
-  stopDriver()
   if (clientHolder.client) {
     try {
       clientHolder.client[Symbol.dispose]()
     } catch { /* ignore */ }
   }
-  eventQueue.length = 0
   resetState()
 }
 

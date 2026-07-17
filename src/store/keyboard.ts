@@ -17,6 +17,7 @@ import type {
   RynkClient,
 } from '../rynk/wasm/rynk_wasm.js'
 import { createStore, produce, reconcile } from 'solid-js/store'
+import { sendChanges } from './sync'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ export interface KeyboardState {
   device: DeviceMeta | null
   config: KeyboardConfig
   status: KeyboardStatus
-  sync: { syncing: boolean, queueDepth: number, errors: { slice: string, error: string, timestamp: number }[] }
+  sync: { syncing: boolean }
 }
 
 export type ConfigSlice = keyof KeyboardConfig
@@ -68,10 +69,6 @@ export interface PathChange {
   slice: ConfigSlice
   path: (string | number)[]
   newValue: unknown
-}
-
-export interface SyncEvent {
-  changes: PathChange[]
 }
 
 // ── Store + shared state ────────────────────────────────────────────────────
@@ -85,7 +82,7 @@ function emptyStatus(): KeyboardStatus {
 }
 
 function initialState(): KeyboardState {
-  return { connection: null, device: null, config: emptyConfig(), status: emptyStatus(), sync: { syncing: false, queueDepth: 0, errors: [] } }
+  return { connection: null, device: null, config: emptyConfig(), status: emptyStatus(), sync: { syncing: false } }
 }
 
 export const [store, setStore] = createStore<KeyboardState>(initialState())
@@ -98,50 +95,52 @@ export function syncShadow(c: KeyboardConfig) {
   shadow.config = structuredClone(c)
 }
 
+let syncChain: Promise<void> = Promise.resolve()
+
 export function resetState() {
+  syncChain = Promise.resolve()
   clientHolder.client = null
   setStore(reconcile(initialState()))
 }
 
-// ── Event queue ─────────────────────────────────────────────────────────────
-
-// Driver wake callback — set by driver.ts on startup.
-const driverWake: { fn: (() => void) | null } = { fn: null }
-
-export function setWakeDriver(fn: () => void) {
-  driverWake.fn = fn
-}
-
-const MAX_QUEUE = 50
-export const eventQueue: SyncEvent[] = []
+// ── editConfig: action → store → diff shadow → send → commit/rollback ──────
 
 export function editConfig(mutator: (draft: KeyboardConfig) => void) {
-  // Check queue capacity before mutating — if full, reject cleanly so the
-  // caller can wait for sync to drain and retry without leaving the store
-  // in a diverged state (store updated but keyboard never receives it).
-  if (eventQueue.length >= MAX_QUEUE)
-    throw new Error('sync queue full — wait for pending changes to flush')
-
-  // Shallow copy of slice references before mutation.
-  // produce() preserves references for untouched top-level keys (immer guarantee),
-  // so we can skip deep-diff for any slice whose reference didn't change.
-  const beforeRefs = { ...store.config }
   setStore('config', produce(mutator))
 
-  const changes: PathChange[] = []
-  for (const slice of Object.keys(store.config) as ConfigSlice[]) {
-    if (beforeRefs[slice] !== store.config[slice]) {
-      diffValue(slice, [], beforeRefs[slice], store.config[slice], changes)
-    }
-  }
-  if (changes.length === 0) return
+  syncChain = syncChain.then(async () => {
+    const c = clientHolder.client
+    if (!c || !store.connection || !store.device) return
 
-  eventQueue.push({ changes })
-  setStore('sync', 'queueDepth', eventQueue.length)
-  driverWake.fn?.()
+    const changes = diffConfigs(shadow.config, store.config)
+    if (changes.length === 0) return
+
+    const caps = store.device.capabilities
+    setStore('sync', 'syncing', true)
+    try {
+      await sendChanges(c, changes, caps)
+      syncShadow(store.config)
+    } catch {
+      setStore('config', reconcile(structuredClone(shadow.config)))
+    } finally {
+      setStore('sync', 'syncing', false)
+    }
+  })
+
+  return syncChain
 }
 
 // ── Diff ────────────────────────────────────────────────────────────────────
+
+function diffConfigs(shadow: KeyboardConfig, current: KeyboardConfig): PathChange[] {
+  const changes: PathChange[] = []
+  for (const slice of Object.keys(current) as ConfigSlice[]) {
+    if (shadow[slice] !== current[slice]) {
+      diffValue(slice, [], shadow[slice], current[slice], changes)
+    }
+  }
+  return changes
+}
 
 function diffValue(slice: ConfigSlice, path: (string | number)[], oldVal: unknown, newVal: unknown, changes: PathChange[]) {
   if (deepEqual(oldVal, newVal)) return
@@ -173,15 +172,4 @@ function deepEqual(a: unknown, b: unknown): boolean {
     if (!deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])) return false
   }
   return true
-}
-
-export function setPath(obj: unknown, path: (string | number)[], value: unknown) {
-  if (path.length === 0) return
-  let cur: unknown = obj
-  for (let i = 0; i < path.length - 1; i++) {
-    if (cur == null) return
-    cur = (cur as Record<string | number, unknown>)[path[i]]
-  }
-  const target = cur as Record<string | number, unknown>
-  target[path[path.length - 1]] = value
 }
