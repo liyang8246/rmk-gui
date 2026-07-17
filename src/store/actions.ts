@@ -15,30 +15,34 @@ import { startDriver, stopDriver } from './driver'
 import {
   clientHolder,
   eventQueue,
-
   resetState,
   setStore,
-  store,
   syncShadow,
 } from './keyboard'
 
 export async function connectKeyboard(link: ByteLink, transport: 'serial' | 'ble' | 'tcp', label: string) {
+  // Defensively free any existing (possibly-dead) client before reconnecting
+  if (clientHolder.client) {
+    try {
+      clientHolder.client[Symbol.dispose]()
+    } catch { /* already dead */ }
+    clientHolder.client = null
+  }
+
   const { client: c, major, minor } = await connectClient(link, label)
   clientHolder.client = c
 
   setStore('connection', { transport, label, protocolVersion: { major, minor } })
 
-  const [caps, layout] = await Promise.all([
-    c.get_capabilities(),
-    c.get_layout(),
-  ])
+  // RynkClient methods are &mut self — cannot use Promise.all for concurrent calls
+  const caps = await c.get_capabilities()
+  const layout = await c.get_layout()
   setStore('device', { capabilities: caps, layout })
 
   const config = await fetchFullConfig(c, caps)
   setStore('config', reconcile(config))
   syncShadow(config)
 
-  await pollStatusOnce(c)
   startDriver()
 }
 
@@ -56,16 +60,15 @@ export async function disconnectKeyboard() {
 // ── Config fetchers ─────────────────────────────────────────────────────────
 
 async function fetchFullConfig(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardConfig> {
-  const [keymap, encoders, combos, macros, morse, forks, behavior, defaultLayer] = await Promise.all([
-    fetchKeymap(client, caps),
-    fetchEncoders(client, caps),
-    fetchCombos(client, caps),
-    fetchMacros(client, caps),
-    fetchMorse(client, caps),
-    fetchForks(client, caps),
-    client.get_behavior(),
-    client.get_default_layer(),
-  ])
+  // RynkClient methods are &mut self — must serialize, not Promise.all
+  const keymap = await fetchKeymap(client, caps)
+  const encoders = await fetchEncoders(client, caps)
+  const combos = await fetchCombos(client, caps)
+  const macros = await fetchMacros(client, caps)
+  const morse = await fetchMorse(client, caps)
+  const forks = await fetchForks(client, caps)
+  const behavior = await client.get_behavior()
+  const defaultLayer = await client.get_default_layer()
   return { keymap, encoders, combos, macros, morse, forks, behavior, defaultLayer }
 }
 
@@ -80,6 +83,7 @@ async function fetchKeymap(client: RynkClient, caps: DeviceCapabilities): Promis
       const resp = await client.get_keymap_bulk(layer, row, col)
       if (resp.actions.length === 0) break
       flat.push(...resp.actions)
+      // Advance (layer,row,col) cursor by resp.actions.length, carrying overflow
       col += resp.actions.length
       while (col >= caps.num_cols) {
         col -= caps.num_cols
@@ -191,26 +195,4 @@ async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise
     }
   }
   return forks
-}
-
-async function pollStatusOnce(client: RynkClient) {
-  const [layer, conn, led, lock] = await Promise.all([
-    client.get_current_layer(),
-    client.get_connection_status(),
-    client.get_led_indicator(),
-    client.get_lock_status(),
-  ])
-  setStore('status', 'currentLayer', layer)
-  setStore('status', 'connection', reconcile(conn))
-  setStore('status', 'ledIndicator', reconcile(led))
-  setStore('status', 'lockStatus', reconcile(lock))
-
-  if (store.device?.capabilities.ble_enabled) {
-    const [battery, ble] = await Promise.all([
-      client.get_battery_status(),
-      client.get_ble_status(),
-    ])
-    setStore('status', 'battery', reconcile(battery))
-    setStore('status', 'bleStatus', reconcile(ble))
-  }
 }

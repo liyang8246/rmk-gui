@@ -30,7 +30,8 @@ export function reapplyChanges(changes: PathChange[]) {
 export function commitShadow(changes: PathChange[]) {
   for (const c of changes) {
     if (c.path.length === 0) {
-      ;(shadow.config as unknown as Record<string, unknown>)[c.slice] = structuredClone(c.newValue)
+      const target = shadow.config as unknown as Record<string, unknown>
+      target[c.slice] = structuredClone(c.newValue)
     } else {
       setPath(shadow.config[c.slice], c.path, structuredClone(c.newValue))
     }
@@ -38,6 +39,12 @@ export function commitShadow(changes: PathChange[]) {
 }
 
 export function rollbackToShadow(changes: PathChange[]) {
+  // NOTE: If sendChanges failed mid-way (partial sync), some paths may already
+  // be committed on the keyboard with new values while shadow still holds old
+  // values. This rollback reverts the store to shadow (old values), which is
+  // correct for the UI but may leave the keyboard in a mixed state. Writes are
+  // idempotent so the next successful sync will re-send everything, but shadow
+  // accuracy for partially-succeeded paths is not guaranteed until then.
   for (const [slice] of groupBySlice(changes)) {
     setStore('config', slice as never, structuredClone(shadow.config[slice]) as never)
   }
@@ -180,18 +187,15 @@ async function sendIndexedBulk(
     if (r.length > 1) {
       for (let i = 0; i < r.length; i += maxBulk) {
         const chunk = r.slice(i, i + maxBulk)
-        if (kind === 'combo') {
-          await client.set_combo_bulk({ start_index: chunk[0].index, configs: chunk.map(c => c.config) as never[] })
-        } else {
-          await client.set_morse_bulk({ start_index: chunk[0].index, configs: chunk.map(c => c.config) as never[] })
-        }
+        const chunkConfigs = chunk.map(c => c.config) as never[]
+        kind === 'combo'
+          ? await client.set_combo_bulk({ start_index: chunk[0].index, configs: chunkConfigs })
+          : await client.set_morse_bulk({ start_index: chunk[0].index, configs: chunkConfigs })
       }
     } else {
-      if (kind === 'combo') {
-        await client.set_combo(r[0].index, r[0].config as never)
-      } else {
-        await client.set_morse(r[0].index, r[0].config as never)
-      }
+      kind === 'combo'
+        ? await client.set_combo(r[0].index, r[0].config as never)
+        : await client.set_morse(r[0].index, r[0].config as never)
     }
   }
 }

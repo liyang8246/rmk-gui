@@ -52,7 +52,6 @@ export interface KeyboardStatus {
   sleepState: boolean
   wpm: number
   lockStatus: LockStatus | null
-  eventsDropped: number
 }
 
 export interface KeyboardState {
@@ -60,7 +59,7 @@ export interface KeyboardState {
   device: DeviceMeta | null
   config: KeyboardConfig
   status: KeyboardStatus
-  sync: { syncing: boolean, errors: { slice: string, error: string, timestamp: number }[] }
+  sync: { syncing: boolean, queueDepth: number, errors: { slice: string, error: string, timestamp: number }[] }
 }
 
 export type ConfigSlice = keyof KeyboardConfig
@@ -82,11 +81,11 @@ function emptyConfig(): KeyboardConfig {
 }
 
 function emptyStatus(): KeyboardStatus {
-  return { currentLayer: 0, connection: null, battery: null, bleStatus: null, matrixState: null, ledIndicator: null, sleepState: false, wpm: 0, lockStatus: null, eventsDropped: 0 }
+  return { currentLayer: 0, connection: null, battery: null, bleStatus: null, matrixState: null, ledIndicator: null, sleepState: false, wpm: 0, lockStatus: null }
 }
 
 function initialState(): KeyboardState {
-  return { connection: null, device: null, config: emptyConfig(), status: emptyStatus(), sync: { syncing: false, errors: [] } }
+  return { connection: null, device: null, config: emptyConfig(), status: emptyStatus(), sync: { syncing: false, queueDepth: 0, errors: [] } }
 }
 
 export const [store, setStore] = createStore<KeyboardState>(initialState())
@@ -117,30 +116,35 @@ const MAX_QUEUE = 50
 export const eventQueue: SyncEvent[] = []
 
 export function editConfig(mutator: (draft: KeyboardConfig) => void) {
-  const before = structuredClone(store.config)
-  setStore('config', produce(mutator))
-  const after = structuredClone(store.config)
+  // Check queue capacity before mutating — if full, reject cleanly so the
+  // caller can wait for sync to drain and retry without leaving the store
+  // in a diverged state (store updated but keyboard never receives it).
+  if (eventQueue.length >= MAX_QUEUE)
+    throw new Error('sync queue full — wait for pending changes to flush')
 
-  const changes = diffConfigs(before, after)
+  // Shallow copy of slice references before mutation.
+  // produce() preserves references for untouched top-level keys (immer guarantee),
+  // so we can skip deep-diff for any slice whose reference didn't change.
+  const beforeRefs = { ...store.config }
+  setStore('config', produce(mutator))
+
+  const changes: PathChange[] = []
+  for (const slice of Object.keys(store.config) as ConfigSlice[]) {
+    if (beforeRefs[slice] !== store.config[slice]) {
+      diffValue(slice, [], beforeRefs[slice], store.config[slice], changes)
+    }
+  }
   if (changes.length === 0) return
 
-  if (eventQueue.length >= MAX_QUEUE) eventQueue.shift()
   eventQueue.push({ changes })
+  setStore('sync', 'queueDepth', eventQueue.length)
   driverWake.fn?.()
 }
 
 // ── Diff ────────────────────────────────────────────────────────────────────
 
-function diffConfigs(before: KeyboardConfig, after: KeyboardConfig): PathChange[] {
-  const changes: PathChange[] = []
-  for (const slice of Object.keys(after) as ConfigSlice[]) {
-    diffValue(slice, [], before[slice], after[slice], changes)
-  }
-  return changes
-}
-
 function diffValue(slice: ConfigSlice, path: (string | number)[], oldVal: unknown, newVal: unknown, changes: PathChange[]) {
-  if (JSON.stringify(oldVal) === JSON.stringify(newVal)) return
+  if (deepEqual(oldVal, newVal)) return
   if (Array.isArray(oldVal) && Array.isArray(newVal)) {
     const maxLen = Math.max(oldVal.length, newVal.length)
     for (let i = 0; i < maxLen; i++) {
@@ -151,6 +155,26 @@ function diffValue(slice: ConfigSlice, path: (string | number)[], oldVal: unknow
   }
 }
 
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false
+  if (Array.isArray(a) !== Array.isArray(b)) return false
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) return false
+    }
+    return true
+  }
+  const ak = Object.keys(a as Record<string, unknown>)
+  const bk = Object.keys(b as Record<string, unknown>)
+  if (ak.length !== bk.length) return false
+  for (const k of ak) {
+    if (!deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])) return false
+  }
+  return true
+}
+
 export function setPath(obj: unknown, path: (string | number)[], value: unknown) {
   if (path.length === 0) return
   let cur: unknown = obj
@@ -158,5 +182,6 @@ export function setPath(obj: unknown, path: (string | number)[], value: unknown)
     if (cur == null) return
     cur = (cur as Record<string | number, unknown>)[path[i]]
   }
-  ;(cur as Record<string | number, unknown>)[path[path.length - 1]] = value
+  const target = cur as Record<string | number, unknown>
+  target[path[path.length - 1]] = value
 }

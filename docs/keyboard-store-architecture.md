@@ -7,10 +7,12 @@
 ## 关键约束: RynkClient 单借用
 
 `RynkClient` 所有方法都取 `&mut self`，JS 必须 await 一个调用结束才能发下一个。
-`next_event()` 会 park 在 `transport.read()` 上，期间 `receive_in_flight = true`。
-此时任何并发 `set_*` 调用会永久杀死 client (`dead = true`)。
 
-**结论**: 不能同时跑 topic loop 和 sync processor。改为单驱动循环。
+`next_event()` 存在已知 bug（作者已确认为误设计），不可用。
+**当前方案: 不使用 `next_event()`**，status 全量轮询 (`get_*`)，单驱动循环串行所有 client 调用。
+
+> 详见 `docs/rynk-client-borrow-constraint.md`。rynk-wasm 修复后可引入独立 topic loop，
+> 但当前设计不依赖它——轮询已覆盖 topic 功能。
 
 ## 状态分层
 
@@ -27,23 +29,22 @@ store
 
 所有类型均来自 `src/rynk/wasm/rynk_wasm.d.ts`，`import type` 直接引用。
 
-### connection
+### connection — null 表示未连接
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `connected` | `boolean` | 是否已连接 |
-| `transport` | `'serial' \| 'ble' \| 'tcp' \| null` | 传输方式 |
-| `label` | `string \| null` | 设备显示名 |
-| `protocolVersion` | `ProtocolVersion \| null` | 协议版本 (major + minor) |
-| `client` | `RynkClient \| null` | WASM 句柄, sync 层调它发命令 |
+| `transport` | `'serial' \| 'ble' \| 'tcp'` | 传输方式 |
+| `label` | `string` | 设备显示名 |
+| `protocolVersion` | `ProtocolVersion` | 协议版本 (major + minor) |
+
+`connection` 为 `null` 时表示未连接。`RynkClient` 句柄存在 `clientHolder`（非响应式）, 不在 store 里。
 
 ### device — 连接时读一次，只读
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `capabilities` | `DeviceCapabilities \| null` | 硬件能力 (层数/行列数/旋钮数/bulk上限等) |
-| `info` | `DeviceInfo \| null` | 设备身份 (rmk_version/VID/PID/厂商/产品名/序列号) |
-| `layout` | `LayoutInfo \| null` | 物理布局 (variants + keys + encoders 位置) |
+| `capabilities` | `DeviceCapabilities` | 硬件能力 (层数/行列数/旋钮数/bulk上限等) |
+| `layout` | `LayoutInfo` | 物理布局 (variants + keys + encoders 位置) |
 
 ### config — 可编辑，需同步到键盘
 
@@ -78,6 +79,7 @@ store
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `syncing` | `boolean` | 正在写入键盘 |
+| `queueDepth` | `number` | 当前同步队列深度 |
 | `errors` | `{ slice: string, error: string, timestamp: number }[]` | 最近的同步失败记录 |
 
 ## 处理流程
@@ -87,10 +89,10 @@ store
 ```
 connect(link)
   → connectClient(link)           WASM 握手, 拿到 RynkClient
-  → 读 device (capabilities/info/layout)
-  → 读 config 全量 (get_keymap_bulk / get_combo_bulk / ...)
+  → 读 device (capabilities/layout)  串行 await, 不能 Promise.all
+  → 读 config 全量 (get_keymap_bulk / get_combo_bulk / ...)  串行 await
     → 同时写入 store + shadow      diff = 0, 不触发回写
-  → 读 status 一次
+  → 读 status 一次                 串行 await
   → 启动 driver loop
 ```
 
@@ -98,11 +100,12 @@ connect(link)
 
 ```
 editConfig(mutator)
-  ├─ snapshot before = clone(store.config)
+  ├─ 检查 eventQueue 是否已满 → 满了 throw (store 未改动, 调用方等待 drain 后重试)
+  ├─ beforeRefs = shallow copy of store.config slice refs
   ├─ setStore(produce(mutator))       store 立即更新, UI 即时响应
-  ├─ snapshot after = clone(store.config)
-  ├─ changes = diff(before, after)   只找本次编辑改了哪些路径
-  └─ eventQueue.push({ changes })    一个 event 入队, 上限 50 条 (满了丢最旧)
+  ├─ 遍历 slice: ref 不等才 deepEqual diff → 只找本次编辑改了哪些路径
+  └─ eventQueue.push({ changes }) + setStore('sync', 'queueDepth', n)
+                                      一个 event 入队, 上限 50 条 (满了 throw)
 
 Driver loop (单循环, 串行所有 client 操作):
   while connected:
@@ -128,44 +131,46 @@ Driver loop (单循环, 串行所有 client 操作):
 sync 有优先权——队列非空时不 sleep、不轮询。
 re-apply 必须保留——没有它，前一个事件失败回滚会覆盖后续事件的值。
 
-**已知行为**: 固件推送的 topic 帧会在 `request_raw` 内部被缓冲到 client 的内部队列 (容量 64)，
-但我们不调用 `next_event()` 来排空它。队列满后 `eventsDropped` 会单调增长。
-这是预期行为——轮询已覆盖 topic 的功能，`eventsDropped` 不应视为错误信号。
+**`next_event()` 不使用**。固件推送的 topic 帧（当前层变化、矩阵状态等）通过
+轮询 `get_*` 获取，不依赖 `next_event()` 驱动。`eventsDropped` 记录在 `status` 中
+供可观测性使用, 不作为错误信号驱动恢复。
 
 ### 3. 断连
 
 ```
 任何 client 调用抛出 Disconnected
-  → setStore('connection', 'connected', false)
+  → free WASM client (Symbol.dispose, try/catch)
+  → clientHolder.client = null
+  → setStore('connection', null)
   → driver loop 退出
   → flush eventQueue (清空, 不保留旧事件)
   → 重连后: 重新初始同步, 从干净状态开始
 ```
 
 重连时清空队列——旧事件可能引用已失效的键盘状态，直接丢弃更安全。
+`connectKeyboard` 会在开头防御性地 free 已存在的 client。
 
 ## 核心约束
 
 | 约束 | 保证方式 |
 |------|---------|
 | RynkClient 单借用 | 单 driver loop, sync 和轮询不并发 |
-| 一次编辑 = 一个事件 | `editConfig` 内 snapshot + diff + push 一个 event |
+| 不使用 `next_event()` | status 全量轮询 `get_*`, topic 帧不消费 |
+| 一次编辑 = 一个事件 | `editConfig` 内 shallow ref + diff + push 一个 event |
 | 严格串行, 绝不合并 | driver loop 一次处理一个 event, `await` 等键盘 |
 | 失败回滚当前事件 | 回滚目标是 `shadow[path]` (键盘实际态) |
+| 队列满保护 | `editConfig` 在 `produce` 前检查队列, 满了 throw, store 不改动 |
 | 无 echo | 初始同步写 store + shadow (diff=0); 轮询只写 status (不碰 config) |
 | 无 debounce | event 立即入队, driver loop 立即处理 |
-| 断连安全 | 清空队列, 重连后全量重读 |
+| 断连安全 | free client + 清空队列, 重连后全量重读 |
 
 ## 文件结构
 
 ```
 src/store/
-  types.ts                  状态类型定义
-  store.ts                  createStore + 全局单例导出
-  edit.ts                   editConfig() — 唯一的 config 编辑入口
-  shadow.ts                 shadow copy (非响应式, 记录键盘实际状态)
-  diff.ts                   diffConfigs() — before/after 快照差异 → PathChange[]
-  sync.ts                   sendChanges() — 按 slice 分组, 合连续路径为 bulk, 调 RynkClient
+  keyboard.ts               状态类型 + createStore 单例 + shadow + editConfig + diff
+  actions.ts                connect/disconnect + 全量 config fetch + pollStatusOnce
   driver.ts                 单 driver loop (sync 优先 + status 轮询, 内联轮询逻辑)
-  actions.ts                高层 action: connect, loadConfig, disconnect
+  sync.ts                   sendChanges — 按 slice 分组, 合连续路径为 bulk, 调 RynkClient
+  index.ts                  re-export
 ```
