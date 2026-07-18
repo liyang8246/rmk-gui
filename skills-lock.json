@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "neverthrow": {
+      "source": "liyang8246/skills",
+      "sourceType": "github",
+      "skillPath": "skills/neverthrow/SKILL.md",
+      "computedHash": "18668704cdd47f10d82582189b02e1f537d55863e3dc85af75281424d70ac4f3"
+    }
+  }
+}

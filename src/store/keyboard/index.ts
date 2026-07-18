@@ -3,16 +3,19 @@ export {
   resetShadow,
   setBehavior,
   setCombo,
-  setComboBulk,
   setDefaultLayer,
   setEncoder,
   setFork,
   setKey,
-  setKeymapBulk,
   setMacro,
   setMorse,
-  setMorseBulk,
 } from './actions'
+export {
+  toKeyboardError,
+} from './errors'
+export type {
+  KeyboardError,
+} from './errors'
 export {
   clientState,
   setStore,
