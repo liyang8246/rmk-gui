@@ -2,7 +2,7 @@ export {
   clientState,
   setStore,
   store,
-} from './keyboard'
+} from './store'
 export type {
   ConnectionPhase,
   ConnectionState,
@@ -10,4 +10,4 @@ export type {
   KeyboardDevice,
   KeyboardStatus,
   KeyboardStore,
-} from './keyboard'
+} from './types'
