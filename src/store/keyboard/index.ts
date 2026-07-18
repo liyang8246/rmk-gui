@@ -1,4 +1,19 @@
 export {
+  initShadow,
+  resetShadow,
+  setBehavior,
+  setCombo,
+  setComboBulk,
+  setDefaultLayer,
+  setEncoder,
+  setFork,
+  setKey,
+  setKeymapBulk,
+  setMacro,
+  setMorse,
+  setMorseBulk,
+} from './actions'
+export {
   clientState,
   setStore,
   store,

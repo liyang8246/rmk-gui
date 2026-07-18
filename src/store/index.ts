@@ -1,5 +1,18 @@
 export {
   clientState,
+  initShadow,
+  resetShadow,
+  setBehavior,
+  setCombo,
+  setComboBulk,
+  setDefaultLayer,
+  setEncoder,
+  setFork,
+  setKey,
+  setKeymapBulk,
+  setMacro,
+  setMorse,
+  setMorseBulk,
   setStore,
   store,
 } from './keyboard'
