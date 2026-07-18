@@ -1,12 +1,13 @@
 use serde::Serialize;
 use tauri::State;
 
-use super::{Sessions, spawn_tokio_io};
+use super::{DeviceDescriptor, Sessions, spawn_tokio_io};
 
 #[derive(Serialize)]
 pub struct SerialDeviceInfo {
     pub path: String,
     pub name: Option<String>,
+    pub descriptor: DeviceDescriptor,
 }
 
 const RYNK_SERIAL_MAGIC: &str = "rynk:";
@@ -27,8 +28,20 @@ pub async fn rynk_discover_serial() -> Result<Vec<SerialDeviceInfo>, String> {
         None => true,
     });
     Ok(ports.into_iter().map(|p| {
-        let name = match p.port_type { SerialPortType::UsbPort(info) => info.product, _ => None };
-        SerialDeviceInfo { path: p.port_name, name }
+        let (name, descriptor) = match p.port_type {
+            SerialPortType::UsbPort(info) => (
+                info.product.clone(),
+                DeviceDescriptor {
+                    vendor_id: info.vid,
+                    product_id: info.pid,
+                    manufacturer: info.manufacturer.unwrap_or_default(),
+                    product_name: info.product.unwrap_or_default(),
+                    serial_number: info.serial_number.unwrap_or_default(),
+                },
+            ),
+            _ => (None, DeviceDescriptor::default()),
+        };
+        SerialDeviceInfo { path: p.port_name, name, descriptor }
     }).collect())
 }
 

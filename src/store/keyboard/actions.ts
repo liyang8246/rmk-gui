@@ -2,15 +2,16 @@ import type {
   BehaviorConfig,
   Combo,
   DeviceCapabilities,
+  DeviceDescriptor,
   DeviceInfo,
   EncoderAction,
   FirmwareVersion,
   Fork,
-  JsByteLink,
   KeyAction,
   MacroData,
   Morse,
   RynkClient,
+  TransportInfo,
 } from '../../rynk'
 import type { KeyboardError } from './errors'
 import type { KeyboardConfig, KeyboardDevice } from './types'
@@ -21,8 +22,8 @@ import { toKeyboardError } from './errors'
 import { session, setStore, store } from './store'
 import { runMutation } from './utils'
 
-export function initStore(link: JsByteLink, label?: string): ResultAsync<void, KeyboardError> {
-  return ResultAsync.fromThrowable(() => doInit(link, label), toKeyboardError)()
+export function initStore(transport: TransportInfo): ResultAsync<void, KeyboardError> {
+  return ResultAsync.fromThrowable(() => doInit(transport), toKeyboardError)()
 }
 
 export function resetStore(): void {
@@ -37,11 +38,12 @@ export function resetStore(): void {
   session.chain = Promise.resolve()
 }
 
-async function doInit(link: JsByteLink, label?: string): Promise<void> {
+async function doInit(transport: TransportInfo): Promise<void> {
   try {
-    setStore('connection', { phase: 'connecting', label: label ?? '' })
+    setStore('connection', { phase: 'connecting', label: transport.label })
 
-    const { client, major, minor } = await connectClient(link, label)
+    const { link, descriptor } = await transport.connect()
+    const { client } = await connectClient(link, transport.label)
     session.client = client
 
     // Device metadata (serial)
@@ -71,12 +73,12 @@ async function doInit(link: JsByteLink, label?: string): Promise<void> {
     }
     const device: KeyboardDevice = {
       capabilities,
-      info: hardcodedDeviceInfo(major, minor),
+      info: descriptorToDeviceInfo(descriptor),
       version,
       layout,
     }
     setStore({
-      connection: { phase: 'connected', label: label ?? '' },
+      connection: { phase: 'connected', label: transport.label },
       device,
       config,
       status: null,
@@ -133,18 +135,10 @@ async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promis
   return data
 }
 
-function hardcodedDeviceInfo(major: number, minor: number): DeviceInfo {
-  // TODO: wasm has no get_device_info(). vendor_id/product_id/manufacturer/
-  // product_name/serial_number must come from the link layer (Tauri HID/BLE).
-  const rmk_version: FirmwareVersion = { major, minor, patch: 0 }
-  return {
-    rmk_version,
-    vendor_id: 0,
-    product_id: 0,
-    manufacturer: '',
-    product_name: '',
-    serial_number: '',
-  }
+function descriptorToDeviceInfo(d: DeviceDescriptor): DeviceInfo {
+  // TODO: rmk_version has no source — rynk protocol lacks a firmware version getter.
+  const rmk_version: FirmwareVersion = { major: 0, minor: 0, patch: 0 }
+  return { ...d, rmk_version }
 }
 
 export function setKey(

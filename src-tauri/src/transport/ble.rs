@@ -3,26 +3,37 @@ use std::time::Duration;
 
 use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter, WriteType};
 use btleplug::platform::{Adapter, Manager};
+use serde::Serialize;
 use tauri::State;
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
-use serde::Serialize;
+use super::{DeviceDescriptor, SessionCmd, Sessions, insert_session};
 
 #[derive(Serialize)]
 pub struct BleDeviceInfo {
     pub id: String,
     pub name: Option<String>,
+    pub descriptor: DeviceDescriptor,
 }
 
-use super::{SessionCmd, Sessions, insert_session};
+#[derive(Serialize)]
+pub struct BleConnectResponse {
+    pub session: String,
+    pub descriptor: DeviceDescriptor,
+}
 
 const RYNK_SERVICE_UUID: Uuid = Uuid::from_u128(0x10900067_537f_4f0a_9b55_929e271f61ab);
 const RYNK_INPUT_CHAR_UUID: Uuid = Uuid::from_u128(0x80f9319b_0c74_43a5_9738_c59d6dda3db9);
 const RYNK_OUTPUT_CHAR_UUID: Uuid = Uuid::from_u128(0x19802524_6f90_4346_93c2_63dbc509ab55);
 const BLE_SAFE_WRITE: usize = 20;
 const RYNK_BLE_CHUNK_SIZE: usize = 244;
+
+// GATT Device Information Service characteristics (standard BLE UUIDs).
+const DIS_PNP_ID_UUID: Uuid = Uuid::from_u128(0x00002a50_0000_1000_8000_00805f9b34fb);
+const DIS_SERIAL_UUID: Uuid = Uuid::from_u128(0x00002a25_0000_1000_8000_00805f9b34fb);
+const DIS_MANUFACTURER_UUID: Uuid = Uuid::from_u128(0x00002a29_0000_1000_8000_00805f9b34fb);
 
 async fn get_adapter() -> Result<Adapter, String> {
     let manager = Manager::new().await.map_err(|e| e.to_string())?;
@@ -43,9 +54,15 @@ pub async fn rynk_discover_ble() -> Result<Vec<BleDeviceInfo>, String> {
     let mut out = Vec::new();
     for p in peripherals {
         let props = p.properties().await.ok().flatten();
+        let name = props.and_then(|p| p.local_name.clone());
+        let descriptor = DeviceDescriptor {
+            product_name: name.clone().unwrap_or_default(),
+            ..Default::default()
+        };
         out.push(BleDeviceInfo {
             id: p.id().to_string(),
-            name: props.and_then(|p| p.local_name),
+            name,
+            descriptor,
         });
     }
     Ok(out)
@@ -53,8 +70,39 @@ pub async fn rynk_discover_ble() -> Result<Vec<BleDeviceInfo>, String> {
 
 // ── Connect ────────────────────────────────────────────────────────────────────
 
+async fn read_dis_descriptor(
+    peripheral: &btleplug::platform::Peripheral,
+    product_name: String,
+) -> DeviceDescriptor {
+    let chars = peripheral.characteristics();
+    let mut desc = DeviceDescriptor { product_name, ..Default::default() };
+
+    // PnP ID (0x2A50): 7 bytes = vid_source(1) + vendor_id(2 LE) + product_id(2 LE) + version(2 LE)
+    if let Some(c) = chars.iter().find(|c| c.uuid == DIS_PNP_ID_UUID) {
+        if let Ok(data) = peripheral.read(c).await {
+            if data.len() >= 7 {
+                desc.vendor_id = u16::from_le_bytes([data[1], data[2]]);
+                desc.product_id = u16::from_le_bytes([data[3], data[4]]);
+            }
+        }
+    }
+    // Serial Number (0x2A25)
+    if let Some(c) = chars.iter().find(|c| c.uuid == DIS_SERIAL_UUID) {
+        if let Ok(data) = peripheral.read(c).await {
+            desc.serial_number = String::from_utf8_lossy(&data).into_owned();
+        }
+    }
+    // Manufacturer Name (0x2A29)
+    if let Some(c) = chars.iter().find(|c| c.uuid == DIS_MANUFACTURER_UUID) {
+        if let Ok(data) = peripheral.read(c).await {
+            desc.manufacturer = String::from_utf8_lossy(&data).into_owned();
+        }
+    }
+    desc
+}
+
 #[tauri::command]
-pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Result<String, String> {
+pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Result<BleConnectResponse, String> {
     let adapter = get_adapter().await?;
     let peripherals = adapter.peripherals().await.map_err(|e| e.to_string())?;
     let peripheral = peripherals.into_iter()
@@ -63,6 +111,11 @@ pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Resu
 
     peripheral.connect().await.map_err(|e| e.to_string())?;
     peripheral.discover_services().await.map_err(|e| e.to_string())?;
+
+    // Read GATT Device Information Service for vid/pid/manufacturer/serial.
+    let product_name = peripheral.properties().await.ok().flatten()
+        .and_then(|p| p.local_name).unwrap_or_default();
+    let descriptor = read_dis_descriptor(&peripheral, product_name).await;
 
     let chars = peripheral.characteristics();
     let input = chars.iter().find(|c| c.uuid == RYNK_INPUT_CHAR_UUID)
@@ -108,6 +161,6 @@ pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Resu
         }
     });
 
-    let id = insert_session(&sessions, cmd_tx, data_rx).await;
-    Ok(id)
+    let session = insert_session(&sessions, cmd_tx, data_rx).await;
+    Ok(BleConnectResponse { session, descriptor })
 }

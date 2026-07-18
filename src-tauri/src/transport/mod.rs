@@ -5,10 +5,22 @@ pub mod tcp;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use serde::Serialize;
 use tauri::State;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, Mutex, oneshot};
 use uuid::Uuid;
+
+// ── Device descriptor (shared across transports) ──────────────────────────────
+
+#[derive(Serialize, Clone, Default)]
+pub struct DeviceDescriptor {
+    pub vendor_id: u16,
+    pub product_id: u16,
+    pub manufacturer: String,
+    pub product_name: String,
+    pub serial_number: String,
+}
 
 // ── Session model ───────────────────────────────────────────────────────────────
 

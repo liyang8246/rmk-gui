@@ -2,12 +2,13 @@ use serde::Serialize;
 use std::time::Duration;
 use tauri::State;
 
-use super::{Sessions, spawn_tokio_io};
+use super::{DeviceDescriptor, Sessions, spawn_tokio_io};
 
 #[derive(Serialize)]
 pub struct TcpDeviceInfo {
     pub addr: String,
     pub name: String,
+    pub descriptor: DeviceDescriptor,
 }
 
 const QEMU_ADDR: &str = "127.0.0.1:7965";
@@ -17,7 +18,7 @@ pub async fn rynk_discover_tcp() -> Vec<TcpDeviceInfo> {
     #[cfg(debug_assertions)]
     {
         match tokio::time::timeout(Duration::from_millis(300), tokio::net::TcpStream::connect(QEMU_ADDR)).await {
-            Ok(Ok(_)) => vec![TcpDeviceInfo { addr: QEMU_ADDR.into(), name: "QEMU".into() }],
+            Ok(Ok(_)) => vec![TcpDeviceInfo { addr: QEMU_ADDR.into(), name: "QEMU".into(), descriptor: DeviceDescriptor::default() }],
             _ => vec![],
         }
     }
