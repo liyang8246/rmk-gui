@@ -22,6 +22,12 @@ pub struct DeviceDescriptor {
     pub serial_number: String,
 }
 
+#[derive(Serialize)]
+pub struct ConnectResponse {
+    pub session: String,
+    pub descriptor: DeviceDescriptor,
+}
+
 // ── Session model ───────────────────────────────────────────────────────────────
 
 pub enum SessionCmd {

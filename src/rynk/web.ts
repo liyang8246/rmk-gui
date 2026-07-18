@@ -1,3 +1,5 @@
+import type { ConnectedDevice, DeviceDescriptor } from './index'
+
 function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
   const c = new Uint8Array(a.length + b.length)
   c.set(a)
@@ -62,8 +64,28 @@ export class WebByteLink {
   }
 }
 
-export async function connectWebSerial(): Promise<WebByteLink> {
+// WebSerial exposes only usbVendorId / usbProductId via getInfo(); no string descriptors.
+function serialDescriptor(port: SerialPort): DeviceDescriptor {
+  const info = port.getInfo()
+  return {
+    vendor_id: info.usbVendorId ?? 0,
+    product_id: info.usbProductId ?? 0,
+    manufacturer: '',
+    product_name: '',
+    serial_number: '',
+  }
+}
+
+export async function connectWebSerial(): Promise<ConnectedDevice> {
   const port = await navigator.serial.requestPort()
   await port.open({ baudRate: 115200 })
-  return new WebByteLink(port)
+  return { link: new WebByteLink(port), descriptor: serialDescriptor(port), label: 'WebSerial' }
+}
+
+// TODO: WebHID support — BLE keyboards reach RynkHidService via WebHID
+// (usagePage 0xFF60, usage 0x61), not Web Bluetooth. connectWebHid() will
+// requestDevice, open, and wrap an HID-report-based byte link. The upstream
+// rynk-wasm/index.html `hidLink()` has the reference implementation.
+export async function connectWebHid(): Promise<ConnectedDevice> {
+  throw new Error('WebHID not yet implemented')
 }

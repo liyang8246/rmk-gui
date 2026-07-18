@@ -9,19 +9,12 @@ use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
-use super::{DeviceDescriptor, SessionCmd, Sessions, insert_session};
+use super::{ConnectResponse, DeviceDescriptor, SessionCmd, Sessions, insert_session};
 
 #[derive(Serialize)]
 pub struct BleDeviceInfo {
     pub id: String,
     pub name: Option<String>,
-    pub descriptor: DeviceDescriptor,
-}
-
-#[derive(Serialize)]
-pub struct BleConnectResponse {
-    pub session: String,
-    pub descriptor: DeviceDescriptor,
 }
 
 const RYNK_SERVICE_UUID: Uuid = Uuid::from_u128(0x10900067_537f_4f0a_9b55_929e271f61ab);
@@ -54,15 +47,10 @@ pub async fn rynk_discover_ble() -> Result<Vec<BleDeviceInfo>, String> {
     let mut out = Vec::new();
     for p in peripherals {
         let props = p.properties().await.ok().flatten();
-        let name = props.and_then(|p| p.local_name.clone());
-        let descriptor = DeviceDescriptor {
-            product_name: name.clone().unwrap_or_default(),
-            ..Default::default()
-        };
+        let name = props.and_then(|p| p.local_name);
         out.push(BleDeviceInfo {
             id: p.id().to_string(),
             name,
-            descriptor,
         });
     }
     Ok(out)
@@ -102,7 +90,7 @@ async fn read_dis_descriptor(
 }
 
 #[tauri::command]
-pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Result<BleConnectResponse, String> {
+pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Result<ConnectResponse, String> {
     let adapter = get_adapter().await?;
     let peripherals = adapter.peripherals().await.map_err(|e| e.to_string())?;
     let peripheral = peripherals.into_iter()
@@ -162,5 +150,5 @@ pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Resu
     });
 
     let session = insert_session(&sessions, cmd_tx, data_rx).await;
-    Ok(BleConnectResponse { session, descriptor })
+    Ok(ConnectResponse { session, descriptor })
 }

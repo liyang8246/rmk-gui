@@ -1,13 +1,12 @@
 use serde::Serialize;
 use tauri::State;
 
-use super::{DeviceDescriptor, Sessions, spawn_tokio_io};
+use super::{ConnectResponse, DeviceDescriptor, Sessions, spawn_tokio_io};
 
 #[derive(Serialize)]
 pub struct SerialDeviceInfo {
     pub path: String,
     pub name: Option<String>,
-    pub descriptor: DeviceDescriptor,
 }
 
 const RYNK_SERIAL_MAGIC: &str = "rynk:";
@@ -28,29 +27,33 @@ pub async fn rynk_discover_serial() -> Result<Vec<SerialDeviceInfo>, String> {
         None => true,
     });
     Ok(ports.into_iter().map(|p| {
-        let (name, descriptor) = match p.port_type {
-            SerialPortType::UsbPort(info) => (
-                info.product.clone(),
-                DeviceDescriptor {
-                    vendor_id: info.vid,
-                    product_id: info.pid,
-                    manufacturer: info.manufacturer.unwrap_or_default(),
-                    product_name: info.product.unwrap_or_default(),
-                    serial_number: info.serial_number.unwrap_or_default(),
-                },
-            ),
-            _ => (None, DeviceDescriptor::default()),
-        };
-        SerialDeviceInfo { path: p.port_name, name, descriptor }
+        let name = match p.port_type { SerialPortType::UsbPort(info) => info.product, _ => None };
+        SerialDeviceInfo { path: p.port_name, name }
     }).collect())
 }
 
 #[tauri::command]
-pub async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Result<String, String> {
-    use tokio_serial::{ClearBuffer, SerialPort, SerialPortBuilderExt};
+pub async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Result<ConnectResponse, String> {
+    use tokio_serial::{ClearBuffer, SerialPort, SerialPortBuilderExt, SerialPortType, available_ports};
     let stream = tokio_serial::new(&path, 115_200).open_native_async().map_err(|e| e.to_string())?;
     let _ = stream.clear(ClearBuffer::Input);
     let (read, write) = tokio::io::split(stream);
-    let id = spawn_tokio_io(sessions, read, write).await;
-    Ok(id)
+    let session = spawn_tokio_io(sessions, read, write).await;
+
+    // Re-query the port's USB descriptor for identity (vid/pid/manufacturer/serial).
+    let descriptor = available_ports().map_err(|e| e.to_string())?
+        .into_iter().find(|p| p.port_name == path)
+        .and_then(|p| match p.port_type {
+            SerialPortType::UsbPort(info) => Some(DeviceDescriptor {
+                vendor_id: info.vid,
+                product_id: info.pid,
+                manufacturer: info.manufacturer.unwrap_or_default(),
+                product_name: info.product.unwrap_or_default(),
+                serial_number: info.serial_number.unwrap_or_default(),
+            }),
+            _ => None,
+        })
+        .unwrap_or_default();
+
+    Ok(ConnectResponse { session, descriptor })
 }

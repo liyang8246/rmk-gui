@@ -1,6 +1,7 @@
 import type {
   BehaviorConfig,
   Combo,
+  ConnectedDevice,
   DeviceCapabilities,
   DeviceDescriptor,
   DeviceInfo,
@@ -11,7 +12,6 @@ import type {
   MacroData,
   Morse,
   RynkClient,
-  TransportInfo,
 } from '../../rynk'
 import type { KeyboardError } from './errors'
 import type { KeyboardConfig, KeyboardDevice } from './types'
@@ -22,8 +22,8 @@ import { toKeyboardError } from './errors'
 import { session, setStore, store } from './store'
 import { runMutation } from './utils'
 
-export function initStore(transport: TransportInfo): ResultAsync<void, KeyboardError> {
-  return ResultAsync.fromThrowable(() => doInit(transport), toKeyboardError)()
+export function initStore(connected: ConnectedDevice): ResultAsync<void, KeyboardError> {
+  return ResultAsync.fromThrowable(() => doInit(connected), toKeyboardError)()
 }
 
 export function resetStore(): void {
@@ -38,12 +38,11 @@ export function resetStore(): void {
   session.chain = Promise.resolve()
 }
 
-async function doInit(transport: TransportInfo): Promise<void> {
+async function doInit(connected: ConnectedDevice): Promise<void> {
   try {
-    setStore('connection', { phase: 'connecting', label: transport.label })
+    setStore('connection', { phase: 'connecting', label: connected.label })
 
-    const { link, descriptor } = await transport.connect()
-    const { client } = await connectClient(link, transport.label)
+    const { client } = await connectClient(connected.link, connected.label)
     session.client = client
 
     // Device metadata (serial)
@@ -73,12 +72,12 @@ async function doInit(transport: TransportInfo): Promise<void> {
     }
     const device: KeyboardDevice = {
       capabilities,
-      info: descriptorToDeviceInfo(descriptor),
+      info: descriptorToDeviceInfo(connected.descriptor),
       version,
       layout,
     }
     setStore({
-      connection: { phase: 'connected', label: transport.label },
+      connection: { phase: 'connected', label: connected.label },
       device,
       config,
       status: null,

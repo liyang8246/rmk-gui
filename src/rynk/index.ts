@@ -16,12 +16,12 @@ export interface DeviceDescriptor {
 export interface ConnectedDevice {
   link: ByteLink
   descriptor: DeviceDescriptor
+  label: string
 }
 
 export interface TransportInfo {
   kind: 'serial' | 'ble' | 'tcp'
   label: string
-  descriptor: DeviceDescriptor
   connect: () => Promise<ConnectedDevice>
 }
 
@@ -33,9 +33,18 @@ export async function discover(): Promise<TransportInfo[]> {
     discoverTcp().catch(() => []),
   ])
   return [
-    ...serials.map(s => ({ kind: 'serial' as const, label: s.name ?? s.path, descriptor: s.descriptor, connect: () => connectSerial(s.path, s.descriptor) })),
-    ...bles.map(b => ({ kind: 'ble' as const, label: b.name ?? b.id, descriptor: b.descriptor, connect: () => connectBle(b.id) })),
-    ...tcps.map(t => ({ kind: 'tcp' as const, label: t.name, descriptor: t.descriptor, connect: () => connectTcp(t.addr) })),
+    ...serials.map((s) => {
+      const label = s.name ?? s.path
+      return { kind: 'serial' as const, label, connect: () => connectSerial(s.path, label) }
+    }),
+    ...bles.map((b) => {
+      const label = b.name ?? b.id
+      return { kind: 'ble' as const, label, connect: () => connectBle(b.id, label) }
+    }),
+    ...tcps.map((t) => {
+      const label = t.name
+      return { kind: 'tcp' as const, label, connect: () => connectTcp(t.addr, label) }
+    }),
   ]
 }
 

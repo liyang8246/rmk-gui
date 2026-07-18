@@ -20,10 +20,11 @@ export class TauriByteLink {
 }
 
 // Discovery + connect API.
-interface SerialDeviceInfo { path: string, name: string | null, descriptor: DeviceDescriptor }
-interface BleDeviceInfo { id: string, name: string | null, descriptor: DeviceDescriptor }
-interface TcpDeviceInfo { addr: string, name: string, descriptor: DeviceDescriptor }
-interface BleConnectResponse { session: string, descriptor: DeviceDescriptor }
+interface SerialDeviceInfo { path: string, name: string | null }
+interface BleDeviceInfo { id: string, name: string | null }
+interface TcpDeviceInfo { addr: string, name: string }
+
+interface ConnectResponse { session: string, descriptor: DeviceDescriptor }
 
 export async function discoverSerial(): Promise<SerialDeviceInfo[]> {
   return invoke<SerialDeviceInfo[]>('rynk_discover_serial')
@@ -37,17 +38,17 @@ export async function discoverTcp(): Promise<TcpDeviceInfo[]> {
   return invoke<TcpDeviceInfo[]>('rynk_discover_tcp')
 }
 
-export async function connectSerial(path: string, descriptor: DeviceDescriptor): Promise<ConnectedDevice> {
-  const session = await invoke<string>('rynk_connect_serial', { path })
-  return { link: new TauriByteLink(session), descriptor }
+export async function connectSerial(path: string, label: string): Promise<ConnectedDevice> {
+  const res = await invoke<ConnectResponse>('rynk_connect_serial', { path })
+  return { link: new TauriByteLink(res.session), descriptor: res.descriptor, label }
 }
 
-export async function connectBle(id: string): Promise<ConnectedDevice> {
-  const result = await invoke<BleConnectResponse>('rynk_connect_ble', { id })
-  return { link: new TauriByteLink(result.session), descriptor: result.descriptor }
+export async function connectBle(id: string, label: string): Promise<ConnectedDevice> {
+  const res = await invoke<ConnectResponse>('rynk_connect_ble', { id })
+  return { link: new TauriByteLink(res.session), descriptor: res.descriptor, label }
 }
 
-export async function connectTcp(addr: string): Promise<ConnectedDevice> {
-  const session = await invoke<string>('rynk_connect_tcp', { addr })
-  return { link: new TauriByteLink(session), descriptor: { vendor_id: 0, product_id: 0, manufacturer: '', product_name: '', serial_number: '' } }
+export async function connectTcp(addr: string, label: string): Promise<ConnectedDevice> {
+  const res = await invoke<ConnectResponse>('rynk_connect_tcp', { addr })
+  return { link: new TauriByteLink(res.session), descriptor: res.descriptor, label }
 }
