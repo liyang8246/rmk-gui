@@ -1,6 +1,6 @@
 export {
-  initShadow,
-  resetShadow,
+  initStore as initKbdStore,
+  resetStore as resetKbdStore,
   setBehavior,
   setCombo,
   setDefaultLayer,
@@ -17,9 +17,7 @@ export type {
   KeyboardError,
 } from './errors'
 export {
-  clientState,
-  setStore,
-  store,
+  store as kbdStore,
 } from './store'
 export type {
   ConnectionPhase,

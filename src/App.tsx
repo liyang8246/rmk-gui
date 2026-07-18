@@ -1,5 +1,5 @@
 import { discover } from './rynk'
-import { store } from './store'
+import { kbdStore } from './store'
 
 async function testConnect() {
   const devices = await discover()
@@ -16,7 +16,7 @@ function App() {
   return (
     <div class="flex h-screen w-screen flex-col items-center gap-4 p-8">
       <button onClick={() => testConnect()}>Connect</button>
-      <button onClick={() => console.warn('store:', store)}>Show Store</button>
+      <button onClick={() => console.warn('store:', kbdStore)}>Show Store</button>
     </div>
   )
 }

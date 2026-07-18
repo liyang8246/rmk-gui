@@ -1,90 +1,150 @@
-import type { Result } from 'neverthrow'
 import type {
   BehaviorConfig,
   Combo,
+  DeviceCapabilities,
+  DeviceInfo,
   EncoderAction,
+  FirmwareVersion,
   Fork,
+  JsByteLink,
   KeyAction,
   MacroData,
   Morse,
   RynkClient,
 } from '../../rynk/core'
 import type { KeyboardError } from './errors'
-import type { KeyboardConfig } from './types'
-import { err, ResultAsync } from 'neverthrow'
+import type { KeyboardConfig, KeyboardDevice } from './types'
+import { ResultAsync } from 'neverthrow'
 import { produce } from 'solid-js/store'
+import { connectClient } from '../../rynk/core'
 import { toKeyboardError } from './errors'
-import { clientState, setStore, store } from './store'
+import { session, setStore, store } from './store'
+import { runMutation } from './utils'
 
-let syncChain: Promise<void> = Promise.resolve()
-let shadow: KeyboardConfig | null = null
-
-export function initShadow(config: KeyboardConfig): void {
-  shadow = structuredClone(config)
+export function initStore(link: JsByteLink, label?: string): ResultAsync<void, KeyboardError> {
+  return ResultAsync.fromThrowable(() => doInit(link, label), toKeyboardError)()
 }
 
-export function resetShadow(): void {
-  shadow = null
-  syncChain = Promise.resolve()
+export function resetStore(): void {
+  setStore({
+    connection: null,
+    device: null,
+    config: null,
+    status: null,
+  })
+  session.client = null
+  session.shadow = null
+  session.chain = Promise.resolve()
 }
 
-// ── Enqueue: chain continues regardless of individual failure (swallow) ──
-//
-// Each call returns its own `ResultAsync` whose outcome reflects only this
-// call. The internal `syncChain` swallows individual failures so one Err does
-// not short-circuit subsequent calls — interactive editing stays responsive
-// even when a single write fails.
+async function doInit(link: JsByteLink, label?: string): Promise<void> {
+  try {
+    setStore('connection', { phase: 'connecting', label: label ?? '' })
 
-function enqueue<T>(fn: () => ResultAsync<T, KeyboardError>): ResultAsync<T, KeyboardError> {
-  const result: Promise<Result<T, KeyboardError>> = syncChain
-    .then(() => fn())
-    .then(
-      (r: Result<T, KeyboardError>) => r,
-      (e: unknown) => err<T, KeyboardError>(toKeyboardError(e)),
-    )
-  syncChain = result.then(
-    () => {},
-    () => {},
-  )
-  return new ResultAsync(result)
+    const { client, major, minor } = await connectClient(link, label)
+    session.client = client
+
+    // Device metadata (serial)
+    const version = await client.get_version()
+    const capabilities = await client.get_capabilities()
+    const layout = await client.get_layout()
+
+    // Config (serial)
+    const behavior = await client.get_behavior()
+    const defaultLayer = await client.get_default_layer()
+    const keymap = await fetchKeymap(client, capabilities)
+    const encoders = await fetchEncoders(client, capabilities)
+    const combos = (await client.get_combo_bulk(0)).configs
+    const morses = (await client.get_morse_bulk(0)).configs
+    const forks = await fetchForks(client, capabilities)
+    const macros = await fetchMacros(client, capabilities)
+
+    const config: KeyboardConfig = {
+      behavior,
+      combos,
+      defaultLayer,
+      encoders,
+      forks,
+      keymap,
+      macros,
+      morses,
+    }
+    const device: KeyboardDevice = {
+      capabilities,
+      info: hardcodedDeviceInfo(major, minor),
+      version,
+      layout,
+    }
+    setStore({
+      connection: { phase: 'connected', label: label ?? '' },
+      device,
+      config,
+      status: null,
+    })
+    session.shadow = structuredClone(config)
+    session.chain = Promise.resolve()
+  } catch (e) {
+    resetStore()
+    throw e
+  }
 }
 
-// ── Guard ──
-//
-// Precondition: throws `'not connected'` synchronously when client/shadow are
-// not ready. This is a programmer error (calling a setter before init), so it
-// stays a real throw per neverthrow's "expected vs unexpected" dividing line
-// rather than being encoded as a `KeyboardError`.
-
-function getClient(): RynkClient {
-  const c = clientState.value
-  if (!c || !shadow) throw new Error('not connected')
-  return c
+async function fetchKeymap(client: RynkClient, caps: DeviceCapabilities): Promise<KeyAction[][][]> {
+  const keymap: KeyAction[][][] = []
+  for (let layer = 0; layer < caps.num_layers; layer++) {
+    const { actions } = await client.get_keymap_bulk(layer, 0, 0)
+    const rows: KeyAction[][] = []
+    for (let r = 0; r < caps.num_rows; r++) {
+      const row: KeyAction[] = []
+      for (let c = 0; c < caps.num_cols; c++) {
+        row.push(actions[r * caps.num_cols + c])
+      }
+      rows.push(row)
+    }
+    keymap.push(rows)
+  }
+  return keymap
 }
 
-// ── Mutation skeleton ──
-//
-// Optimistic-update flow shared by every setter:
-//   1. push — flip the store to the new value (UI reflects immediately)
-//   2. call — invoke the client method on the device (serialized via enqueue)
-//   3. sync — on Ok, mirror the change into the shadow (device-true state)
-//   4. undo — on Err, restore the store to its pre-mutation snapshot
-//
-// `push` and `getClient` run synchronously at the call site, so a
-// 'not connected' precondition throw escapes to the caller as a real throw.
-
-interface Mutation {
-  push: () => void
-  call: (client: RynkClient) => Promise<void>
-  sync: () => void
-  undo: () => void
+async function fetchEncoders(client: RynkClient, caps: DeviceCapabilities): Promise<EncoderAction[][]> {
+  const encoders: EncoderAction[][] = []
+  for (let e = 0; e < caps.num_encoders; e++) {
+    const layers: EncoderAction[] = []
+    for (let l = 0; l < caps.num_layers; l++) {
+      layers.push(await client.get_encoder(e, l))
+    }
+    encoders.push(layers)
+  }
+  return encoders
 }
 
-function runMutation(m: Mutation): ResultAsync<void, KeyboardError> {
-  m.push()
-  const client = getClient()
-  const wrapped = ResultAsync.fromThrowable(() => m.call(client), toKeyboardError)
-  return enqueue(() => wrapped().andTee(m.sync).orTee(m.undo))
+async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise<Fork[]> {
+  const forks: Fork[] = []
+  for (let i = 0; i < caps.max_forks; i++) {
+    forks.push(await client.get_fork(i))
+  }
+  return forks
+}
+
+async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promise<number[]> {
+  if (caps.macro_space_size === 0) return []
+  // TODO: verify get_macro(offset) chunking — may return less than macro_space_size per call.
+  const { data } = await client.get_macro(0)
+  return data
+}
+
+function hardcodedDeviceInfo(major: number, minor: number): DeviceInfo {
+  // TODO: wasm has no get_device_info(). vendor_id/product_id/manufacturer/
+  // product_name/serial_number must come from the link layer (Tauri HID/BLE).
+  const rmk_version: FirmwareVersion = { major, minor, patch: 0 }
+  return {
+    rmk_version,
+    vendor_id: 0,
+    product_id: 0,
+    manufacturer: '',
+    product_name: '',
+    serial_number: '',
+  }
 }
 
 export function setKey(
@@ -97,7 +157,7 @@ export function setKey(
   return runMutation({
     push: () => setStore('config', 'keymap', layer, row, col, action),
     call: client => client.set_key(layer, row, col, action),
-    sync: () => { shadow!.keymap[layer][row][col] = action },
+    sync: () => { session.shadow!.keymap[layer][row][col] = action },
     undo: () => { if (store.config) setStore('config', 'keymap', layer, row, col, snapshot) },
   })
 }
@@ -111,7 +171,7 @@ export function setEncoder(
   return runMutation({
     push: () => setStore('config', 'encoders', encoderId, layer, action),
     call: client => client.set_encoder(encoderId, layer, action),
-    sync: () => { shadow!.encoders[encoderId][layer] = action },
+    sync: () => { session.shadow!.encoders[encoderId][layer] = action },
     undo: () => { if (store.config) setStore('config', 'encoders', encoderId, layer, snapshot) },
   })
 }
@@ -121,7 +181,7 @@ export function setCombo(index: number, config: Combo): ResultAsync<void, Keyboa
   return runMutation({
     push: () => setStore('config', 'combos', index, config),
     call: client => client.set_combo(index, config),
-    sync: () => { shadow!.combos[index] = config },
+    sync: () => { session.shadow!.combos[index] = config },
     undo: () => { if (store.config) setStore('config', 'combos', index, snapshot) },
   })
 }
@@ -131,7 +191,7 @@ export function setMorse(index: number, config: Morse): ResultAsync<void, Keyboa
   return runMutation({
     push: () => setStore('config', 'morses', index, config),
     call: client => client.set_morse(index, config),
-    sync: () => { shadow!.morses[index] = config },
+    sync: () => { session.shadow!.morses[index] = config },
     undo: () => { if (store.config) setStore('config', 'morses', index, snapshot) },
   })
 }
@@ -141,7 +201,7 @@ export function setFork(index: number, config: Fork): ResultAsync<void, Keyboard
   return runMutation({
     push: () => setStore('config', 'forks', index, config),
     call: client => client.set_fork(index, config),
-    sync: () => { shadow!.forks[index] = config },
+    sync: () => { session.shadow!.forks[index] = config },
     undo: () => { if (store.config) setStore('config', 'forks', index, snapshot) },
   })
 }
@@ -156,7 +216,7 @@ export function setMacro(offset: number, data: MacroData): ResultAsync<void, Key
       })
     })),
     call: client => client.set_macro(offset, data),
-    sync: () => bytes.forEach((b, i) => { shadow!.macros[offset + i] = b }),
+    sync: () => bytes.forEach((b, i) => { session.shadow!.macros[offset + i] = b }),
     undo: () => {
       if (!store.config) return
       setStore('config', 'macros', produce((draft) => {
@@ -173,7 +233,7 @@ export function setBehavior(config: BehaviorConfig): ResultAsync<void, KeyboardE
   return runMutation({
     push: () => setStore('config', 'behavior', config),
     call: client => client.set_behavior(config),
-    sync: () => { shadow!.behavior = config },
+    sync: () => { session.shadow!.behavior = config },
     undo: () => { if (store.config) setStore('config', 'behavior', snapshot) },
   })
 }
@@ -183,7 +243,7 @@ export function setDefaultLayer(layer: number): ResultAsync<void, KeyboardError>
   return runMutation({
     push: () => setStore('config', 'defaultLayer', layer),
     call: client => client.set_default_layer(layer),
-    sync: () => { shadow!.defaultLayer = layer },
+    sync: () => { session.shadow!.defaultLayer = layer },
     undo: () => { if (store.config) setStore('config', 'defaultLayer', snapshot) },
   })
 }

@@ -1,7 +1,7 @@
 export {
-  clientState,
-  initShadow,
-  resetShadow,
+  initKbdStore,
+  kbdStore,
+  resetKbdStore,
   setBehavior,
   setCombo,
   setDefaultLayer,
@@ -10,8 +10,6 @@ export {
   setKey,
   setMacro,
   setMorse,
-  setStore,
-  store,
 } from './keyboard'
 export type {
   ConnectionPhase,
