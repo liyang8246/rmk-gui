@@ -11,12 +11,12 @@ import type {
   MacroData,
   Morse,
   RynkClient,
-} from '../../rynk/core'
+} from '../../rynk'
 import type { KeyboardError } from './errors'
 import type { KeyboardConfig, KeyboardDevice } from './types'
 import { ResultAsync } from 'neverthrow'
 import { produce } from 'solid-js/store'
-import { connectClient } from '../../rynk/core'
+import { connectClient } from '../../rynk'
 import { toKeyboardError } from './errors'
 import { session, setStore, store } from './store'
 import { runMutation } from './utils'

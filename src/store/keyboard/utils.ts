@@ -1,12 +1,11 @@
 import type { Result } from 'neverthrow'
-import type { RynkClient } from '../../rynk/core'
+import type { RynkClient } from '../../rynk'
 import type { KeyboardError } from './errors'
 import { err, ResultAsync } from 'neverthrow'
 import { toKeyboardError } from './errors'
 import { session } from './store'
 
 // Swallows individual failures so one Err does not short-circuit subsequent calls.
-
 export function enqueue<T>(
   fn: () => ResultAsync<T, KeyboardError>,
 ): ResultAsync<T, KeyboardError> {
@@ -24,7 +23,6 @@ export function enqueue<T>(
 }
 
 // Throws `'not connected'` as a precondition (programmer error, not a KeyboardError).
-
 export function getClient(): RynkClient {
   const c = session.client
   if (!c || !session.shadow) throw new Error('not connected')
@@ -32,7 +30,6 @@ export function getClient(): RynkClient {
 }
 
 // Optimistic update: push → call → sync (Ok) / undo (Err).
-
 export interface Mutation {
   push: () => void
   call: (client: RynkClient) => Promise<void>

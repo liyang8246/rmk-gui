@@ -1,4 +1,4 @@
-import type { RynkClient } from '../../rynk/core'
+import type { RynkClient } from '../../rynk'
 import type { KeyboardConfig, KeyboardStore } from './types'
 import { createStore } from 'solid-js/store'
 

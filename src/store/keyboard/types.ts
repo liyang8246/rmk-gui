@@ -15,7 +15,7 @@ import type {
   Morse,
   PeripheralStatus,
   ProtocolVersion,
-} from '../../rynk/core'
+} from '../../rynk'
 
 export type ConnectionPhase = 'connecting' | 'connected' | 'error'
 

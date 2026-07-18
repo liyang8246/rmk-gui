@@ -1,4 +1,4 @@
-import type { RynkError } from '../../rynk/core'
+import type { RynkError } from '../../rynk'
 
 export type KeyboardError
   = | { type: 'rynk', code: RynkError }
