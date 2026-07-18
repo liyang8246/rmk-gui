@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/neverthrow/SKILL.md",
       "computedHash": "18668704cdd47f10d82582189b02e1f537d55863e3dc85af75281424d70ac4f3"
+    },
+    "solidjs": {
+      "source": "liyang8246/skills",
+      "sourceType": "github",
+      "skillPath": "skills/solidjs/SKILL.md",
+      "computedHash": "065c7bbbded8c71d9eed277463e709d881c668a97e67bf517e4188f86ff1b0ef"
     }
   }
 }
