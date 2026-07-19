@@ -86,9 +86,49 @@ const DEFAULT_ENCODER_MAP: [[EncoderAction; NUM_ENCODER]; NUM_LAYER] = [
     [EncoderAction::new(k!(AudioVolUp), k!(AudioVolDown))],
 ];
 
+// No real input sources on QEMU — synthesize topic events so the host's
+// next_topic() loop has something to receive. embassy-time uses mock-driver
+// here (no real timer), so we throttle with yield_now instead of Timer.
+#[embassy_executor::task]
+async fn test_topics() {
+    use rmk::event::{
+        ConnectionStatusChangeEvent, LayerChangeEvent, LedIndicatorEvent, SleepStateEvent, WpmUpdateEvent,
+        publish_event,
+    };
+    use rmk::types::connection::{ConnectionStatus, UsbState};
+    use rmk::types::led_indicator::LedIndicator;
+
+    // Let run_rynk_uart enter run_session and create its topic subscribers.
+    for _ in 0..2000 { yield_now().await }
+
+    let mut wpm: u16 = 0;
+    let mut sleeping = false;
+    let mut led = LedIndicator::new();
+    loop {
+        for &layer in &[0u8, 1] {
+            publish_event(LayerChangeEvent::new(layer));
+            for _ in 0..500 { yield_now().await }
+        }
+        wpm = wpm.wrapping_add(7);
+        publish_event(WpmUpdateEvent::new(wpm));
+        led = led.with_num_lock(!led.num_lock());
+        publish_event(LedIndicatorEvent::new(led));
+        sleeping = !sleeping;
+        publish_event(SleepStateEvent::new(sleeping));
+        publish_event(ConnectionStatusChangeEvent(ConnectionStatus {
+            usb: if sleeping { UsbState::Suspended } else { UsbState::Configured },
+            ..ConnectionStatus::default()
+        }));
+        println!("[topic] wpm {} sleep {}", wpm, sleeping);
+        for _ in 0..10000 { yield_now().await }
+    }
+}
+
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
+async fn main(spawner: Spawner) {
     println!("[RMK] starting");
+
+    spawner.spawn(test_topics().unwrap());
 
     let rx = Uart::new();
     let tx = Uart::new();
