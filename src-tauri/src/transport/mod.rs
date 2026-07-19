@@ -11,8 +11,6 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, Mutex, oneshot};
 use uuid::Uuid;
 
-// ── Device descriptor (shared across transports) ──────────────────────────────
-
 #[derive(Serialize, Clone, Default)]
 pub struct DeviceDescriptor {
     pub vendor_id: u16,
@@ -27,8 +25,6 @@ pub struct ConnectResponse {
     pub session: String,
     pub descriptor: DeviceDescriptor,
 }
-
-// ── Session model ───────────────────────────────────────────────────────────────
 
 pub enum SessionCmd {
     Send(Vec<u8>, oneshot::Sender<()>),
@@ -48,8 +44,6 @@ pub async fn insert_session(sessions: &State<'_, Sessions>, cmd_tx: mpsc::Sender
     id
 }
 
-/// Spawn a reader/writer task for tokio AsyncRead+AsyncWrite halves (serial/TCP).
-/// Returns the session id.
 pub async fn spawn_tokio_io<R, W>(sessions: State<'_, Sessions>, read: R, write: W) -> String
 where
     R: tokio::io::AsyncRead + Unpin + Send + 'static,
@@ -77,8 +71,6 @@ where
     });
     insert_session(&sessions, cmd_tx, data_rx).await
 }
-
-// ── Byte pipe ──────────────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub async fn rynk_send(session: String, data: Vec<u8>, sessions: State<'_, Sessions>) -> Result<(), String> {

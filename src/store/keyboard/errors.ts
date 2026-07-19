@@ -18,9 +18,6 @@ const RYNK_ERROR_CODES: readonly RynkError[] = [
 
 const RYNK_ERROR_SET: ReadonlySet<string> = new Set(RYNK_ERROR_CODES)
 
-// RynkError literal -> rynk
-// link closed -> transport
-// else unknown
 export function toKeyboardError(e: unknown): KeyboardError {
   if (e instanceof Error) {
     if (RYNK_ERROR_SET.has(e.message)) {

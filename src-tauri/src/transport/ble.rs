@@ -23,7 +23,6 @@ const RYNK_OUTPUT_CHAR_UUID: Uuid = Uuid::from_u128(0x19802524_6f90_4346_93c2_63
 const BLE_SAFE_WRITE: usize = 20;
 const RYNK_BLE_CHUNK_SIZE: usize = 244;
 
-// GATT Device Information Service characteristics (standard BLE UUIDs).
 const DIS_PNP_ID_UUID: Uuid = Uuid::from_u128(0x00002a50_0000_1000_8000_00805f9b34fb);
 const DIS_SERIAL_UUID: Uuid = Uuid::from_u128(0x00002a25_0000_1000_8000_00805f9b34fb);
 const DIS_MANUFACTURER_UUID: Uuid = Uuid::from_u128(0x00002a29_0000_1000_8000_00805f9b34fb);
@@ -33,8 +32,6 @@ async fn get_adapter() -> Result<Adapter, String> {
     manager.adapters().await.map_err(|e| e.to_string())?
         .into_iter().next().ok_or("no BLE adapter".into())
 }
-
-// ── Discovery ──────────────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub async fn rynk_discover_ble() -> Result<Vec<BleDeviceInfo>, String> {
@@ -56,8 +53,6 @@ pub async fn rynk_discover_ble() -> Result<Vec<BleDeviceInfo>, String> {
     Ok(out)
 }
 
-// ── Connect ────────────────────────────────────────────────────────────────────
-
 async fn read_dis_descriptor(
     peripheral: &btleplug::platform::Peripheral,
     product_name: String,
@@ -74,13 +69,11 @@ async fn read_dis_descriptor(
             }
         }
     }
-    // Serial Number (0x2A25)
     if let Some(c) = chars.iter().find(|c| c.uuid == DIS_SERIAL_UUID) {
         if let Ok(data) = peripheral.read(c).await {
             desc.serial_number = String::from_utf8_lossy(&data).into_owned();
         }
     }
-    // Manufacturer Name (0x2A29)
     if let Some(c) = chars.iter().find(|c| c.uuid == DIS_MANUFACTURER_UUID) {
         if let Ok(data) = peripheral.read(c).await {
             desc.manufacturer = String::from_utf8_lossy(&data).into_owned();
@@ -100,7 +93,6 @@ pub async fn rynk_connect_ble(id: String, sessions: State<'_, Sessions>) -> Resu
     peripheral.connect().await.map_err(|e| e.to_string())?;
     peripheral.discover_services().await.map_err(|e| e.to_string())?;
 
-    // Read GATT Device Information Service for vid/pid/manufacturer/serial.
     let product_name = peripheral.properties().await.ok().flatten()
         .and_then(|p| p.local_name).unwrap_or_default();
     let descriptor = read_dis_descriptor(&peripheral, product_name).await;

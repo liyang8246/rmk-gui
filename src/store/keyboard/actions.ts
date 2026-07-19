@@ -45,12 +45,9 @@ async function doInit(connected: ConnectedDevice): Promise<void> {
     const { client } = await connectClient(connected.link, connected.label)
     session.client = client
 
-    // Device metadata (serial)
     const version = await client.get_version()
     const capabilities = await client.get_capabilities()
     const layout = await client.get_layout()
-
-    // Config (serial)
     const behavior = await client.get_behavior()
     const defaultLayer = await client.get_default_layer()
     const keymap = await fetchKeymap(client, capabilities)

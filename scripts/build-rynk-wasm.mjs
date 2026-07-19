@@ -1,13 +1,3 @@
-// Build rynk-wasm from source and copy artifacts into src/rynk/wasm/.
-//
-// Usage:
-//   node scripts/build-rynk-wasm.mjs           — build + copy
-//   node scripts/build-rynk-wasm.mjs --fetch    — git-pull rmk first
-//
-// Prerequisites:
-//   rustup target add wasm32-unknown-unknown
-//   cargo install wasm-pack
-
 import { execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -47,7 +37,6 @@ function getCommit() {
 
 function buildWasm() {
   console.log('[2/3] Building rynk-wasm…')
-  // Clean pkg dir so stale artifacts don't survive.
   if (existsSync(pkgDir)) rmSync(pkgDir, { recursive: true, force: true })
   run('wasm-pack build --target web --release', { cwd: rynkWasmDir })
 }
@@ -56,16 +45,13 @@ function copyArtifacts() {
   console.log('[3/3] Copying artifacts…')
   mkdirSync(outDir, { recursive: true })
 
-  // Remove old artifacts (but keep the directory).
   for (const f of ['rynk_wasm.js', 'rynk_wasm.d.ts', 'rynk_wasm_bg.wasm'])
     rmSync(join(outDir, f), { force: true })
 
-  // Copy the three files Vite needs.
   cpSync(join(pkgDir, 'rynk_wasm.js'), join(outDir, 'rynk_wasm.js'))
   cpSync(join(pkgDir, 'rynk_wasm.d.ts'), join(outDir, 'rynk_wasm.d.ts'))
   cpSync(join(pkgDir, 'rynk_wasm_bg.wasm'), join(outDir, 'rynk_wasm_bg.wasm'))
 
-  // Write a version manifest so the build is traceable.
   const manifest = {
     commit: getCommit(),
     branch: RYNK_BRANCH,

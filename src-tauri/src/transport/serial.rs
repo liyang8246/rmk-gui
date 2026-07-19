@@ -40,7 +40,6 @@ pub async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) ->
     let (read, write) = tokio::io::split(stream);
     let session = spawn_tokio_io(sessions, read, write).await;
 
-    // Re-query the port's USB descriptor for identity (vid/pid/manufacturer/serial).
     let descriptor = available_ports().map_err(|e| e.to_string())?
         .into_iter().find(|p| p.port_name == path)
         .and_then(|p| match p.port_type {

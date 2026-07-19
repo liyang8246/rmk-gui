@@ -1,7 +1,6 @@
 import type { ConnectedDevice, DeviceDescriptor } from './index'
 import { invoke } from '@tauri-apps/api/core'
 
-// JsByteLink bridge to native rynk transport (serial / BLE / TCP).
 export class TauriByteLink {
   constructor(private sessionId: string) {}
 
@@ -19,7 +18,6 @@ export class TauriByteLink {
   }
 }
 
-// Discovery + connect API.
 interface SerialDeviceInfo { path: string, name: string | null }
 interface BleDeviceInfo { id: string, name: string | null }
 interface TcpDeviceInfo { addr: string, name: string }

@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Comment Policy
+
+No verbose/long comments, no ornate dividers (`──`, box-drawing, ASCII art), no restating what code already shows. One-line comments only, and only for a non-obvious *why* (invariant, platform quirk, wire layout, cross-file sync, real TODO). When in doubt, delete it.
+
 ## Cloned Dependency Source
 
 Read-only dependency source repositories are available under

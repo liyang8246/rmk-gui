@@ -3,14 +3,11 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
 
-// Tauri environment variables
 const host = process.env.TAURI_DEV_HOST
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [tailwindcss(), solid()],
 
-  // Vite options tailored for Tauri development
   clearScreen: false,
   server: {
     port: 1420,
@@ -24,17 +21,13 @@ export default defineConfig({
         }
       : undefined,
     watch: {
-      // Tell vite to ignore watching src-tauri
       ignored: ['**/src-tauri/**'],
     },
   },
   envPrefix: ['VITE_', 'TAURI_'],
   build: {
-    // Tauri supports es2021
     target: 'esnext',
-    // Don't minify for debug builds
     minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
-    // Produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
   },
 })

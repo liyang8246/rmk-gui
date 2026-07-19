@@ -82,10 +82,7 @@ export async function connectWebSerial(): Promise<ConnectedDevice> {
   return { link: new WebByteLink(port), descriptor: serialDescriptor(port), label: 'WebSerial' }
 }
 
-// TODO: WebHID support — BLE keyboards reach RynkHidService via WebHID
-// (usagePage 0xFF60, usage 0x61), not Web Bluetooth. connectWebHid() will
-// requestDevice, open, and wrap an HID-report-based byte link. The upstream
-// rynk-wasm/index.html `hidLink()` has the reference implementation.
+// TODO: WebHID support — see rynk-wasm/index.html hidLink() for reference.
 export async function connectWebHid(): Promise<ConnectedDevice> {
   throw new Error('WebHID not yet implemented')
 }
