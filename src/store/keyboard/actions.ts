@@ -8,12 +8,14 @@ import type {
   KeyAction,
   MacroData,
   Morse,
+  PeripheralStatus,
   RynkClient,
 } from '../../rynk'
 import type { KeyboardError } from './errors'
-import type { KeyboardConfig, KeyboardDevice } from './types'
+import type { KeyboardConfig, KeyboardDevice, KeyboardStatus } from './types'
 import { ResultAsync } from 'neverthrow'
 import { produce } from 'solid-js/store'
+import { match, P } from 'ts-pattern'
 import { connectClient } from '../../rynk'
 import { toKeyboardError } from './errors'
 import { session, setStore, store } from './store'
@@ -59,6 +61,7 @@ async function doInit(connected: ConnectedDevice): Promise<void> {
     const morses = (await client.get_morse_bulk(0)).configs
     const forks = await fetchForks(client, capabilities)
     const macros = await fetchMacros(client, capabilities)
+    const status = await fetchStatus(client, capabilities)
 
     const config: KeyboardConfig = {
       behavior,
@@ -80,13 +83,31 @@ async function doInit(connected: ConnectedDevice): Promise<void> {
       connection: { phase: 'connected', label: connected.label },
       device,
       config,
-      status: null,
+      status,
     })
     session.chain = Promise.resolve()
+    void startTopicLoop(client)
   } catch (e) {
     await resetStore()
     throw e
   }
+}
+
+async function startTopicLoop(client: RynkClient): Promise<void> {
+  try {
+    while (session.client === client) {
+      const event = await client.next_topic()
+      if (session.client !== client) break
+      match(event)
+        .with({ LayerChange: P.select() }, x => setStore('status', 'currentLayer', x))
+        .with({ WpmUpdate: P.select() }, x => setStore('status', 'wpm', x))
+        .with({ ConnectionChange: P.select() }, x => setStore('status', 'connectionStatus', x))
+        .with({ SleepState: P.select() }, x => setStore('status', 'sleepState', x))
+        .with({ LedIndicatorChange: P.select() }, x => setStore('status', 'ledIndicator', x))
+        .with({ BatteryStatusChange: P.select() }, x => setStore('status', 'batteryStatus', x))
+        .exhaustive()
+    }
+  } catch { } // link died
 }
 
 async function fetchKeymap(client: RynkClient, caps: DeviceCapabilities): Promise<KeyAction[][][]> {
@@ -133,6 +154,33 @@ async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promis
   // TODO: verify get_macro(offset) chunking — may return less than macro_space_size per call.
   const { data } = await client.get_macro(0)
   return data
+}
+
+// Serial awaits: protocol allows one request in flight at a time.
+async function fetchStatus(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardStatus> {
+  const batteryStatus = await client.get_battery_status()
+  const connectionStatus = await client.get_connection_status()
+  const currentLayer = await client.get_current_layer()
+  const ledIndicator = await client.get_led_indicator()
+  const lockStatus = await client.get_lock_status()
+  const matrixState = await client.get_matrix_state()
+  const sleepState = await client.get_sleep_state()
+  const wpm = await client.get_wpm()
+  const peripheralStatus: PeripheralStatus[] = []
+  for (let i = 0; i < caps.num_split_peripherals; i++) {
+    peripheralStatus.push(await client.get_peripheral_status(i))
+  }
+  return {
+    batteryStatus,
+    connectionStatus,
+    currentLayer,
+    ledIndicator,
+    lockStatus,
+    matrixState,
+    peripheralStatus,
+    sleepState,
+    wpm,
+  }
 }
 
 export function setKey(

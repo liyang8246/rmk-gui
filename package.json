@@ -22,7 +22,8 @@
     "@iconify-icon/solid": "^3.0.3",
     "@tauri-apps/api": "^2.11.1",
     "neverthrow": "^8.2.0",
-    "solid-js": "^1.9.14"
+    "solid-js": "^1.9.14",
+    "ts-pattern": "^5.9.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.1.0",
