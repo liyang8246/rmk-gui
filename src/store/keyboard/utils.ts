@@ -25,21 +25,20 @@ export function enqueue<T>(
 // Throws `'not connected'` as a precondition (programmer error, not a KeyboardError).
 export function getClient(): RynkClient {
   const c = session.client
-  if (!c || !session.shadow) throw new Error('not connected')
+  if (!c) throw new Error('not connected')
   return c
 }
 
-// Optimistic update: push → call → sync (Ok) / undo (Err).
+// Optimistic update: getClient → push → call → undo (Err).
 export interface Mutation {
   push: () => void
-  call: (client: RynkClient) => Promise<void>
-  sync: () => void
+  call: (c: RynkClient) => Promise<void>
   undo: () => void
 }
 
 export function runMutation(m: Mutation): ResultAsync<void, KeyboardError> {
-  m.push()
   const client = getClient()
+  m.push()
   const wrapped = ResultAsync.fromThrowable(() => m.call(client), toKeyboardError)
-  return enqueue(() => wrapped().andTee(m.sync).orTee(m.undo))
+  return enqueue(() => wrapped().orTee(m.undo))
 }

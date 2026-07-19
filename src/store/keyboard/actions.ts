@@ -34,7 +34,6 @@ export function resetStore(): void {
     status: null,
   })
   session.client = null
-  session.shadow = null
   session.chain = Promise.resolve()
 }
 
@@ -79,7 +78,6 @@ async function doInit(connected: ConnectedDevice): Promise<void> {
       config,
       status: null,
     })
-    session.shadow = structuredClone(config)
     session.chain = Promise.resolve()
   } catch (e) {
     resetStore()
@@ -104,6 +102,7 @@ async function fetchKeymap(client: RynkClient, caps: DeviceCapabilities): Promis
   return keymap
 }
 
+// TODO: switch to bulk fetch — num_encoders×num_layers round trips is slow on large keyboards.
 async function fetchEncoders(client: RynkClient, caps: DeviceCapabilities): Promise<EncoderAction[][]> {
   const encoders: EncoderAction[][] = []
   for (let e = 0; e < caps.num_encoders; e++) {
@@ -116,6 +115,7 @@ async function fetchEncoders(client: RynkClient, caps: DeviceCapabilities): Prom
   return encoders
 }
 
+// TODO: switch to bulk fetch — max_forks round trips is slow on large keyboards.
 async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise<Fork[]> {
   const forks: Fork[] = []
   for (let i = 0; i < caps.max_forks; i++) {
@@ -146,8 +146,7 @@ export function setKey(
   const snapshot = store.config!.keymap[layer][row][col]
   return runMutation({
     push: () => setStore('config', 'keymap', layer, row, col, action),
-    call: client => client.set_key(layer, row, col, action),
-    sync: () => { session.shadow!.keymap[layer][row][col] = action },
+    call: c => c.set_key(layer, row, col, action),
     undo: () => { if (store.config) setStore('config', 'keymap', layer, row, col, snapshot) },
   })
 }
@@ -160,8 +159,7 @@ export function setEncoder(
   const snapshot = store.config!.encoders[encoderId][layer]
   return runMutation({
     push: () => setStore('config', 'encoders', encoderId, layer, action),
-    call: client => client.set_encoder(encoderId, layer, action),
-    sync: () => { session.shadow!.encoders[encoderId][layer] = action },
+    call: c => c.set_encoder(encoderId, layer, action),
     undo: () => { if (store.config) setStore('config', 'encoders', encoderId, layer, snapshot) },
   })
 }
@@ -170,8 +168,7 @@ export function setCombo(index: number, config: Combo): ResultAsync<void, Keyboa
   const snapshot = store.config!.combos[index]
   return runMutation({
     push: () => setStore('config', 'combos', index, config),
-    call: client => client.set_combo(index, config),
-    sync: () => { session.shadow!.combos[index] = config },
+    call: c => c.set_combo(index, config),
     undo: () => { if (store.config) setStore('config', 'combos', index, snapshot) },
   })
 }
@@ -180,8 +177,7 @@ export function setMorse(index: number, config: Morse): ResultAsync<void, Keyboa
   const snapshot = store.config!.morses[index]
   return runMutation({
     push: () => setStore('config', 'morses', index, config),
-    call: client => client.set_morse(index, config),
-    sync: () => { session.shadow!.morses[index] = config },
+    call: c => c.set_morse(index, config),
     undo: () => { if (store.config) setStore('config', 'morses', index, snapshot) },
   })
 }
@@ -190,8 +186,7 @@ export function setFork(index: number, config: Fork): ResultAsync<void, Keyboard
   const snapshot = store.config!.forks[index]
   return runMutation({
     push: () => setStore('config', 'forks', index, config),
-    call: client => client.set_fork(index, config),
-    sync: () => { session.shadow!.forks[index] = config },
+    call: c => c.set_fork(index, config),
     undo: () => { if (store.config) setStore('config', 'forks', index, snapshot) },
   })
 }
@@ -205,8 +200,7 @@ export function setMacro(offset: number, data: MacroData): ResultAsync<void, Key
         draft[offset + i] = b
       })
     })),
-    call: client => client.set_macro(offset, data),
-    sync: () => bytes.forEach((b, i) => { session.shadow!.macros[offset + i] = b }),
+    call: c => c.set_macro(offset, data),
     undo: () => {
       if (!store.config) return
       setStore('config', 'macros', produce((draft) => {
@@ -222,8 +216,7 @@ export function setBehavior(config: BehaviorConfig): ResultAsync<void, KeyboardE
   const snapshot = store.config!.behavior
   return runMutation({
     push: () => setStore('config', 'behavior', config),
-    call: client => client.set_behavior(config),
-    sync: () => { session.shadow!.behavior = config },
+    call: c => c.set_behavior(config),
     undo: () => { if (store.config) setStore('config', 'behavior', snapshot) },
   })
 }
@@ -232,8 +225,7 @@ export function setDefaultLayer(layer: number): ResultAsync<void, KeyboardError>
   const snapshot = store.config!.defaultLayer
   return runMutation({
     push: () => setStore('config', 'defaultLayer', layer),
-    call: client => client.set_default_layer(layer),
-    sync: () => { session.shadow!.defaultLayer = layer },
+    call: c => c.set_default_layer(layer),
     undo: () => { if (store.config) setStore('config', 'defaultLayer', snapshot) },
   })
 }

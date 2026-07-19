@@ -5,7 +5,7 @@ export type KeyboardError
     | { type: 'transport', cause: unknown }
     | { type: 'unknown', cause: unknown }
 
-const RYNK_ERROR_CODES: readonly RynkError[] = [
+const RYNK_ERROR_CODES = [
   'Malformed',
   'NotReady',
   'StorageFault',
@@ -14,18 +14,26 @@ const RYNK_ERROR_CODES: readonly RynkError[] = [
   'Invalid',
   'UnknownCmd',
   'Locked',
-]
+] as const satisfies readonly RynkError[]
 
-const RYNK_ERROR_SET: ReadonlySet<string> = new Set(RYNK_ERROR_CODES)
+const REJECTED_RE = /^device rejected (\w+)$/
+const TRANSPORT_NAMES: readonly string[] = ['Disconnected', 'TransportError']
+
+function isRynkError(s: string): s is RynkError {
+  return (RYNK_ERROR_CODES as readonly string[]).includes(s)
+}
 
 export function toKeyboardError(e: unknown): KeyboardError {
-  if (e instanceof Error) {
-    if (RYNK_ERROR_SET.has(e.message)) {
-      return { type: 'rynk', code: e.message as RynkError }
-    }
-    if (e.message === 'link closed') {
-      return { type: 'transport', cause: e }
-    }
+  if (!(e instanceof Error)) return { type: 'unknown', cause: e }
+  if (e.message === 'link closed' || TRANSPORT_NAMES.includes(e.name)) {
+    return { type: 'transport', cause: e }
+  }
+  const reject = e.name === 'Rejected' ? REJECTED_RE.exec(e.message) : null
+  if (reject && isRynkError(reject[1])) {
+    return { type: 'rynk', code: reject[1] }
+  }
+  if (isRynkError(e.message)) {
+    return { type: 'rynk', code: e.message }
   }
   return { type: 'unknown', cause: e }
 }
