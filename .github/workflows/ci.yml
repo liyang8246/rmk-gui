@@ -7,19 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-24.04
-            bundles: deb,rpm,appimage
-          - os: ubuntu-24.04-arm
-            bundles: deb,rpm,appimage
-          - os: macos-15-intel
-            bundles: dmg
-          - os: macos-15
-            bundles: dmg
-          - os: windows-2025
-            bundles: nsis
-          - os: windows-11-arm
-            bundles: nsis
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-2025, windows-11-arm]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -43,7 +31,7 @@ jobs:
 
       - run: pnpm lint
 
-      - run: pnpm build:tauri -- --bundles ${{ matrix.bundles }}
+      - run: pnpm build:tauri
 
       - uses: actions/upload-artifact@v4
         with:
