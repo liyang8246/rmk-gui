@@ -24,11 +24,7 @@ export default antfu(
   },
   {
     name: 'ignore-generated-wasm',
-    ignores: [
-      'src/rynk/wasm/rynk_wasm.js',
-      'src/rynk/wasm/rynk_wasm.d.ts',
-      'src/rynk/wasm/rynk_wasm_bg.wasm',
-    ],
+    ignores: ['src/rynk/wasm/**'],
   },
   {
     // Docs contain illustrative code snippets (shorthand methods, top-level
