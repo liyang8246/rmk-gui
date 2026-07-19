@@ -7,6 +7,8 @@
     "dev:tauri": "tauri dev",
     "build:web": "vite build",
     "build:tauri": "tauri build",
+    "build:wasm": "nu scripts/build-rynk-wasm.nu",
+    "postinstall": "pnpm run build:wasm",
     "qemu": "node qemu/run.mjs",
     "generate": "vite build",
     "preview": "vite preview",

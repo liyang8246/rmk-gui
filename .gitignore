@@ -30,6 +30,9 @@ src-tauri/gen
 qemu/target
 qemu/Cargo.lock
 
+# Generated WASM (built by scripts/build-rynk-wasm.mjs in CI)
+src/rynk/wasm
+
 # Env
 .env
 .env.*

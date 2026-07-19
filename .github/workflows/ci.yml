@@ -21,6 +21,18 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      - uses: hustcer/setup-nu@v3
+        with:
+          version: "0.112"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: jetli/wasm-pack-action@v0.4.0
+
       - name: Install Linux deps
         if: startsWith(matrix.os, 'ubuntu')
         run: |
