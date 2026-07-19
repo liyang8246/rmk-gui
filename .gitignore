@@ -47,3 +47,6 @@ src/rynk/wasm
 
 # mdBook build output
 docs/book
+
+.vercel
+.env*
