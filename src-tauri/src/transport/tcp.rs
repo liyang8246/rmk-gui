@@ -1,5 +1,4 @@
 use serde::Serialize;
-use std::time::Duration;
 use tauri::State;
 
 use super::{ConnectResponse, Sessions, spawn_tokio_io};
@@ -10,12 +9,12 @@ pub struct TcpDeviceInfo {
     pub name: String,
 }
 
-const QEMU_ADDR: &str = "127.0.0.1:7965";
-
 #[tauri::command]
 pub async fn rynk_discover_tcp() -> Vec<TcpDeviceInfo> {
     #[cfg(debug_assertions)]
     {
+        use std::time::Duration;
+        const QEMU_ADDR: &str = "127.0.0.1:7965";
         match tokio::time::timeout(Duration::from_millis(300), tokio::net::TcpStream::connect(QEMU_ADDR)).await {
             Ok(Ok(_)) => vec![TcpDeviceInfo { addr: QEMU_ADDR.into(), name: "QEMU".into() }],
             _ => vec![],
