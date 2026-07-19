@@ -24,3 +24,6 @@ tokio-serial = "5.4"
 tokio-stream = "0.1"
 btleplug = "0.12"
 uuid = { version = "1", features = [ "v4" ] }
+
+[lints.clippy]
+all = "warn"
