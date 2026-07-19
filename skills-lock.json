@@ -7,6 +7,12 @@
       "skillPath": "skills/neverthrow/SKILL.md",
       "computedHash": "18668704cdd47f10d82582189b02e1f537d55863e3dc85af75281424d70ac4f3"
     },
+    "nushell": {
+      "source": "liyang8246/skills",
+      "sourceType": "github",
+      "skillPath": "skills/nushell/SKILL.md",
+      "computedHash": "ce494a683928fab7748280ff11a31837a9135d8057234a3986d5be6604891f28"
+    },
     "solidjs": {
       "source": "liyang8246/skills",
       "sourceType": "github",
