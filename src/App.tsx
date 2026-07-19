@@ -1,3 +1,4 @@
+import type { ConnectedDevice } from './rynk'
 import { createSignal, Show } from 'solid-js'
 import { discover } from './rynk'
 import { initKbdStore, kbdStore, resetKbdStore } from './store'
@@ -17,7 +18,7 @@ async function testConnect() {
     const dev = devices[0]
     console.warn('connecting to:', dev.label)
 
-    const connected = await dev.connect()
+    const connected: ConnectedDevice = await dev.connect()
     console.warn('connected:', {
       label: connected.label,
       descriptor: connected.descriptor,
@@ -30,7 +31,7 @@ async function testConnect() {
     )
   } catch (e) {
     console.warn('connect error:', e)
-    resetKbdStore()
+    await resetKbdStore()
   } finally {
     setConnecting(false)
   }
@@ -43,7 +44,7 @@ function App() {
         <Show when={connecting()} fallback="Connect">Connecting...</Show>
       </button>
       <button onClick={() => console.warn('store:', kbdStore)}>Show Store</button>
-      <button onClick={() => resetKbdStore()}>Reset</button>
+      <button onClick={() => resetKbdStore().catch(e => console.warn('disconnect error:', e))}>Disconnect</button>
     </div>
   )
 }

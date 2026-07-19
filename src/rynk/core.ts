@@ -1,8 +1,8 @@
-/// Byte link contract that wasm's WasmTransport calls into.
 export interface JsByteLink {
   send: (frame: Uint8Array) => Promise<void>
   recv: () => Promise<Uint8Array>
   close: () => Promise<void>
+  readonly label: string
 }
 
 /// Frame: cmd=0x0001 LE, seq=1, len=0, reply [0x00, major, minor].
@@ -24,11 +24,11 @@ async function loadCore(major: number) {
   }
 }
 
-export async function connectClient(link: JsByteLink, label?: string) {
+export async function connectClient(link: JsByteLink) {
   const { major, minor } = await probeVersion(link)
   const core = await loadCore(major)
   await core.default()
-  const client = await core.connect(link, label ?? null)
+  const client = await core.connect(link)
   return { client, major, minor }
 }
 

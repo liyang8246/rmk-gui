@@ -2,7 +2,7 @@ import type { ConnectedDevice, DeviceDescriptor } from './index'
 import { invoke } from '@tauri-apps/api/core'
 
 export class TauriByteLink {
-  constructor(private sessionId: string) {}
+  constructor(private sessionId: string, readonly label: string) {}
 
   async send(frame: Uint8Array): Promise<void> {
     await invoke('rynk_send', { session: this.sessionId, data: Array.from(frame) })
@@ -38,15 +38,15 @@ export async function discoverTcp(): Promise<TcpDeviceInfo[]> {
 
 export async function connectSerial(path: string, label: string): Promise<ConnectedDevice> {
   const res = await invoke<ConnectResponse>('rynk_connect_serial', { path })
-  return { link: new TauriByteLink(res.session), descriptor: res.descriptor, label }
+  return { link: new TauriByteLink(res.session, label), descriptor: res.descriptor, label }
 }
 
 export async function connectBle(id: string, label: string): Promise<ConnectedDevice> {
   const res = await invoke<ConnectResponse>('rynk_connect_ble', { id })
-  return { link: new TauriByteLink(res.session), descriptor: res.descriptor, label }
+  return { link: new TauriByteLink(res.session, label), descriptor: res.descriptor, label }
 }
 
 export async function connectTcp(addr: string, label: string): Promise<ConnectedDevice> {
   const res = await invoke<ConnectResponse>('rynk_connect_tcp', { addr })
-  return { link: new TauriByteLink(res.session), descriptor: res.descriptor, label }
+  return { link: new TauriByteLink(res.session, label), descriptor: res.descriptor, label }
 }

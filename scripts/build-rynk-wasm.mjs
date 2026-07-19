@@ -12,7 +12,7 @@ const pkgDir = join(rynkWasmDir, 'pkg')
 const outDir = join(root, 'src', 'rynk', 'wasm')
 
 const RYNK_REMOTE_URL = 'https://github.com/HaoboGu/rmk.git'
-const RYNK_BRANCH = 'feat/rynk_protocol'
+const RYNK_BRANCH = 'feat/rynk'
 
 function run(cmd, opts = {}) {
   console.log(`  $ ${cmd}`)
@@ -27,8 +27,7 @@ function pullRmk() {
   }
   console.log('[1/3] Updating rmk repo…')
   run(`git -C "${clonedepsRoot}" fetch origin ${RYNK_BRANCH}`)
-  run(`git -C "${clonedepsRoot}" checkout ${RYNK_BRANCH}`)
-  run(`git -C "${clonedepsRoot}" reset --hard origin/${RYNK_BRANCH}`)
+  run(`git -C "${clonedepsRoot}" checkout -B ${RYNK_BRANCH} FETCH_HEAD`)
 }
 
 function getCommit() {

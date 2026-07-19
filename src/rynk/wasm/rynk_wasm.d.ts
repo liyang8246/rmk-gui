@@ -4,7 +4,7 @@
  * A KeyAction is the action at a keyboard position, stored in keymap.
  * It can be a single action like triggering a key, or a composite keyboard action like tap/hold
  */
-export type KeyAction = "No" | "Transparent" | { Single: Action } | { Tap: Action } | { TapHold: [Action, Action, MorseProfile] } | { Morse: number };
+export type KeyAction = "No" | "Transparent" | { Single: Action } | { Tap: Action } | { TapHold: [Action, Action, number] } | { Morse: number };
 
 /**
  * A decoded topic push (server → host), one variant per row of the
@@ -157,7 +157,7 @@ export interface Combo {
 export type ConnectionType = "Usb" | "Ble";
 
 /**
- * Current lock/unlock state of the device, returned by `GetLockStatus`
+ * Current lock/unlock state of this Rynk session, returned by `GetLockStatus`
  * and `UnlockPoll`. The `Lock` endpoint returns `()`.
  *
  * Loses `Copy` and derived `MaxSize` (both forbidden by the `heapless::Vec`
@@ -599,10 +599,11 @@ export type MouseButtons = { button1: boolean; button2: boolean; button3: boolea
 /**
  * Live Rynk client handle exposed to JavaScript.
  *
- * Wraps a `Client<WasmTransport>`; methods borrow it for one await, so JS must
- * await each call before the next (the single-borrow rule the native
- * transports get from the compiler). Dropping the handle, or closing the JS
- * link, ends the session.
+ * Wraps the session's `Client` + `Driver`. All methods are `&self`: a parked
+ * `next_topic()` pull and one request may run concurrently (full-duplex), but
+ * keep requests serialized — the protocol allows a single request in flight.
+ * Dropping the handle, or closing the JS link, ends the session; the link
+ * itself stays open until the page closes it.
  */
 export class RynkClient {
     private constructor();
@@ -610,10 +611,6 @@ export class RynkClient {
     [Symbol.dispose](): void;
     bootloader_jump(): Promise<void>;
     clear_ble_profile(slot: number): Promise<void>;
-    /**
-     * Topic pushes the driver dropped (queue full). `f64` so JS gets a `number`.
-     */
-    events_dropped(): number;
     get_battery_status(): Promise<BatteryStatus>;
     get_behavior(): Promise<BehaviorConfig>;
     get_ble_status(): Promise<BleStatus>;
@@ -624,6 +621,7 @@ export class RynkClient {
     get_connection_type(): Promise<ConnectionType>;
     get_current_layer(): Promise<number>;
     get_default_layer(): Promise<number>;
+    get_device_info(): Promise<DeviceInfo>;
     get_encoder(encoder_id: number, layer: number): Promise<EncoderAction>;
     get_fork(index: number): Promise<Fork>;
     get_key(layer: number, row: number, col: number): Promise<KeyAction>;
@@ -639,18 +637,14 @@ export class RynkClient {
     get_sleep_state(): Promise<boolean>;
     get_version(): Promise<ProtocolVersion>;
     get_wpm(): Promise<number>;
-    /**
-     * The display name the page supplied at connect time (WebHID `productName`,
-     * a page-derived string, or the default when none was given).
-     */
-    label(): string;
     lock(): Promise<void>;
     /**
      * Pull the next recognized topic push (server→host). Parks until one
-     * arrives; rejects with `Disconnected` at EOF. Unrecognized topics are
-     * skipped. JS drives this in a loop, like the native `next_event()` pull.
+     * arrives; rejects when the link dies. Unrecognized topics are skipped.
+     * JS drives this in a loop, like the native `next_topic()` pull, and it
+     * runs concurrently with the request methods.
      */
-    next_event(): Promise<TopicEvent>;
+    next_topic(): Promise<TopicEvent>;
     reboot(): Promise<void>;
     set_behavior(config: BehaviorConfig): Promise<void>;
     set_combo(index: number, config: Combo): Promise<void>;
@@ -669,13 +663,11 @@ export class RynkClient {
 }
 
 /**
- * Handshake over an already-open JS link and return a client. Routes through
- * [`WebDevice`] — the web transport's [`RynkDevice`] — so the browser path uses
- * the same connect lifecycle as the native serial/BLE transports. `label` is the
- * display name the page showed in its picker (WebHID `productName`, or a derived
- * string); omit it or pass `null` for a default.
+ * Handshake over an already-open JS link and return a client. The link is the
+ * web transport's [`RynkDevice`], so the browser path uses the same connect
+ * lifecycle as the native serial/BLE transports.
  */
-export function connect(link: any, label?: string | null): Promise<RynkClient>;
+export function connect(link: any): Promise<RynkClient>;
 
 export function init(): void;
 
@@ -683,11 +675,12 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly _critical_section_1_0_acquire: () => number;
+    readonly _critical_section_1_0_release: (a: number) => void;
     readonly __wbg_rynkclient_free: (a: number, b: number) => void;
-    readonly connect: (a: any, b: number, c: number) => any;
+    readonly connect: (a: any) => any;
     readonly rynkclient_bootloader_jump: (a: number) => any;
     readonly rynkclient_clear_ble_profile: (a: number, b: number) => any;
-    readonly rynkclient_events_dropped: (a: number) => number;
     readonly rynkclient_get_battery_status: (a: number) => any;
     readonly rynkclient_get_behavior: (a: number) => any;
     readonly rynkclient_get_ble_status: (a: number) => any;
@@ -698,6 +691,7 @@ export interface InitOutput {
     readonly rynkclient_get_connection_type: (a: number) => any;
     readonly rynkclient_get_current_layer: (a: number) => any;
     readonly rynkclient_get_default_layer: (a: number) => any;
+    readonly rynkclient_get_device_info: (a: number) => any;
     readonly rynkclient_get_encoder: (a: number, b: number, c: number) => any;
     readonly rynkclient_get_fork: (a: number, b: number) => any;
     readonly rynkclient_get_key: (a: number, b: number, c: number, d: number) => any;
@@ -713,9 +707,8 @@ export interface InitOutput {
     readonly rynkclient_get_sleep_state: (a: number) => any;
     readonly rynkclient_get_version: (a: number) => any;
     readonly rynkclient_get_wpm: (a: number) => any;
-    readonly rynkclient_label: (a: number) => [number, number];
     readonly rynkclient_lock: (a: number) => any;
-    readonly rynkclient_next_event: (a: number) => any;
+    readonly rynkclient_next_topic: (a: number) => any;
     readonly rynkclient_reboot: (a: number) => any;
     readonly rynkclient_set_behavior: (a: number, b: any) => any;
     readonly rynkclient_set_combo: (a: number, b: number, c: any) => any;
@@ -732,8 +725,8 @@ export interface InitOutput {
     readonly rynkclient_switch_ble_profile: (a: number, b: number) => any;
     readonly rynkclient_unlock_poll: (a: number) => any;
     readonly init: () => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h170054496a4db573: (a: number, b: number, c: any) => [number, number];
-    readonly wasm_bindgen__convert__closures_____invoke__h78a24b8d388c2cc6: (a: number, b: number, c: any, d: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h8e283c808a45b4aa: (a: number, b: number, c: any) => [number, number];
+    readonly wasm_bindgen__convert__closures_____invoke__h7692e81cabd6b936: (a: number, b: number, c: any, d: any) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

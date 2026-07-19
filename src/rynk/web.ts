@@ -14,7 +14,7 @@ export class WebByteLink {
   private closed = false
   private wake: (() => void) | null = null
 
-  constructor(port: SerialPort) {
+  constructor(port: SerialPort, readonly label: string) {
     this.reader = port.readable!.getReader()
     this.writer = port.writable!.getWriter()
     this.pump()
@@ -79,7 +79,7 @@ function serialDescriptor(port: SerialPort): DeviceDescriptor {
 export async function connectWebSerial(): Promise<ConnectedDevice> {
   const port = await navigator.serial.requestPort()
   await port.open({ baudRate: 115200 })
-  return { link: new WebByteLink(port), descriptor: serialDescriptor(port), label: 'WebSerial' }
+  return { link: new WebByteLink(port, 'WebSerial'), descriptor: serialDescriptor(port), label: 'WebSerial' }
 }
 
 // TODO: WebHID support — see rynk-wasm/index.html hidLink() for reference.

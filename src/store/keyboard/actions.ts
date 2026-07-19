@@ -3,10 +3,7 @@ import type {
   Combo,
   ConnectedDevice,
   DeviceCapabilities,
-  DeviceDescriptor,
-  DeviceInfo,
   EncoderAction,
-  FirmwareVersion,
   Fork,
   KeyAction,
   MacroData,
@@ -26,25 +23,32 @@ export function initStore(connected: ConnectedDevice): ResultAsync<void, Keyboar
   return ResultAsync.fromThrowable(() => doInit(connected), toKeyboardError)()
 }
 
-export function resetStore(): void {
+export async function resetStore(): Promise<void> {
+  const connected = session.connected
+  const client = session.client
+  session.connected = null
+  session.client = null
+  session.chain = Promise.resolve()
   setStore({
     connection: null,
     device: null,
     config: null,
     status: null,
   })
-  session.client = null
-  session.chain = Promise.resolve()
+  client?.free()
+  await connected?.link?.close()
 }
 
 async function doInit(connected: ConnectedDevice): Promise<void> {
+  session.connected = connected
   try {
     setStore('connection', { phase: 'connecting', label: connected.label })
 
-    const { client } = await connectClient(connected.link, connected.label)
+    const { client } = await connectClient(connected.link)
     session.client = client
 
     const version = await client.get_version()
+    const info = await client.get_device_info()
     const capabilities = await client.get_capabilities()
     const layout = await client.get_layout()
     const behavior = await client.get_behavior()
@@ -68,7 +72,7 @@ async function doInit(connected: ConnectedDevice): Promise<void> {
     }
     const device: KeyboardDevice = {
       capabilities,
-      info: descriptorToDeviceInfo(connected.descriptor),
+      info,
       version,
       layout,
     }
@@ -80,7 +84,7 @@ async function doInit(connected: ConnectedDevice): Promise<void> {
     })
     session.chain = Promise.resolve()
   } catch (e) {
-    resetStore()
+    await resetStore()
     throw e
   }
 }
@@ -129,12 +133,6 @@ async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promis
   // TODO: verify get_macro(offset) chunking — may return less than macro_space_size per call.
   const { data } = await client.get_macro(0)
   return data
-}
-
-function descriptorToDeviceInfo(d: DeviceDescriptor): DeviceInfo {
-  // TODO: rmk_version has no source — rynk protocol lacks a firmware version getter.
-  const rmk_version: FirmwareVersion = { major: 0, minor: 0, patch: 0 }
-  return { ...d, rmk_version }
 }
 
 export function setKey(

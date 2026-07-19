@@ -3,10 +3,11 @@
 /**
  * Live Rynk client handle exposed to JavaScript.
  *
- * Wraps a `Client<WasmTransport>`; methods borrow it for one await, so JS must
- * await each call before the next (the single-borrow rule the native
- * transports get from the compiler). Dropping the handle, or closing the JS
- * link, ends the session.
+ * Wraps the session's `Client` + `Driver`. All methods are `&self`: a parked
+ * `next_topic()` pull and one request may run concurrently (full-duplex), but
+ * keep requests serialized — the protocol allows a single request in flight.
+ * Dropping the handle, or closing the JS link, ends the session; the link
+ * itself stays open until the page closes it.
  */
 export class RynkClient {
     static __wrap(ptr) {
@@ -38,14 +39,6 @@ export class RynkClient {
      */
     clear_ble_profile(slot) {
         const ret = wasm.rynkclient_clear_ble_profile(this.__wbg_ptr, slot);
-        return ret;
-    }
-    /**
-     * Topic pushes the driver dropped (queue full). `f64` so JS gets a `number`.
-     * @returns {number}
-     */
-    events_dropped() {
-        const ret = wasm.rynkclient_events_dropped(this.__wbg_ptr);
         return ret;
     }
     /**
@@ -118,6 +111,13 @@ export class RynkClient {
      */
     get_default_layer() {
         const ret = wasm.rynkclient_get_default_layer(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {Promise<DeviceInfo>}
+     */
+    get_device_info() {
+        const ret = wasm.rynkclient_get_device_info(this.__wbg_ptr);
         return ret;
     }
     /**
@@ -239,23 +239,6 @@ export class RynkClient {
         return ret;
     }
     /**
-     * The display name the page supplied at connect time (WebHID `productName`,
-     * a page-derived string, or the default when none was given).
-     * @returns {string}
-     */
-    label() {
-        let deferred1_0;
-        let deferred1_1;
-        try {
-            const ret = wasm.rynkclient_label(this.__wbg_ptr);
-            deferred1_0 = ret[0];
-            deferred1_1 = ret[1];
-            return getStringFromWasm0(ret[0], ret[1]);
-        } finally {
-            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-        }
-    }
-    /**
      * @returns {Promise<void>}
      */
     lock() {
@@ -264,12 +247,13 @@ export class RynkClient {
     }
     /**
      * Pull the next recognized topic push (server→host). Parks until one
-     * arrives; rejects with `Disconnected` at EOF. Unrecognized topics are
-     * skipped. JS drives this in a loop, like the native `next_event()` pull.
+     * arrives; rejects when the link dies. Unrecognized topics are skipped.
+     * JS drives this in a loop, like the native `next_topic()` pull, and it
+     * runs concurrently with the request methods.
      * @returns {Promise<TopicEvent>}
      */
-    next_event() {
-        const ret = wasm.rynkclient_next_event(this.__wbg_ptr);
+    next_topic() {
+        const ret = wasm.rynkclient_next_topic(this.__wbg_ptr);
         return ret;
     }
     /**
@@ -403,19 +387,14 @@ export class RynkClient {
 if (Symbol.dispose) RynkClient.prototype[Symbol.dispose] = RynkClient.prototype.free;
 
 /**
- * Handshake over an already-open JS link and return a client. Routes through
- * [`WebDevice`] — the web transport's [`RynkDevice`] — so the browser path uses
- * the same connect lifecycle as the native serial/BLE transports. `label` is the
- * display name the page showed in its picker (WebHID `productName`, or a derived
- * string); omit it or pass `null` for a default.
+ * Handshake over an already-open JS link and return a client. The link is the
+ * web transport's [`RynkDevice`], so the browser path uses the same connect
+ * lifecycle as the native serial/BLE transports.
  * @param {any} link
- * @param {string | null} [label]
  * @returns {Promise<RynkClient>}
  */
-export function connect(link, label) {
-    var ptr0 = isLikeNone(label) ? 0 : passStringToWasm0(label, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    var len0 = WASM_VECTOR_LEN;
-    const ret = wasm.connect(link, ptr0, len0);
+export function connect(link) {
+    const ret = wasm.connect(link);
     return ret;
 }
 
@@ -503,10 +482,6 @@ function __wbg_get_imports() {
         }, arguments); },
         __wbg_call_a6e5c5dce5018821: function() { return handleError(function (arg0, arg1, arg2) {
             const ret = arg0.call(arg1, arg2);
-            return ret;
-        }, arguments); },
-        __wbg_close_31697c6da9691062: function() { return handleError(function (arg0) {
-            const ret = arg0.close();
             return ret;
         }, arguments); },
         __wbg_debug_87fd9b1a625b7efb: function(arg0) {
@@ -627,7 +602,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return wasm_bindgen__convert__closures_____invoke__h78a24b8d388c2cc6(a, state0.b, arg0, arg1);
+                        return wasm_bindgen__convert__closures_____invoke__h7692e81cabd6b936(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -656,7 +631,7 @@ function __wbg_get_imports() {
         __wbg_queueMicrotask_6a09b7bc46549209: function(arg0) {
             queueMicrotask(arg0);
         },
-        __wbg_recv_f502c5dd86b967f7: function() { return handleError(function (arg0) {
+        __wbg_recv_bfa98f8a281aca2f: function() { return handleError(function (arg0) {
             const ret = arg0.recv();
             return ret;
         }, arguments); },
@@ -720,8 +695,8 @@ function __wbg_get_imports() {
             console.warn(arg0);
         },
         __wbindgen_cast_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 306, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h170054496a4db573);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 318, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h8e283c808a45b4aa);
             return ret;
         },
         __wbindgen_cast_0000000000000002: function(arg0) {
@@ -750,15 +725,15 @@ function __wbg_get_imports() {
     };
 }
 
-function wasm_bindgen__convert__closures_____invoke__h170054496a4db573(arg0, arg1, arg2) {
-    const ret = wasm.wasm_bindgen__convert__closures_____invoke__h170054496a4db573(arg0, arg1, arg2);
+function wasm_bindgen__convert__closures_____invoke__h8e283c808a45b4aa(arg0, arg1, arg2) {
+    const ret = wasm.wasm_bindgen__convert__closures_____invoke__h8e283c808a45b4aa(arg0, arg1, arg2);
     if (ret[1]) {
         throw takeFromExternrefTable0(ret[0]);
     }
 }
 
-function wasm_bindgen__convert__closures_____invoke__h78a24b8d388c2cc6(arg0, arg1, arg2, arg3) {
-    wasm.wasm_bindgen__convert__closures_____invoke__h78a24b8d388c2cc6(arg0, arg1, arg2, arg3);
+function wasm_bindgen__convert__closures_____invoke__h7692e81cabd6b936(arg0, arg1, arg2, arg3) {
+    wasm.wasm_bindgen__convert__closures_____invoke__h7692e81cabd6b936(arg0, arg1, arg2, arg3);
 }
 
 const RynkClientFinalization = (typeof FinalizationRegistry === 'undefined')
