@@ -8,6 +8,14 @@ repository = "https://github.com/haobogu/rmk"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 
+# This is a no_std / no_main RISC-V firmware binary. Disable the test and bench
+# harnesses so `cargo clippy --all-targets` (and rust-analyzer) don't try to
+# build the std-based `test` crate, which fails with "can't find crate for `test`".
+[[bin]]
+name = "rmk-qemu-riscv"
+test = false
+bench = false
+
 # NOTE: This example builds against the locally cloned rmk source at
 # `.slim/clonedeps/repos/HaoboGu__rmk` (see AGENTS.md). The path is relative
 # to this Cargo.toml.
