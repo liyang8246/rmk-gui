@@ -15,9 +15,8 @@ test = false
 bench = false
 
 [dependencies]
-rmk = { path = "../.slim/clonedeps/repos/HaoboGu__rmk/rmk", default-features = false, features = [
-  "rynk",
-  "bulk"
+rmk = { git = "https://github.com/HaoboGu/rmk.git", branch = "feat/rynk", default-features = false, features = [
+  "rynk"
 ] }
 embassy-executor = { version = "0.10", features = [
   "platform-riscv32",
