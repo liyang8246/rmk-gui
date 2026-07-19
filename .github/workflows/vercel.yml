@@ -26,12 +26,17 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo binstall wasm-pack nu --no-confirm
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - run: npm install -g vercel@latest
 
       - run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
-      - run: |
-          vercel build --prod --token=$VERCEL_TOKEN
-          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+      - run: vercel build --prod --token=$VERCEL_TOKEN
+
+      - uses: amondnet/vercel-action@v42
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          target: production
+          prebuilt: true
