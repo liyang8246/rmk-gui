@@ -1,6 +1,6 @@
 const URL    = 'https://github.com/HaoboGu/rmk.git'
 const BRANCH = 'feat/rynk'
-const HASH   = 'a1b4eaeb'
+const HASH   = 'aa3398ea'
 
 def main [] {
     let work = ($env.TEMP? | default '/tmp') | path join 'rmk-wasm-build'
