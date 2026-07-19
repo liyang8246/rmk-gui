@@ -158,7 +158,7 @@ async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promis
 
 // Serial awaits: protocol allows one request in flight at a time.
 async function fetchStatus(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardStatus> {
-  const batteryStatus = await client.get_battery_status()
+  const batteryStatus = caps.ble_enabled ? await client.get_battery_status() : 'Unavailable'
   const connectionStatus = await client.get_connection_status()
   const currentLayer = await client.get_current_layer()
   const ledIndicator = await client.get_led_indicator()
