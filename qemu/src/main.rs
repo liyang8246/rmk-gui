@@ -108,7 +108,7 @@ async fn test_topics() {
     loop {
         for &layer in &[0u8, 1] {
             publish_event(LayerChangeEvent::new(layer));
-            Timer::after(Duration::from_millis(20)).await;
+            Timer::after(Duration::from_millis(200)).await;
         }
         wpm = wpm.wrapping_add(7);
         publish_event(WpmUpdateEvent::new(wpm));
@@ -121,7 +121,7 @@ async fn test_topics() {
             ..ConnectionStatus::default()
         }));
         println!("[topic] wpm {} sleep {}", wpm, sleeping);
-        Timer::after(Duration::from_millis(20)).await;
+        Timer::after(Duration::from_millis(200)).await;
     }
 }
 
