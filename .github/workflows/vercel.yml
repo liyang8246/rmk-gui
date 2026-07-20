@@ -58,6 +58,7 @@ jobs:
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        run: gh pr comment ${{ github.event.pull_request.number }} --body "Preview: ${{ steps.deploy.outputs.url }}"
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "Preview: ${{ steps.deploy.outputs.url }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
