@@ -1,4 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "pnpm build:web",
+  "installCommand": "true",
+  "outputDirectory": "dist",
   "git": {
     "deploymentEnabled": false
   }
