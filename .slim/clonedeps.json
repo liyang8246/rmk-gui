@@ -1,12 +1,12 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-07-16T00:00:00.000Z",
+  "updatedAt": "2026-07-20T00:00:00.000Z",
   "dependencies": [
     {
       "name": "rmk",
-      "resolvedVersion": "feat/rynk_protocol@586cb7d",
+      "resolvedVersion": "feat/rynk@e3480dec",
       "repoUrl": "https://github.com/HaoboGu/rmk.git",
-      "ref": "feat/rynk_protocol",
+      "ref": "feat/rynk",
       "path": ".slim/clonedeps/repos/HaoboGu__rmk",
       "packagePath": "",
       "reason": "Rynk protocol source: header+payload protocol, RynkHidService, WASM/TS type generation, command handlers, transports"
