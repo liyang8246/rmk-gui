@@ -17,4 +17,6 @@ export const session = {
   connected: null as ConnectedDevice | null,
   // Serialize client calls: protocol allows one request in flight at a time.
   chain: Promise.resolve() as Promise<void>,
+  // False until store is populated; topic loop drains without applying during init.
+  topicsReady: false,
 }

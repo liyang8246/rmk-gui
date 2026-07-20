@@ -31,6 +31,7 @@ export async function resetStore(): Promise<void> {
   session.connected = null
   session.client = null
   session.chain = Promise.resolve()
+  session.topicsReady = false
   setStore({
     connection: null,
     device: null,
@@ -48,6 +49,7 @@ async function doInit(connected: ConnectedDevice): Promise<void> {
 
     const { client } = await connectClient(connected.link)
     session.client = client
+    void startTopicLoop(client)
 
     const version = await client.get_version()
     const info = await client.get_device_info()
@@ -86,7 +88,7 @@ async function doInit(connected: ConnectedDevice): Promise<void> {
       status,
     })
     session.chain = Promise.resolve()
-    void startTopicLoop(client)
+    session.topicsReady = true
   } catch (e) {
     await resetStore()
     throw e
@@ -98,6 +100,7 @@ async function startTopicLoop(client: RynkClient): Promise<void> {
     while (session.client === client) {
       const event = await client.next_topic()
       if (session.client !== client) break
+      if (!session.topicsReady) continue
       match(event)
         .with({ LayerChange: P.select() }, x => setStore('status', 'currentLayer', x))
         .with({ WpmUpdate: P.select() }, x => setStore('status', 'wpm', x))
