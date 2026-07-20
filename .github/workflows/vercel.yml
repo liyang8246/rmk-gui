@@ -37,5 +37,5 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-build: true
-          vercel-args: ${{ github.event_name == 'push' && '--prod' || '' }}
+          target: ${{ github.event_name == 'push' && 'production' || 'preview' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
