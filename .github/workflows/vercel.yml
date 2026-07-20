@@ -24,10 +24,10 @@ jobs:
 
       - uses: cargo-bins/cargo-binstall@main
 
-      - name: Install wasm-pack + nushell
+      - name: Install wasm-pack
         run: |
           rustup target add wasm32-unknown-unknown
-          cargo binstall wasm-pack nu --no-confirm
+          cargo binstall wasm-pack --no-confirm
 
       - run: npm install -g vercel@latest
 

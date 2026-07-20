@@ -20,11 +20,11 @@ jobs:
 
       - uses: cargo-bins/cargo-binstall@main
 
-      - name: Install wasm-pack + nushell
+      - name: Install wasm-pack
         shell: bash
         run: |
           rustup target add wasm32-unknown-unknown
-          cargo binstall wasm-pack nu --no-confirm
+          cargo binstall wasm-pack --no-confirm
 
       - name: Install Linux deps
         if: startsWith(matrix.os, 'ubuntu')

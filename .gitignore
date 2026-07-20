@@ -15,6 +15,9 @@ node_modules
 *.log
 logs
 
+# Python
+__pycache__
+
 # Editor
 .DS_Store
 .idea
@@ -30,7 +33,7 @@ src-tauri/gen
 qemu/target
 qemu/Cargo.lock
 
-# Generated WASM (built by scripts/build-rynk-wasm.mjs in CI)
+# Generated WASM (built by scripts/build-rynk-wasm.py in CI)
 src/rynk/wasm
 
 # Env
