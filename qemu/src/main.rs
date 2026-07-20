@@ -6,6 +6,7 @@ use core::ptr::NonNull;
 
 use embassy_executor::Spawner;
 use embassy_futures::yield_now;
+use embassy_time::{Duration, Timer};
 use embedded_io_async::{Read, Write};
 use panic_halt as _;
 use rmk::config::{BehaviorConfig, LockConfig, PositionalConfig, RmkConfig};
@@ -20,6 +21,8 @@ use semihosting::println;
 use static_cell::StaticCell;
 use uart_16550::Uart16550;
 use uart_16550::backend::MmioBackend;
+
+mod time_driver;
 
 struct Uart(Uart16550<MmioBackend>);
 
@@ -86,9 +89,7 @@ const DEFAULT_ENCODER_MAP: [[EncoderAction; NUM_ENCODER]; NUM_LAYER] = [
     [EncoderAction::new(k!(AudioVolUp), k!(AudioVolDown))],
 ];
 
-// No real input sources on QEMU — synthesize topic events so the host's
-// next_topic() loop has something to receive. embassy-time uses mock-driver
-// here (no real timer), so we throttle with yield_now instead of Timer.
+// Synthesize topic events so the host's next_topic() loop has data.
 #[embassy_executor::task]
 async fn test_topics() {
     use rmk::event::{
@@ -99,7 +100,7 @@ async fn test_topics() {
     use rmk::types::led_indicator::LedIndicator;
 
     // Let run_rynk_uart enter run_session and create its topic subscribers.
-    for _ in 0..2000 { yield_now().await }
+    Timer::after(Duration::from_millis(50)).await;
 
     let mut wpm: u16 = 0;
     let mut sleeping = false;
@@ -107,7 +108,7 @@ async fn test_topics() {
     loop {
         for &layer in &[0u8, 1] {
             publish_event(LayerChangeEvent::new(layer));
-            for _ in 0..500 { yield_now().await }
+            Timer::after(Duration::from_millis(20)).await;
         }
         wpm = wpm.wrapping_add(7);
         publish_event(WpmUpdateEvent::new(wpm));
@@ -120,13 +121,14 @@ async fn test_topics() {
             ..ConnectionStatus::default()
         }));
         println!("[topic] wpm {} sleep {}", wpm, sleeping);
-        for _ in 0..10000 { yield_now().await }
+        Timer::after(Duration::from_millis(20)).await;
     }
 }
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     println!("[RMK] starting");
+    time_driver::init();
 
     spawner.spawn(test_topics().unwrap());
 
