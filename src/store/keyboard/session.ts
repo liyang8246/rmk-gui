@@ -1,3 +1,4 @@
+import type { Result } from 'neverthrow'
 import type {
   BehaviorConfig,
   Combo,
@@ -13,13 +14,54 @@ import type {
 } from '../../rynk'
 import type { KeyboardError } from './errors'
 import type { KeyboardConfig, KeyboardDevice, KeyboardStatus } from './types'
-import { ResultAsync } from 'neverthrow'
+import { err, ResultAsync } from 'neverthrow'
 import { produce } from 'solid-js/store'
 import { match, P } from 'ts-pattern'
 import { connectClient } from '../../rynk'
 import { toKeyboardError } from './errors'
-import { session, setStore, store } from './store'
-import { runMutation } from './utils'
+import { setStore, store } from './store'
+
+const session = {
+  client: null as RynkClient | null,
+  // Held from initStore until resetStore; KeyboardSession owns client.free + link.close.
+  connected: null as ConnectedDevice | null,
+  // Serialize client calls: protocol allows one request in flight at a time.
+  chain: Promise.resolve() as Promise<void>,
+  // False until store is populated; topic loop drains without applying during init.
+  topicsReady: false,
+}
+
+// Swallows individual failures so one Err does not short-circuit subsequent calls.
+function enqueue<T>(
+  fn: () => ResultAsync<T, KeyboardError>,
+): ResultAsync<T, KeyboardError> {
+  const result: Promise<Result<T, KeyboardError>> = session.chain
+    .then(() => fn())
+    .then(
+      (r: Result<T, KeyboardError>) => r,
+      (e: unknown) => err<T, KeyboardError>(toKeyboardError(e)),
+    )
+  session.chain = result.then(
+    () => {},
+    () => {},
+  )
+  return new ResultAsync(result)
+}
+
+// Optimistic update: push → call → undo (Err).
+interface Mutation {
+  push: () => void
+  call: (c: RynkClient) => Promise<void>
+  undo: () => void
+}
+
+function runMutation(m: Mutation): ResultAsync<void, KeyboardError> {
+  const client = session.client
+  if (!client) throw new Error('not connected')
+  m.push()
+  const wrapped = ResultAsync.fromThrowable(() => m.call(client), toKeyboardError)
+  return enqueue(() => wrapped().orTee(m.undo))
+}
 
 export function initStore(connected: ConnectedDevice): ResultAsync<void, KeyboardError> {
   return ResultAsync.fromThrowable(() => doInit(connected), toKeyboardError)()

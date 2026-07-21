@@ -1,4 +1,12 @@
 export {
+  toKeyboardError,
+} from './errors'
+
+export type {
+  KeyboardError,
+} from './errors'
+
+export {
   initStore as initKbdStore,
   resetStore as resetKbdStore,
   setBehavior,
@@ -9,15 +17,7 @@ export {
   setKey,
   setMacro,
   setMorse,
-} from './actions'
-
-export {
-  toKeyboardError,
-} from './errors'
-
-export type {
-  KeyboardError,
-} from './errors'
+} from './session'
 
 export {
   store as kbdStore,
