@@ -12,17 +12,19 @@ use panic_halt as _;
 use rmk::config::{BehaviorConfig, LockConfig, PositionalConfig, RmkConfig};
 use rmk::host::run_rynk_uart;
 use rmk::keymap::KeymapData;
-use rmk::types::action::{EncoderAction, KeyAction};
+use rmk::types::action::KeyAction;
 use rmk::types::fork::{Fork, StateBits};
 use rmk::types::modifier::ModifierCombination;
 use rmk::types::morse::{Morse, MorseProfile};
-use rmk::{initialize_keymap, k, layer};
+use rmk::{a, initialize_keymap, k, layer, mo};
 use semihosting::println;
 use static_cell::StaticCell;
 use uart_16550::Uart16550;
 use uart_16550::backend::MmioBackend;
 
 mod time_driver;
+
+include!(concat!(env!("OUT_DIR"), "/layout_blob.rs"));
 
 struct Uart(Uart16550<MmioBackend>);
 
@@ -63,31 +65,27 @@ impl Write for Uart {
     }
 }
 
-const COL: usize = 3;
-const ROW: usize = 3;
+const COL: usize = 12;
+const ROW: usize = 4;
 const NUM_LAYER: usize = 2;
-const NUM_ENCODER: usize = 1;
 
 #[rustfmt::skip]
 const fn get_default_keymap() -> [[[KeyAction; COL]; ROW]; NUM_LAYER] {
     [
         layer!([
-            [k!(Kp1), k!(Kp2), k!(Kp3)],
-            [k!(Kp4), k!(Kp5), k!(Kp6)],
-            [k!(Kp7), k!(Kp8), k!(Kp9)]
+            [k!(Q), k!(W), k!(E), k!(R), k!(T), a!(No), a!(No), k!(Y), k!(U), k!(I), k!(O), k!(P)],
+            [k!(A), k!(S), k!(D), k!(F), k!(G), a!(No), a!(No), k!(H), k!(J), k!(K), k!(L), k!(Semicolon)],
+            [k!(Z), k!(X), k!(C), k!(V), k!(B), k!(LCtrl), k!(LAlt), k!(N), k!(M), k!(Comma), k!(Dot), k!(Slash)],
+            [k!(Escape), k!(Tab), k!(LGui), k!(LShift), k!(Backspace), a!(No), a!(No), k!(Space), mo!(1), k!(Minus), k!(Quote), k!(Enter)]
         ]),
         layer!([
-            [k!(A), k!(B), k!(C)],
-            [k!(D), k!(E), k!(F)],
-            [k!(G), k!(H), k!(I)]
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)]
         ]),
     ]
 }
-
-const DEFAULT_ENCODER_MAP: [[EncoderAction; NUM_ENCODER]; NUM_LAYER] = [
-    [EncoderAction::new(k!(KpPlus), k!(KpMinus))],
-    [EncoderAction::new(k!(AudioVolUp), k!(AudioVolDown))],
-];
 
 // Synthesize topic events so the host's next_topic() loop has data.
 #[embassy_executor::task]
@@ -135,7 +133,7 @@ async fn main(spawner: Spawner) {
     let rx = Uart::new();
     let tx = Uart::new();
 
-    let mut keymap_data = KeymapData::new_with_encoder(get_default_keymap(), DEFAULT_ENCODER_MAP);
+    let mut keymap_data = KeymapData::new(get_default_keymap());
     let mut behavior_config = BehaviorConfig::default();
     behavior_config
         .fork
@@ -167,6 +165,7 @@ async fn main(spawner: Spawner) {
             insecure: true,
             ..Default::default()
         },
+        layout_blob: LAYOUT_BLOB,
         ..Default::default()
     });
 

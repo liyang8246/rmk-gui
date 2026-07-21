@@ -27,11 +27,14 @@ embassy-time = { version = "0.5", features = [
 ] }
 embassy-time-driver = "0.2"
 embassy-time-queue-utils = "0.3"
-critical-section = "1"
+critical-section = "1.0"
 riscv-rt = "0.18"
 riscv = { version = "0.16", features = [ "critical-section-single-hart" ] }
 semihosting = { version = "0.1", features = [ "stdio" ] }
 embedded-io-async = "0.7"
-panic-halt = "1"
-static_cell = "2"
+panic-halt = "1.0"
+static_cell = "2.0"
 uart_16550 = "0.6"
+
+[build-dependencies]
+rmk-config = { git = "https://github.com/HaoboGu/rmk.git", branch = "feat/rynk" }
