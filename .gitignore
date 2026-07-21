@@ -26,12 +26,10 @@ __pycache__
 
 # Tauri
 src-tauri/target
-src-tauri/Cargo.lock
 src-tauri/gen
 
 # QEMU firmware build artifacts
 qemu/target
-qemu/Cargo.lock
 
 # Generated WASM (built by scripts/build-rynk-wasm.py in CI)
 src/rynk/wasm
