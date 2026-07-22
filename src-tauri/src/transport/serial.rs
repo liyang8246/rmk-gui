@@ -1,5 +1,6 @@
 use serde::Serialize;
 use tauri::State;
+use tokio_serial::{SerialPortBuilderExt, SerialPortType, available_ports};
 
 use super::{ConnectResponse, DeviceDescriptor, Sessions, spawn_tokio_io};
 
@@ -34,9 +35,7 @@ pub async fn rynk_discover_serial() -> Result<Vec<SerialDeviceInfo>, String> {
 
 #[tauri::command]
 pub async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Result<ConnectResponse, String> {
-    use tokio_serial::{ClearBuffer, SerialPort, SerialPortBuilderExt, SerialPortType, available_ports};
     let stream = tokio_serial::new(&path, 115_200).open_native_async().map_err(|e| e.to_string())?;
-    let _ = stream.clear(ClearBuffer::Input);
     let (read, write) = tokio::io::split(stream);
     let session = spawn_tokio_io(sessions, read, write).await;
 
