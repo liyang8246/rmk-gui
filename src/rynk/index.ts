@@ -1,7 +1,7 @@
 import type { TauriByteLink } from './tauri'
 import type { WebByteLink } from './web'
 import { isTauri } from '@tauri-apps/api/core'
-import { connectBle, connectSerial, connectTcp, discoverBle, discoverSerial, discoverTcp } from './tauri'
+import { closeAllSessions, connectBle, connectSerial, connectTcp, discoverBle, discoverSerial, discoverTcp } from './tauri'
 
 export type ByteLink = TauriByteLink | WebByteLink
 
@@ -27,6 +27,7 @@ export interface TransportInfo {
 
 export async function discover(): Promise<TransportInfo[]> {
   if (!isTauri()) return []
+  await closeAllSessions()
   const [serials, bles, tcps] = await Promise.all([
     discoverSerial().catch(() => []),
     discoverBle().catch(() => []),

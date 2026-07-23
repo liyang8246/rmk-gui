@@ -94,10 +94,23 @@ pub async fn rynk_recv(session: String, sessions: State<'_, Sessions>) -> Result
     }
 }
 
+async fn close_session(s: Session) {
+    let _ = s.cmd_tx.send(SessionCmd::Close).await;
+}
+
 #[tauri::command]
 pub async fn rynk_close(session: String, sessions: State<'_, Sessions>) -> Result<(), String> {
     if let Some(s) = sessions.lock().await.remove(&session) {
-        let _ = s.cmd_tx.send(SessionCmd::Close).await;
+        close_session(s).await;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn rynk_close_all(sessions: State<'_, Sessions>) -> Result<(), String> {
+    let drained: Vec<Session> = sessions.lock().await.drain().map(|(_, s)| s).collect();
+    for s in drained {
+        close_session(s).await;
     }
     Ok(())
 }

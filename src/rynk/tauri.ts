@@ -46,6 +46,10 @@ export async function connectBle(id: string, label: string): Promise<ConnectedDe
   return { link: new TauriByteLink(res.session, label), descriptor: res.descriptor, label }
 }
 
+export async function closeAllSessions(): Promise<void> {
+  await invoke('rynk_close_all')
+}
+
 export async function connectTcp(addr: string, label: string): Promise<ConnectedDevice> {
   const res = await invoke<ConnectResponse>('rynk_connect_tcp', { addr })
   return { link: new TauriByteLink(res.session, label), descriptor: res.descriptor, label }

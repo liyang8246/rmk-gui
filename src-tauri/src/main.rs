@@ -16,6 +16,7 @@ fn main() {
             serial::rynk_discover_serial, ble::rynk_discover_ble, tcp::rynk_discover_tcp,
             serial::rynk_connect_serial, ble::rynk_connect_ble, tcp::rynk_connect_tcp,
             transport::rynk_send, transport::rynk_recv, transport::rynk_close,
+            transport::rynk_close_all,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
