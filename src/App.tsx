@@ -1,50 +1,34 @@
-import type { ConnectedDevice } from './rynk'
-import { createSignal, Show } from 'solid-js'
+import { createSignal } from 'solid-js'
+import ToolsBar from './components/ToolsBar'
 import { discover } from './rynk'
 import { initKbdStore, kbdStore, resetKbdStore } from './store'
 
-const [connecting, setConnecting] = createSignal(false)
-
-async function testConnect() {
-  setConnecting(true)
-  try {
-    const devices = await discover()
-    if (!devices.length) {
-      console.warn('no devices')
-      return
-    }
-    console.warn('discovered:', devices.map(d => ({ kind: d.kind, label: d.label })))
-
-    const dev = devices[0]
-    console.warn('connecting to:', dev.label)
-
-    const connected: ConnectedDevice = await dev.connect()
-    console.warn('connected:', {
-      label: connected.label,
-      descriptor: connected.descriptor,
-    })
-
-    const result = await initKbdStore(connected)
-    result.match(
-      () => console.warn('init ok, store:', kbdStore),
-      e => console.warn('init failed:', e),
-    )
-  } catch (e) {
-    console.warn('connect error:', e)
-    await resetKbdStore()
-  } finally {
-    setConnecting(false)
-  }
-}
-
 function App() {
+  const [busy, setBusy] = createSignal(false)
+
+  async function connect() {
+    setBusy(true)
+    try {
+      const devices = await discover()
+      if (!devices.length) return
+      const connected = await devices[0].connect()
+      await initKbdStore(connected)
+      console.warn('init', kbdStore)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
-    <div class="flex h-screen w-screen flex-col items-center gap-4 p-8">
-      <button onClick={() => testConnect()} disabled={connecting()}>
-        <Show when={connecting()} fallback="Connect">Connecting...</Show>
+    <div class="
+      flex h-screen w-screen flex-col items-center gap-4 grid-canvas p-8
+    "
+    >
+      <ToolsBar />
+      <button onClick={connect} disabled={busy()}>
+        {busy() ? 'Connecting...' : 'Connect'}
       </button>
-      <button onClick={() => console.warn('store:', kbdStore)}>Show Store</button>
-      <button onClick={() => resetKbdStore().catch(e => console.warn('disconnect error:', e))}>Disconnect</button>
+      <button onClick={() => resetKbdStore().catch(() => {})}>Disconnect</button>
     </div>
   )
 }
