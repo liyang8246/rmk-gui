@@ -2,6 +2,7 @@ import type { Component } from 'solid-js'
 import { Icon } from '@iconify-icon/solid'
 import { createSignal } from 'solid-js'
 import { useModal } from '~/hooks/useModal'
+import { useToast } from '~/hooks/useToast'
 
 const ToolButton: Component<{
   name: string
@@ -48,6 +49,20 @@ const ToolsBar: Component = () => {
     ),
     { title: '设置', showCloseButton: true },
   )
+  const firmwareToast = useToast(
+    props => (
+      <div class="flex items-center gap-2">
+        <span class="text-sm">固件已就绪</span>
+        <button
+          class="cursor-pointer text-xs text-primary"
+          onClick={() => props.close()}
+        >
+          知道了
+        </button>
+      </div>
+    ),
+    { type: 'success' },
+  )
 
   return (
     <div class="
@@ -59,7 +74,7 @@ const ToolsBar: Component = () => {
       <ToolButton name="Macros" icon="lucide:zap" onClick={() => {}} />
       <ToolButton name="Combos" icon="lucide:combine" onClick={() => {}} />
       <ToolButton name="Wireless" icon="lucide:bluetooth" onClick={() => {}} />
-      <ToolButton name="Firmware" icon="lucide:cpu" onClick={() => {}} />
+      <ToolButton name="Firmware" icon="lucide:cpu" onClick={() => firmwareToast()} />
       <ToolButton name="Setting" icon="lucide:settings" onClick={() => settingsModal.open()} />
     </div>
   )

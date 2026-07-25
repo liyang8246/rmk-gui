@@ -1,6 +1,8 @@
 import type { Component } from 'solid-js'
 import { onMount } from 'solid-js'
 import ToolsBar from './components/ToolsBar'
+import { ModalProvider } from './hooks/useModal'
+import { ToastProvider } from './hooks/useToast'
 import { discover } from './rynk'
 import { initKbdStore, kbdStore } from './store'
 
@@ -20,6 +22,8 @@ const App: Component = () => {
     >
       <ToolsBar />
     </div>
+    <ModalProvider />
+    <ToastProvider />
   </>
 }
 
