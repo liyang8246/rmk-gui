@@ -9,12 +9,12 @@ const ToolButton: Component<{
   return (
     <button
       class="
-        flex items-center gap-2 rounded-lg px-3 py-2 transition-colors
-        hover:bg-base-200
+        flex cursor-pointer items-center gap-1 rounded-xl p-2 text-base-content
+        hover:bg-base-300
       "
       onClick={() => props.onClick()}
     >
-      <Icon icon={props.icon} class="text-lg" />
+      <Icon icon={props.icon} />
       <span class="text-sm">{props.name}</span>
     </button>
   )
@@ -23,12 +23,16 @@ const ToolButton: Component<{
 const ToolsBar: Component = () => {
   return (
     <div class="
-      flex h-12 w-fit items-center rounded-xl bg-base-100 ring ring-base-300
+      flex h-12 w-fit items-center gap-1 rounded-xl bg-base-100 px-2 py-1
+      shadow-lg ring ring-base-300
     "
     >
-      <ToolButton name="选择" icon="lucide:mouse-pointer-2" onClick={() => {}} />
-      <ToolButton name="画笔" icon="lucide:pencil" onClick={() => {}} />
-      <ToolButton name="橡皮" icon="lucide:eraser" onClick={() => {}} />
+      <ToolButton name="Layers" icon="lucide:layers" onClick={() => {}} />
+      <ToolButton name="Macros" icon="lucide:zap" onClick={() => {}} />
+      <ToolButton name="Combos" icon="lucide:combine" onClick={() => {}} />
+      <ToolButton name="Wireless" icon="lucide:bluetooth" onClick={() => {}} />
+      <ToolButton name="Firmware" icon="lucide:cpu" onClick={() => {}} />
+      <ToolButton name="Setting" icon="lucide:settings" onClick={() => {}} />
     </div>
   )
 }
