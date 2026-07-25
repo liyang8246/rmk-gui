@@ -1,4 +1,5 @@
 import process from 'node:process'
+import { solidInheritAttrs } from '@liyang8246/solid-inheritattrs'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
@@ -6,7 +7,7 @@ import solid from 'vite-plugin-solid'
 const host = process.env.TAURI_DEV_HOST
 
 export default defineConfig({
-  plugins: [tailwindcss(), solid()],
+  plugins: [tailwindcss(), solidInheritAttrs(), solid()],
 
   clearScreen: false,
   server: {
