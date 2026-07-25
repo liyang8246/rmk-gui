@@ -1,3 +1,5 @@
+minimumReleaseAgeExclude:
+  - '@liyang8246/solid-inheritattrs@0.2.0 || 0.2.1 || 0.3.0'
 shellEmulator: true
 
 trustPolicy: low
@@ -6,6 +8,3 @@ allowBuilds:
   '@parcel/watcher': true
   esbuild: true
   unrs-resolver: true
-
-minimumReleaseAgeExclude:
-  - '@liyang8246/solid-inheritattrs@0.2.0 || 0.2.1 || 0.3.0'

@@ -21,6 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ark-ui/solid": "^5.37.1",
     "@iconify-icon/solid": "^3.0.3",
     "@tauri-apps/api": "^2.11.1",
     "neverthrow": "^8.2.0",
