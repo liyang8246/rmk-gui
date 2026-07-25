@@ -1,5 +1,7 @@
 import type { Component } from 'solid-js'
 import { Icon } from '@iconify-icon/solid'
+import { createSignal } from 'solid-js'
+import { useModal } from '~/hooks/useModal'
 
 const ToolButton: Component<{
   name: string
@@ -21,6 +23,32 @@ const ToolButton: Component<{
 }
 
 const ToolsBar: Component = () => {
+  const [count, setCount] = createSignal(0)
+  const settingsModal = useModal(
+    props => (
+      <div class="flex gap-2 p-2">
+        <button
+          class="
+            cursor-pointer rounded-lg bg-primary px-3 py-1 text-primary-content
+          "
+          onClick={() => setCount(c => c + 1)}
+        >
+          +1
+        </button>
+        <span class="text-sm">
+          {count()}
+        </span>
+        <button
+          class="cursor-pointer rounded-lg px-3 py-1 ring ring-base-300"
+          onClick={() => props.close()}
+        >
+          Close
+        </button>
+      </div>
+    ),
+    { title: '设置', showCloseButton: true },
+  )
+
   return (
     <div class="
       flex h-12 w-fit items-center gap-1 rounded-xl bg-base-100 px-2 py-1
@@ -32,7 +60,7 @@ const ToolsBar: Component = () => {
       <ToolButton name="Combos" icon="lucide:combine" onClick={() => {}} />
       <ToolButton name="Wireless" icon="lucide:bluetooth" onClick={() => {}} />
       <ToolButton name="Firmware" icon="lucide:cpu" onClick={() => {}} />
-      <ToolButton name="Setting" icon="lucide:settings" onClick={() => {}} />
+      <ToolButton name="Setting" icon="lucide:settings" onClick={() => settingsModal.open()} />
     </div>
   )
 }
