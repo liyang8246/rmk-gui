@@ -37,6 +37,8 @@ export default antfu(
     rules: {
       'antfu/if-newline': 'off',
       'style/brace-style': 'off',
+      'style/jsx-wrap-multilines': 'off',
+      'style/jsx-closing-tag-location': 'off',
     },
   },
 )
