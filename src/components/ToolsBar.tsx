@@ -50,17 +50,9 @@ const ToolsBar: Component = () => {
     { title: '设置', showCloseButton: true },
   )
   const firmwareToast = useToast(
-    props => (
-      <div class="flex items-center gap-2">
-        <span class="text-sm">固件已就绪</span>
-        <button
-          class="cursor-pointer text-xs text-primary"
-          onClick={() => props.close()}
-        >
-          知道了
-        </button>
-      </div>
-    ),
+    () => <>
+      <p class="text-sm">固件已就绪</p>
+    </>,
     { type: 'success' },
   )
 

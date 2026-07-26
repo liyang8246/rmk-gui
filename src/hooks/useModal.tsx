@@ -1,7 +1,7 @@
 import type { Accessor, Component, JSX } from 'solid-js'
 import { Dialog } from '@ark-ui/solid/dialog'
+import { Icon } from '@iconify-icon/solid'
 import { createSignal, For, onCleanup, Show } from 'solid-js'
-import { Portal } from 'solid-js/web'
 
 export type ModalContent = (props: { close: () => void }) => JSX.Element
 
@@ -27,6 +27,7 @@ interface ModalInstance {
 let nextId = 0
 const [instances, setInstances] = createSignal<ModalInstance[]>([])
 
+// Top-level sibling of #root; no transform/overflow ancestors
 export const ModalProvider: Component = () => {
   return (
     <For each={instances()}>
@@ -37,23 +38,23 @@ export const ModalProvider: Component = () => {
           lazyMount
           unmountOnExit
         >
-          <Portal>
-            <Dialog.Backdrop class="fixed inset-0 bg-black/40 backdrop-blur-sm" />
-            <Dialog.Positioner class="
-              fixed inset-0 flex items-center justify-center
-            "
-            >
-              <Dialog.Content class="bg-base-100 p-6">
-                <Show when={inst.options.title !== undefined}>
-                  <Dialog.Title>{inst.options.title}</Dialog.Title>
-                </Show>
-                <Show when={inst.options.showCloseButton ?? true}>
-                  <Dialog.CloseTrigger aria-label="Close">×</Dialog.CloseTrigger>
-                </Show>
-                {inst.content({ close: () => inst.setOpen(false) })}
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
+          <Dialog.Backdrop class="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+          <Dialog.Positioner class="
+            fixed inset-0 flex items-center justify-center
+          "
+          >
+            <Dialog.Content class="bg-base-100 p-6">
+              <Show when={inst.options.title !== undefined}>
+                <Dialog.Title>{inst.options.title}</Dialog.Title>
+              </Show>
+              <Show when={inst.options.showCloseButton ?? true}>
+                <Dialog.CloseTrigger aria-label="Close">
+                  <Icon icon="lucide:x" />
+                </Dialog.CloseTrigger>
+              </Show>
+              {inst.content({ close: () => inst.setOpen(false) })}
+            </Dialog.Content>
+          </Dialog.Positioner>
         </Dialog.Root>
       )}
     </For>
