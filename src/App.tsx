@@ -1,5 +1,7 @@
 import type { Component } from 'solid-js'
 import { onMount } from 'solid-js'
+import Keyboard from './components/Keyboard'
+import StateBar from './components/StateBar'
 import ToolsBar from './components/ToolsBar'
 import { ModalProvider } from './hooks/useModal'
 import { ToastProvider } from './hooks/useToast'
@@ -21,6 +23,10 @@ const App: Component = () => {
     "
     >
       <ToolsBar />
+      <div class="w-full flex-1 overflow-auto">
+        <Keyboard />
+      </div>
+      <StateBar />
     </div>
     <ModalProvider />
     <ToastProvider />
