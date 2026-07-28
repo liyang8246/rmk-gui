@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import ToolButton from '~/components/ToolButton.vue'
+import { openPage } from '~/composables/usePageModal'
+import CounterPage from '~/views/CounterPage.vue'
 
 function noop() {}
 </script>
@@ -16,6 +18,6 @@ function noop() {}
     <ToolButton name="Combos" icon="lucide:combine" :on-click="noop" />
     <ToolButton name="Wireless" icon="lucide:bluetooth" :on-click="noop" />
     <ToolButton name="Firmware" icon="lucide:cpu" :on-click="noop" />
-    <ToolButton name="Setting" icon="lucide:settings" :on-click="noop" />
+    <ToolButton name="Setting" icon="lucide:settings" :on-click="() => openPage(CounterPage)" />
   </div>
 </template>

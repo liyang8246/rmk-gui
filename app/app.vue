@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import Keyboard from '~/components/Keyboard.vue'
+import PageModalStack from '~/components/PageModalStack.vue'
 import StateBar from '~/components/StateBar.vue'
 import ToolsBar from '~/components/ToolsBar.vue'
 import { discover } from '~/rynk'
@@ -27,4 +28,5 @@ onMounted(async () => {
     </div>
     <StateBar />
   </div>
+  <PageModalStack />
 </template>
