@@ -4,14 +4,14 @@ import betterTailwindcss from 'eslint-plugin-better-tailwindcss'
 export default antfu(
   {
     type: 'app',
-    solid: true,
+    vue: true,
   },
   {
     ...betterTailwindcss.configs.recommended,
-    files: ['**/*.{tsx,ts,jsx,js}'],
+    files: ['**/*.{tsx,ts,jsx,js,vue}'],
     settings: {
       'better-tailwindcss': {
-        entryPoint: 'src/assets/css/main.css',
+        entryPoint: 'app/assets/css/main.css',
       },
     },
   },
@@ -24,12 +24,9 @@ export default antfu(
   },
   {
     name: 'ignore-generated-wasm',
-    ignores: ['src/rynk/wasm/**'],
+    ignores: ['app/rynk/wasm/**'],
   },
   {
-    // Docs contain illustrative code snippets (shorthand methods, top-level
-    // return, single-line loops) that are valid as prose examples but not as
-    // standalone programs. SUMMARY.md uses multiple H1 by mdBook convention.
     name: 'ignore-docs',
     ignores: ['docs/**/*'],
   },
@@ -37,8 +34,6 @@ export default antfu(
     rules: {
       'antfu/if-newline': 'off',
       'style/brace-style': 'off',
-      'style/jsx-wrap-multilines': 'off',
-      'style/jsx-closing-tag-location': 'off',
     },
   },
 )

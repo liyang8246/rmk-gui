@@ -14,7 +14,7 @@ async function probeVersion(link: JsByteLink) {
     if (!c.length) throw new Error('link closed')
     buf.push(...c)
   }
-  return { major: buf[6], minor: buf[7] }
+  return { major: buf[6]!, minor: buf[7]! }
 }
 
 async function loadCore(major: number) {

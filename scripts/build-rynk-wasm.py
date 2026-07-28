@@ -3,7 +3,7 @@ import shutil, subprocess, tempfile
 from pathlib import Path
 
 URL, BRANCH = "https://github.com/HaoboGu/rmk.git", "feat/rynk"
-WASM_OUT = Path(__file__).resolve().parent.parent / "src" / "rynk" / "wasm"
+WASM_OUT = Path(__file__).resolve().parent.parent / "app" / "rynk" / "wasm"
 
 work = Path(tempfile.mkdtemp(prefix="rmk-wasm-"))
 subprocess.run(["git", "clone", "--depth", "1", "--branch", BRANCH, URL, str(work)], check=True)

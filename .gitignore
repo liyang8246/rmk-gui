@@ -32,7 +32,7 @@ src-tauri/gen
 qemu/target
 
 # Generated WASM (built by scripts/build-rynk-wasm.py in CI)
-src/rynk/wasm
+app/rynk/wasm
 
 # Env
 .env

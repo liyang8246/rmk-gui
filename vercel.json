@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "vite",
+  "framework": "nuxt",
   "buildCommand": "pnpm build:web",
   "installCommand": "true",
-  "outputDirectory": "dist",
+  "outputDirectory": ".output/public",
   "git": {
     "deploymentEnabled": false
   }

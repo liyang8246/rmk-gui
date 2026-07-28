@@ -29,7 +29,7 @@ export function toKeyboardError(e: unknown): KeyboardError {
     return { type: 'transport', cause: e }
   }
   const reject = e.name === 'Rejected' ? REJECTED_RE.exec(e.message) : null
-  if (reject && isRynkError(reject[1])) {
+  if (reject && isRynkError(reject[1]!)) {
     return { type: 'rynk', code: reject[1] }
   }
   if (isRynkError(e.message)) {

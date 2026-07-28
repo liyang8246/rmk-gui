@@ -3,35 +3,35 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev:web": "vite",
+    "dev:web": "nuxt dev",
     "dev:tauri": "tauri dev",
-    "build:web": "vite build",
+    "build:web": "nuxt generate",
     "build:tauri": "tauri build",
     "build:wasm": "python3 scripts/build-rynk-wasm.py",
     "postinstall": "pnpm build:wasm",
     "qemu": "node qemu/run.mjs",
-    "generate": "vite build",
-    "preview": "vite preview",
+    "generate": "nuxt generate",
     "lint": "run-s lint:ts lint:rs",
     "lint:ts": "eslint .",
     "lint:rs": "cd src-tauri && cargo clippy --all-targets -- -D warnings",
     "lint:fix": "run-s lint:fix:ts lint:fix:rs",
     "lint:fix:ts": "eslint . --fix",
     "lint:fix:rs": "cd src-tauri && cargo fmt",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@ark-ui/solid": "^5.37.1",
-    "@iconify-icon/solid": "^3.0.3",
+    "@iconify/vue": "^5.0.1",
+    "@pinia/nuxt": "^1.0.1",
     "@tauri-apps/api": "^2.11.1",
     "neverthrow": "^8.2.0",
-    "solid-js": "^1.9.14",
-    "ts-pattern": "^5.9.0"
+    "pinia": "^4.0.2",
+    "reka-ui": "^2.10.1",
+    "ts-pattern": "^5.9.0",
+    "vue": "^3.5.13"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.2.0",
     "@iconify-json/lucide": "^1.2.119",
-    "@liyang8246/solid-inheritattrs": "^0.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/cli": "^2.11.4",
     "@types/node": "^26.1.1",
@@ -39,11 +39,10 @@
     "esbuild": "^0.28.1",
     "eslint": "^10.7.0",
     "eslint-plugin-better-tailwindcss": "^4.7.0",
-    "eslint-plugin-solid": "^0.14.5",
     "npm-run-all": "^4.1.5",
+    "nuxt": "^4.5.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.1.5",
-    "vite-plugin-solid": "^2.11.13"
+    "vue-tsc": "^3.3.8"
   }
 }
