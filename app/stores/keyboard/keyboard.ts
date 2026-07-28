@@ -14,7 +14,7 @@ import type {
 } from '../../rynk'
 import type { KeyboardError } from './errors'
 import type { KeyboardConfig, KeyboardDevice, KeyboardStatus, KeyboardStore } from './types'
-import { err, ResultAsync } from 'neverthrow'
+import { err, errAsync, ResultAsync } from 'neverthrow'
 import { defineStore } from 'pinia'
 import { match, P } from 'ts-pattern'
 import { ref } from 'vue'
@@ -48,19 +48,21 @@ function enqueue<T>(
   return new ResultAsync(result)
 }
 
-// Optimistic update: push → call → undo (Err).
-interface Mutation {
-  push: () => void
+interface Mutation<T> {
+  push: () => T
   call: (c: RynkClient) => Promise<void>
-  undo: () => void
+  undo: (snapshot: T) => void
 }
 
-function runMutation(m: Mutation): ResultAsync<void, KeyboardError> {
-  const client = session.client
-  if (!client) throw new Error('not connected')
-  m.push()
-  const wrapped = ResultAsync.fromThrowable(() => m.call(client), toKeyboardError)
-  return enqueue(() => wrapped().orTee(m.undo))
+// push/call/undo all run inside enqueue so a failed undo can't clobber a later push.
+function runMutation<T>(m: Mutation<T>): ResultAsync<void, KeyboardError> {
+  return enqueue(() => {
+    const client = session.client
+    if (!client) throw new Error('not connected')
+    const snapshot = m.push()
+    return ResultAsync.fromThrowable(() => m.call(client), toKeyboardError)()
+      .orTee(() => m.undo(snapshot))
+  })
 }
 
 async function fetchKeymap(client: RynkClient, caps: DeviceCapabilities): Promise<KeyAction[][][]> {
@@ -232,17 +234,30 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     await connected?.link?.close()
   }
 
+  const invalid = (cause: string): ResultAsync<void, KeyboardError> =>
+    errAsync<void, KeyboardError>({ type: 'invalid', cause })
+
   function setKey(
     layer: number,
     row: number,
     col: number,
     action: KeyAction,
   ): ResultAsync<void, KeyboardError> {
-    const snapshot = config.value!.keymap[layer]![row]![col]!
+    if (!config.value) return invalid('not connected')
+    const layerArr = config.value!.keymap[layer]
+    if (!layerArr) return invalid(`layer ${layer} out of range`)
+    const rowArr = layerArr[row]
+    if (!rowArr) return invalid(`row ${row} out of range`)
+    if (col < 0 || col >= rowArr.length) return invalid(`col ${col} out of range`)
+
     return runMutation({
-      push: () => { config.value!.keymap[layer]![row]![col] = action },
+      push: () => {
+        const snapshot = config.value!.keymap[layer]![row]![col]!
+        config.value!.keymap[layer]![row]![col] = action
+        return snapshot
+      },
       call: c => c.set_key(layer, row, col, action),
-      undo: () => { if (config.value) config.value.keymap[layer]![row]![col] = snapshot },
+      undo: (snapshot) => { if (config.value) config.value.keymap[layer]![row]![col] = snapshot },
     })
   }
 
@@ -251,52 +266,83 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     layer: number,
     action: EncoderAction,
   ): ResultAsync<void, KeyboardError> {
-    const snapshot = config.value!.encoders[encoderId]![layer]!
+    if (!config.value) return invalid('not connected')
+    const enc = config.value!.encoders[encoderId]
+    if (!enc) return invalid(`encoder ${encoderId} out of range`)
+    if (layer < 0 || layer >= enc.length) return invalid(`layer ${layer} out of range`)
+
     return runMutation({
-      push: () => { config.value!.encoders[encoderId]![layer] = action },
+      push: () => {
+        const snapshot = config.value!.encoders[encoderId]![layer]!
+        config.value!.encoders[encoderId]![layer] = action
+        return snapshot
+      },
       call: c => c.set_encoder(encoderId, layer, action),
-      undo: () => { if (config.value) config.value.encoders[encoderId]![layer] = snapshot },
+      undo: (snapshot) => { if (config.value) config.value.encoders[encoderId]![layer] = snapshot },
     })
   }
 
   function setCombo(index: number, combo: Combo): ResultAsync<void, KeyboardError> {
-    const snapshot = config.value!.combos[index]!
+    if (!config.value) return invalid('not connected')
+    if (index < 0 || index >= config.value!.combos.length) return invalid(`combo ${index} out of range`)
+
     return runMutation({
-      push: () => { config.value!.combos[index] = combo },
+      push: () => {
+        const snapshot = config.value!.combos[index]!
+        config.value!.combos[index] = combo
+        return snapshot
+      },
       call: c => c.set_combo(index, combo),
-      undo: () => { if (config.value) config.value.combos[index] = snapshot },
+      undo: (snapshot) => { if (config.value) config.value.combos[index] = snapshot },
     })
   }
 
   function setMorse(index: number, morse: Morse): ResultAsync<void, KeyboardError> {
-    const snapshot = config.value!.morses[index]!
+    if (!config.value) return invalid('not connected')
+    if (index < 0 || index >= config.value!.morses.length) return invalid(`morse ${index} out of range`)
+
     return runMutation({
-      push: () => { config.value!.morses[index] = morse },
+      push: () => {
+        const snapshot = config.value!.morses[index]!
+        config.value!.morses[index] = morse
+        return snapshot
+      },
       call: c => c.set_morse(index, morse),
-      undo: () => { if (config.value) config.value.morses[index] = snapshot },
+      undo: (snapshot) => { if (config.value) config.value.morses[index] = snapshot },
     })
   }
 
   function setFork(index: number, fork: Fork): ResultAsync<void, KeyboardError> {
-    const snapshot = config.value!.forks[index]!
+    if (!config.value) return invalid('not connected')
+    if (index < 0 || index >= config.value!.forks.length) return invalid(`fork ${index} out of range`)
+
     return runMutation({
-      push: () => { config.value!.forks[index] = fork },
+      push: () => {
+        const snapshot = config.value!.forks[index]!
+        config.value!.forks[index] = fork
+        return snapshot
+      },
       call: c => c.set_fork(index, fork),
-      undo: () => { if (config.value) config.value.forks[index] = snapshot },
+      undo: (snapshot) => { if (config.value) config.value.forks[index] = snapshot },
     })
   }
 
   function setMacro(offset: number, data: MacroData): ResultAsync<void, KeyboardError> {
+    if (!config.value) return invalid('not connected')
     const bytes = data.data
-    const snapshot = bytes.map((_, i) => config.value!.macros[offset + i]!)
+    if (offset < 0 || offset + bytes.length > config.value!.macros.length)
+      return invalid(`macro offset ${offset}+${bytes.length} out of range`)
+
     return runMutation({
       push: () => {
+        const snapshot = bytes.map((_, i) => config.value!.macros[offset + i]!)
         bytes.forEach((b, i) => {
           config.value!.macros[offset + i] = b
         })
+        return snapshot
       },
       call: c => c.set_macro(offset, data),
-      undo: () => {
+      undo: (snapshot) => {
         if (!config.value) return
         snapshot.forEach((old, i) => {
           config.value!.macros[offset + i] = old
@@ -306,20 +352,32 @@ export const useKeyboardStore = defineStore('keyboard', () => {
   }
 
   function setBehavior(behavior: BehaviorConfig): ResultAsync<void, KeyboardError> {
-    const snapshot = config.value!.behavior
+    if (!config.value) return invalid('not connected')
+
     return runMutation({
-      push: () => { config.value!.behavior = behavior },
+      push: () => {
+        const snapshot = config.value!.behavior
+        config.value!.behavior = behavior
+        return snapshot
+      },
       call: c => c.set_behavior(behavior),
-      undo: () => { if (config.value) config.value.behavior = snapshot },
+      undo: (snapshot) => { if (config.value) config.value.behavior = snapshot },
     })
   }
 
   function setDefaultLayer(layer: number): ResultAsync<void, KeyboardError> {
-    const snapshot = config.value!.defaultLayer
+    if (!config.value) return invalid('not connected')
+    if (layer < 0 || layer >= config.value!.keymap.length)
+      return invalid(`default layer ${layer} out of range`)
+
     return runMutation({
-      push: () => { config.value!.defaultLayer = layer },
+      push: () => {
+        const snapshot = config.value!.defaultLayer
+        config.value!.defaultLayer = layer
+        return snapshot
+      },
       call: c => c.set_default_layer(layer),
-      undo: () => { if (config.value) config.value.defaultLayer = snapshot },
+      undo: (snapshot) => { if (config.value) config.value.defaultLayer = snapshot },
     })
   }
 

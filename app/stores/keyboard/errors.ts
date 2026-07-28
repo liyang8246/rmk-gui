@@ -3,6 +3,7 @@ import type { RynkError } from '../../rynk'
 export type KeyboardError
   = | { type: 'rynk', code: RynkError }
     | { type: 'transport', cause: unknown }
+    | { type: 'invalid', cause: string }
     | { type: 'unknown', cause: unknown }
 
 const RYNK_ERROR_CODES = [
