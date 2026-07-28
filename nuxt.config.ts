@@ -4,8 +4,20 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   ssr: false,
-  modules: ['@pinia/nuxt'],
+  modules: [
+    '@pinia/nuxt',
+    'reka-ui/nuxt',
+    '@nuxt/icon',
+    '@nuxt/hints',
+    '@vueuse/nuxt',
+    '@nuxt/eslint',
+  ],
   devtools: { enabled: true },
+  eslint: {
+    config: {
+      standalone: false,
+    },
+  },
   imports: { autoImport: false },
   components: { dirs: [] },
   nitro: { imports: false },

@@ -10,8 +10,7 @@ const kbdStore = useKeyboardStore()
 
 onMounted(async () => {
   const devices = await discover()
-  if (!devices.length)
-    return
+  if (!devices.length) return
   const connected = await devices[0]!.connect()
   await kbdStore.initStore(connected)
   console.warn('init', kbdStore)

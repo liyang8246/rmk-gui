@@ -4,9 +4,12 @@ minimumReleaseAgeExclude:
   - '@nuxt/schema@4.5.1'
   - '@nuxt/vite-builder@4.5.1'
   - nuxt@4.5.1
+  - '@nuxt/icon@2.4.1'
 shellEmulator: true
 
-trustPolicy: low
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  - 'semver@5.7.2 || 6.3.1'
 
 allowBuilds:
   '@parcel/watcher': true
