@@ -1,25 +1,22 @@
 import antfu from '@antfu/eslint-config'
 import betterTailwindcss from 'eslint-plugin-better-tailwindcss'
-import withNuxt from './.nuxt/eslint.config.mjs'
 
-export default withNuxt(
-  antfu(
-    {
-      type: 'app',
-      vue: true,
-    },
-    {
-      ...betterTailwindcss.configs.recommended,
-      settings: {
-        'better-tailwindcss': {
-          entryPoint: 'app/assets/css/main.css',
-        },
+export default antfu(
+  {
+    type: 'app',
+    svelte: true,
+  },
+  {
+    ...betterTailwindcss.configs.recommended,
+    settings: {
+      'better-tailwindcss': {
+        entryPoint: 'src/assets/css/main.css',
       },
     },
-  ),
+  },
   {
     name: 'ignore-docs',
-    ignores: ['docs/**/*'],
+    ignores: ['docs/**/*', 'src-tauri/**', 'qemu/**', '.slim/**', 'dist/**', 'src/rynk/wasm/**'],
   },
   {
     name: 'global-rule-overrides',

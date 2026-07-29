@@ -1,18 +1,13 @@
-minimumReleaseAgeExclude:
-  - '@nuxt/kit@4.5.1'
-  - '@nuxt/nitro-server@4.5.1'
-  - '@nuxt/schema@4.5.1'
-  - '@nuxt/vite-builder@4.5.1'
-  - nuxt@4.5.1
-  - '@nuxt/icon@2.4.1'
+minimumReleaseAgeExclude: []
 shellEmulator: true
 
 trustPolicy: no-downgrade
 trustPolicyExclude:
   - 'semver@5.7.2 || 6.3.1'
+  - chokidar@4.0.3
 
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
   unrs-resolver: true
-  vue-demi: true
+  vue-demi: set this to true or false

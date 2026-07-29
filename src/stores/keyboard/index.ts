@@ -1,6 +1,6 @@
 export { toKeyboardError } from './errors'
 export type { KeyboardError } from './errors'
-export { useKeyboardStore } from './keyboard'
+export { keyboardStore } from './keyboard.svelte'
 export type {
   ConnectionPhase,
   ConnectionState,
