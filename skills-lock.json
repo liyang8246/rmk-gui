@@ -13,17 +13,17 @@
       "skillPath": "skills/neverthrow/SKILL.md",
       "computedHash": "18668704cdd47f10d82582189b02e1f537d55863e3dc85af75281424d70ac4f3"
     },
-    "nushell": {
-      "source": "liyang8246/skills",
+    "svelte-code-writer": {
+      "source": "sveltejs/ai-tools",
       "sourceType": "github",
-      "skillPath": "skills/nushell/SKILL.md",
-      "computedHash": "ce494a683928fab7748280ff11a31837a9135d8057234a3986d5be6604891f28"
+      "skillPath": "plugins/claude/svelte/skills/svelte-code-writer/SKILL.md",
+      "computedHash": "6f78193a79906175595ce8e4ca8d726da350eb99035a9544b6553620df5673a1"
     },
-    "solidjs": {
-      "source": "liyang8246/skills",
+    "svelte-core-bestpractices": {
+      "source": "sveltejs/ai-tools",
       "sourceType": "github",
-      "skillPath": "skills/solidjs/SKILL.md",
-      "computedHash": "065c7bbbded8c71d9eed277463e709d881c668a97e67bf517e4188f86ff1b0ef"
+      "skillPath": "plugins/claude/svelte/skills/svelte-core-bestpractices/SKILL.md",
+      "computedHash": "98b4ee346ac45e13740c9f3353b604d5c6e844c96cdc8867052fa961cbdb525d"
     }
   }
 }
