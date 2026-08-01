@@ -31,6 +31,9 @@ src-tauri/gen
 # QEMU firmware build artifacts
 qemu/target
 
+# Local cargo [patch] pointing rmk deps at a developer's own fork
+/.cargo/config.toml
+
 # Generated WASM (built by scripts/build-rynk-wasm.py in CI)
 src/rynk/wasm
 
