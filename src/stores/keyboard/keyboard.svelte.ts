@@ -24,6 +24,8 @@ const session = {
   connected: null as ConnectedDevice | null,
   chain: Promise.resolve() as Promise<void>,
   topicsReady: false,
+  // Held so teardown can await the parked next_topic() before freeing the client.
+  topicLoop: null as Promise<void> | null,
 }
 
 function enqueue<T>(
@@ -175,7 +177,7 @@ class KeyboardStoreClass {
 
       const { client } = await connectClient(connected.link)
       session.client = client
-      void this.startTopicLoop(client)
+      session.topicLoop = this.startTopicLoop(client)
 
       const version = await client.get_version()
       const info = await client.get_device_info()
@@ -226,16 +228,21 @@ class KeyboardStoreClass {
   async resetStore(): Promise<void> {
     const connected = session.connected
     const client = session.client
+    const topicLoop = session.topicLoop
     session.connected = null
     session.client = null
+    session.topicLoop = null
     session.chain = Promise.resolve()
     session.topicsReady = false
     this.#connection = null
     this.#device = null
     this.#config = null
     this.#status = null
-    client?.free()
+    // Order matters: a parked next_topic() borrows the client, so free() must
+    // wait for the link EOF to unwind the topic loop or wasm-bindgen throws.
     await connected?.link?.close()
+    await topicLoop
+    client?.free()
   }
 
   setKey(
@@ -259,6 +266,69 @@ class KeyboardStoreClass {
       },
       call: c => c.set_key(layer, row, col, action),
       undo: (snapshot) => { if (this.#config) this.#config.keymap[layer]![row]![col] = snapshot },
+    })
+  }
+
+  /// Replace the whole keymap in one paged write instead of layers×rows×cols
+  /// round trips. Shape must match the device geometry exactly.
+  setKeymap(keymap: KeyAction[][][]): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!this.#config || !caps) return invalid('not connected')
+    if (keymap.length !== caps.num_layers)
+      return invalid(`keymap: ${keymap.length} layers, expected ${caps.num_layers}`)
+    for (const [l, rows] of keymap.entries()) {
+      if (rows.length !== caps.num_rows)
+        return invalid(`keymap layer ${l}: ${rows.length} rows, expected ${caps.num_rows}`)
+      for (const [r, row] of rows.entries()) {
+        if (row.length !== caps.num_cols)
+          return invalid(`keymap layer ${l} row ${r}: ${row.length} cols, expected ${caps.num_cols}`)
+      }
+    }
+    // Layer-major, row-major — the order read_all_keymap returns.
+    const flat = keymap.flat().flat()
+
+    return runMutation({
+      push: () => {
+        const snapshot = this.#config!.keymap
+        this.#config!.keymap = keymap
+        return snapshot
+      },
+      call: c => c.write_all_keymap(flat),
+      undo: (snapshot) => { if (this.#config) this.#config.keymap = snapshot },
+    })
+  }
+
+  setCombos(combos: Combo[]): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!this.#config || !caps) return invalid('not connected')
+    if (combos.length !== caps.max_combos)
+      return invalid(`combos: ${combos.length}, expected ${caps.max_combos}`)
+
+    return runMutation({
+      push: () => {
+        const snapshot = this.#config!.combos
+        this.#config!.combos = combos
+        return snapshot
+      },
+      call: c => c.write_all_combos(combos),
+      undo: (snapshot) => { if (this.#config) this.#config.combos = snapshot },
+    })
+  }
+
+  setMorses(morses: Morse[]): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!this.#config || !caps) return invalid('not connected')
+    if (morses.length !== caps.max_morse)
+      return invalid(`morses: ${morses.length}, expected ${caps.max_morse}`)
+
+    return runMutation({
+      push: () => {
+        const snapshot = this.#config!.morses
+        this.#config!.morses = morses
+        return snapshot
+      },
+      call: c => c.write_all_morses(morses),
+      undo: (snapshot) => { if (this.#config) this.#config.morses = snapshot },
     })
   }
 
