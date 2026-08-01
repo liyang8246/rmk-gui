@@ -8,8 +8,11 @@ import { fileURLToPath } from 'node:url'
 const dir = dirname(fileURLToPath(import.meta.url))
 const elf = join(dir, 'target/riscv32imac-unknown-none-elf/release/rmk-qemu-riscv')
 
+// Extra args go to cargo, e.g. `pnpm qemu --features locked`.
+const cargoArgs = ['build', '--release', ...process.argv.slice(2)]
+
 await new Promise((r, f) =>
-  spawn('cargo', ['build', '--release'], { cwd: dir, stdio: 'inherit' })
+  spawn('cargo', cargoArgs, { cwd: dir, stdio: 'inherit' })
     .on('exit', c => (c ? f(new Error(`cargo exited ${c}`)) : r()))
     .on('error', f))
 

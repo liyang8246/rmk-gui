@@ -14,6 +14,11 @@ name = "rmk-qemu-riscv"
 test = false
 bench = false
 
+# Start locked with an unlock challenge instead of `insecure`, for exercising
+# the host's unlock ceremony.
+[features]
+locked = []
+
 [dependencies]
 rmk = { git = "https://github.com/rmk-rs/rmk.git", branch = "main", default-features = false, features = [ "rynk" ] }
 embassy-executor = { version = "0.10", features = [

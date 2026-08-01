@@ -11,7 +11,7 @@ use embedded_io_async::{Read, Write};
 use panic_halt as _;
 use rmk::config::{BehaviorConfig, LockConfig, PositionalConfig, RmkConfig};
 use rmk::keymap::KeymapData;
-use rmk::types::action::KeyAction;
+use rmk::types::action::{EncoderAction, KeyAction};
 use rmk::types::fork::{Fork, StateBits};
 use rmk::types::modifier::ModifierCombination;
 use rmk::types::morse::{Morse, MorseProfile};
@@ -67,6 +67,33 @@ impl Write for Uart {
 const COL: usize = 12;
 const ROW: usize = 4;
 const NUM_LAYER: usize = 2;
+const NUM_ENCODER: usize = 2;
+
+const DEFAULT_ENCODER_MAP: [[EncoderAction; NUM_ENCODER]; NUM_LAYER] = [
+    [
+        EncoderAction::new(k!(AudioVolUp), k!(AudioVolDown)),
+        EncoderAction::new(k!(PageUp), k!(PageDown)),
+    ],
+    [
+        EncoderAction::new(k!(KpPlus), k!(KpMinus)),
+        EncoderAction::new(k!(Home), k!(End)),
+    ],
+];
+
+// `insecure` keeps the fixture usable by hosts with no unlock ceremony; build
+// with `--features locked` to exercise the lock gate instead.
+#[cfg(not(feature = "locked"))]
+const LOCK_CONFIG: LockConfig = LockConfig {
+    unlock_keys: &[],
+    insecure: true,
+    write_requires_unlock: false,
+};
+#[cfg(feature = "locked")]
+const LOCK_CONFIG: LockConfig = LockConfig {
+    unlock_keys: &[(0, 0), (0, 11)],
+    insecure: false,
+    write_requires_unlock: false,
+};
 
 #[rustfmt::skip]
 const fn get_default_keymap() -> [[[KeyAction; COL]; ROW]; NUM_LAYER] {
@@ -132,7 +159,7 @@ async fn main(spawner: Spawner) {
     let mut rx = Uart::new();
     let mut tx = Uart::new();
 
-    let mut keymap_data = KeymapData::new(get_default_keymap());
+    let mut keymap_data = KeymapData::new_with_encoder(get_default_keymap(), DEFAULT_ENCODER_MAP);
     let mut behavior_config = BehaviorConfig::default();
     behavior_config
         .fork
@@ -160,10 +187,7 @@ async fn main(spawner: Spawner) {
 
     static RMK_CONFIG: StaticCell<RmkConfig<'static>> = StaticCell::new();
     let rmk_config = RMK_CONFIG.init(RmkConfig {
-        lock_config: LockConfig {
-            insecure: true,
-            ..Default::default()
-        },
+        lock_config: LOCK_CONFIG,
         layout_blob: LAYOUT_BLOB,
         ..Default::default()
     });
