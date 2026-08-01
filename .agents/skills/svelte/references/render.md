@@ -1,4 +1,6 @@
-To render a [snippet](https://svelte.dev/docs/svelte/snippet/llms.txt), use a `{@render ...}` tag.
+# {@render ...}
+
+To render a snippet, use a `{@render ...}` tag.
 
 ```svelte
 {#snippet sum(a, b)}
@@ -18,13 +20,13 @@ The expression can be an identifier like `sum`, or an arbitrary JavaScript expre
 
 ## Optional snippets
 
-If the snippet is potentially undefined — for example, because it's an incoming prop — then you can use optional chaining to only render it when it _is_ defined:
+If the snippet is potentially undefined — for example, because it's an incoming prop — then you can use optional chaining to only render it when it is defined:
 
 ```svelte
 {@render children?.()}
 ```
 
-Alternatively, use an [`{#if ...}`](https://svelte.dev/docs/svelte/if/llms.txt) block with an `:else` clause to render fallback content:
+Alternatively, use an `{#if ...}` block with an `:else` clause to render fallback content:
 
 ```svelte
 {#if children}

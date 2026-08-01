@@ -1,12 +1,12 @@
-Attachments are functions that run in an [effect](https://svelte.dev/docs/svelte/$effect/llms.txt) when an element is mounted to the DOM or when [state](https://svelte.dev/docs/svelte/$state/llms.txt) read inside the function updates.
+# Attachments (`{@attach ...}`)
+
+Attachments are functions that run in an effect when an element is mounted to the DOM or when state read inside the function updates.
 
 Optionally, they can return a function that is called before the attachment re-runs, or after the element is later removed from the DOM.
 
-> [!NOTE]
-> Attachments are available in Svelte 5.29 and newer.
+Attachments are available in Svelte 5.29 and newer.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	/** @type {import('svelte/attachments').Attachment} */
 	function myAttachment(element) {
@@ -25,10 +25,9 @@ An element can have any number of attachments.
 
 ## Attachment factories
 
-A useful pattern is for a function, such as `tooltip` in this example, to _return_ an attachment (demo:
+A useful pattern is for a function, such as `tooltip` in this example, to return an attachment:
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import tippy from 'tippy.js';
 
@@ -53,14 +52,13 @@ A useful pattern is for a function, such as `tooltip` in this example, to _retur
 </button>
 ```
 
-Since the `tooltip(content)` expression runs inside an [effect](https://svelte.dev/docs/svelte/$effect/llms.txt), the attachment will be destroyed and recreated whenever `content` changes. The same thing would happen for any state read _inside_ the attachment function when it first runs. (If this isn't what you want, see [Controlling when attachments re-run](#Controlling-when-attachments-re-run).)
+Since the `tooltip(content)` expression runs inside an effect, the attachment will be destroyed and recreated whenever `content` changes. The same thing would happen for any state read inside the attachment function when it first runs.
 
 ## Inline attachments
 
-Attachments can also be created inline (demo:
+Attachments can also be created inline:
 
 ```svelte
-<!--- file: App.svelte --->
 <canvas
 	width={32}
 	height={32}
@@ -75,8 +73,7 @@ Attachments can also be created inline (demo:
 ></canvas>
 ```
 
-> [!NOTE]
-> The nested effect runs whenever `color` changes, while the outer effect (where `canvas.getContext(...)` is called) only runs once, since it doesn't read any reactive state.
+The nested effect runs whenever `color` changes, while the outer effect (where `canvas.getContext(...)` is called) only runs once, since it doesn't read any reactive state.
 
 ## Conditional attachments
 
@@ -88,35 +85,30 @@ Falsy values like `false` or `undefined` are treated as no attachment, enabling 
 
 ## Passing attachments to components
 
-When used on a component, `{@attach ...}` will create a prop whose key is a [`Symbol`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol). If the component then [spreads](https://svelte.dev/tutorial/svelte/spread-props/llms.txt) props onto an element, the element will receive those attachments.
+When used on a component, `{@attach ...}` will create a prop whose key is a `Symbol`. If the component then spreads props onto an element, the element will receive those attachments.
 
-This allows you to create _wrapper components_ that augment elements (demo:
+This allows you to create wrapper components that augment elements:
 
 ```svelte
-<!--- file: Button.svelte --->
+<!-- Button.svelte -->
 <script>
 	/** @type {import('svelte/elements').HTMLButtonAttributes} */
 	let { children, ...props } = $props();
 </script>
 
-<!-- `props` includes attachments -->
 <button {...props}>
 	{@render children?.()}
 </button>
 ```
 
 ```svelte
-<!--- file: App.svelte --->
+<!-- App.svelte -->
 <script>
 	import tippy from 'tippy.js';
 	import Button from './Button.svelte';
 
 	let content = $state('Hello!');
 
-	/**
-	 * @param {string} content
-	 * @returns {import('svelte/attachments').Attachment}
-	 */
 	function tooltip(content) {
 		return (element) => {
 			const tooltip = tippy(element, { content });
@@ -134,10 +126,9 @@ This allows you to create _wrapper components_ that augment elements (demo:
 
 ## Controlling when attachments re-run
 
-Attachments, unlike [actions](https://svelte.dev/docs/svelte/use/llms.txt), are fully reactive: `{@attach foo(bar)}` will re-run on changes to `foo` _or_ `bar` (or any state read inside `foo`):
+Attachments, unlike actions, are fully reactive: `{@attach foo(bar)}` will re-run on changes to `foo` or `bar` (or any state read inside `foo`):
 
 ```js
-// @errors: 7006 2304 2552
 function foo(bar) {
 	return (node) => {
 		veryExpensiveSetupWork(node);
@@ -149,22 +140,21 @@ function foo(bar) {
 In the rare case that this is a problem (for example, if `foo` does expensive and unavoidable setup work) consider passing the data inside a function and reading it in a child effect:
 
 ```js
-// @errors: 7006 2304 2552
-function foo(+++getBar+++) {
+function foo(getBar) {
 	return (node) => {
 		veryExpensiveSetupWork(node);
 
-+++		$effect(() => {
+		$effect(() => {
 			update(node, getBar());
-		});+++
+		});
 	}
 }
 ```
 
 ## Creating attachments programmatically
 
-To add attachments to an object that will be spread onto a component or element, use [`createAttachmentKey`](https://svelte.dev/docs/svelte/svelte-attachments/llms.txt#createAttachmentKey).
+To add attachments to an object that will be spread onto a component or element, use `createAttachmentKey` from `svelte/attachments`.
 
 ## Converting actions to attachments
 
-If you're using a library that only provides actions, you can convert them to attachments with [`fromAction`](https://svelte.dev/docs/svelte/svelte-attachments/llms.txt#fromAction), allowing you to (for example) use them with components.
+If you're using a library that only provides actions, you can convert them to attachments with `fromAction` from `svelte/attachments`, allowing you to use them with components.

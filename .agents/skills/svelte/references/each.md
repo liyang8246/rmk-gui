@@ -1,16 +1,14 @@
-## Keyed each blocks
+# Keyed Each Blocks
 
 ```svelte
-<!--- copy: false  --->
 {#each expression as name (key)}...{/each}
 ```
 
 ```svelte
-<!--- copy: false  --->
 {#each expression as name, index (key)}...{/each}
 ```
 
-If a _key_ expression is provided — which must uniquely identify each list item — Svelte will use it to intelligently update the list when data changes by inserting, moving and deleting items, rather than adding or removing items at the end and updating the state in the middle.
+If a key expression is provided — which must uniquely identify each list item — Svelte will use it to intelligently update the list when data changes by inserting, moving and deleting items, rather than adding or removing items at the end and updating the state in the middle.
 
 The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
 

@@ -13,17 +13,11 @@
       "skillPath": "skills/neverthrow/SKILL.md",
       "computedHash": "18668704cdd47f10d82582189b02e1f537d55863e3dc85af75281424d70ac4f3"
     },
-    "svelte-code-writer": {
-      "source": "sveltejs/ai-tools",
+    "svelte": {
+      "source": "liyang8246/skills",
       "sourceType": "github",
-      "skillPath": "plugins/claude/svelte/skills/svelte-code-writer/SKILL.md",
-      "computedHash": "6f78193a79906175595ce8e4ca8d726da350eb99035a9544b6553620df5673a1"
-    },
-    "svelte-core-bestpractices": {
-      "source": "sveltejs/ai-tools",
-      "sourceType": "github",
-      "skillPath": "plugins/claude/svelte/skills/svelte-core-bestpractices/SKILL.md",
-      "computedHash": "98b4ee346ac45e13740c9f3353b604d5c6e844c96cdc8867052fa961cbdb525d"
+      "skillPath": "skills/svelte/SKILL.md",
+      "computedHash": "6e183d11e8d7e4f259d58bf4c8dc7629b79f9d51a7fa9117340befeff005bd98"
     }
   }
 }
