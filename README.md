@@ -35,17 +35,46 @@ Make sure you have Rust, NodeJS and Python installed on your system.
 2. Install dependencies:
    ```bash
    pnpm install
+   rustup target add wasm32-unknown-unknown
+   cargo install wasm-pack
    ```
-3. Start the development server:
+3. Build the protocol client:
    ```bash
-   pnpm web:dev
-   pnpm tauri:dev
+   pnpm build:wasm
    ```
-4. Build the application:
+   `src/rynk/wasm/` is a build artifact and is not checked in, so this step is
+   required before anything else runs. It compiles `rynk-wasm` from a sibling
+   `../rmk` checkout when one exists, otherwise it clones `rmk-rs/rmk`; set
+   `RMK_REPO` to point somewhere else.
+4. Start the development server:
    ```bash
-   pnpm web:build
-   pnpm tauri:build
+   pnpm dev:web     # browser only
+   pnpm dev:tauri   # desktop app — runs dev:web itself, don't start both
    ```
+5. Build the application:
+   ```bash
+   pnpm build:web
+   pnpm build:tauri  # runs build:web itself
+   ```
+
+### Testing
+
+```bash
+pnpm test        # unit tests — no device and no wasm build needed
+pnpm test:qemu   # end-to-end against the riscv fixture firmware
+pnpm check       # svelte-check
+CI=true pnpm lint
+```
+
+`pnpm test:qemu` builds and runs `qemu/` itself, so there is nothing to start by
+hand. It needs `qemu-system-riscv32` (`brew install qemu`, or
+`apt install qemu-system-misc` on Debian/Ubuntu), the
+`riscv32imac-unknown-none-elf` target, and step 3 to have run. Don't leave
+`pnpm qemu` running alongside it — the fixture's serial port serves one client
+at a time.
+
+`CI=true` matters for linting: the eslint config detects editors and relaxes
+some rules, so a bare `pnpm lint` is more permissive than CI.
 
 ## Roadmap
 
