@@ -25,8 +25,14 @@ export interface TransportInfo {
   connect: () => Promise<ConnectedDevice>
 }
 
+/// Web mode cannot enumerate: `navigator.serial.requestPort()` needs a user
+/// gesture and opens the browser's own picker, so callers use connectWebSerial.
+export function canDiscover(): boolean {
+  return isTauri()
+}
+
 export async function discover(): Promise<TransportInfo[]> {
-  if (!isTauri()) return []
+  if (!canDiscover()) return []
   await closeAllSessions()
   const [serials, bles, tcps] = await Promise.all([
     discoverSerial().catch(() => []),
@@ -52,3 +58,4 @@ export async function discover(): Promise<TransportInfo[]> {
 export { connectClient } from './core'
 export type { JsByteLink } from './core'
 export type * from './wasm/rynk_wasm.js'
+export { connectWebHid, connectWebSerial } from './web'
