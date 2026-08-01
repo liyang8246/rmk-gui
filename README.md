@@ -1,8 +1,8 @@
 <div align="center">
-<img src="./src-tauri/icons/icon.png" alt="Clash" width="128" />
+<img src="./src-tauri/icons/icon.png" alt="RMK GUI" width="128" />
 <h3>
-Gui configuration for <a href="https://github.com/rmk-rs/rmk">RMK</a> based on <a href="https://github.com/tauri-apps/tauri">Tauri</a> and <a href="https://github.com/nuxt/nuxt">Nuxt</a>
-<h3>
+Gui configuration for <a href="https://github.com/rmk-rs/rmk">RMK</a> based on <a href="https://github.com/tauri-apps/tauri">Tauri</a> and <a href="https://github.com/sveltejs/svelte">Svelte</a>
+</h3>
 </div>
 
 ## Warn
@@ -14,13 +14,14 @@ safe distance.
 
 ## Install
 
-Go to the release page to download the corresponding installation package Supports Windows (x64/x86), Linux (x64/arm64)
+Go to the release page to download the corresponding installation package. Supports Windows (x64/x86), Linux (x64/arm64)
 and macOS 10.15+ (intel/apple).
 
 ## Features
 
 - Based on Rust and Tauri2 frameworks.
-- Concise and modern user interface.
+- Concise and modern user interface, built with Svelte 5 and Tailwind CSS 4.
+- Talks the rynk protocol over USB serial, BLE, and Web Serial.
 - Support for Windows, macOS, and Linux.
 
 ## Development
@@ -86,8 +87,9 @@ RMK-GUI was based on or inspired by these projects and so on:
 
 - [Tauri](https://github.com/tauri-apps/tauri) A framework for building tiny, fast binaries for all major desktop and
   mobile platforms.
-- [Nuxt](https://github.com/nuxt/nuxt) An open source framework that makes web development intuitive and powerful.
-- [PrimeVue](https://github.com/primefaces/primevue) A free open-source Vue 3 UI component library with rich features.
+- [Svelte](https://github.com/sveltejs/svelte) A UI framework that compiles components to small, surgical JavaScript.
+- [Ark UI](https://github.com/chakra-ui/ark) A headless, accessible component library for building design systems.
+- [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) A utility-first CSS framework.
 - [Vial-gui](https://github.com/vial-kb/vial-gui) An open-source cross-platform (Windows, Linux and Mac) GUI and a QMK
   fork for configuring your keyboard in real time.
 - [RMK](https://github.com/rmk-rs/rmk) Rust keyboard firmware library with layers, macros, real-time keymap editing,
