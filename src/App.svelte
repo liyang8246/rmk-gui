@@ -5,9 +5,10 @@
   import PageHost from './lib/PageHost.svelte'
   import Toaster from './lib/Toaster.svelte'
   import { canDiscover, connectWebSerial, discover } from './rynk'
-  import { keyboardStore } from './stores'
+  import { describeKeyboardError, keyboardStore } from './stores'
 
   let picking = $state(false)
+  let pickError = $state<string | null>(null)
 
   $effect(() => {
     if (!canDiscover()) return
@@ -20,10 +21,18 @@
   // Must run from a click: the browser port picker requires a user gesture.
   async function pickWebSerial() {
     picking = true
+    pickError = null
     try {
-      await keyboardStore.initStore(await connectWebSerial())
+      // initStore returns a ResultAsync: a failed handshake is an Err, not a throw.
+      const result = await keyboardStore.initStore(await connectWebSerial())
+      if (result.isErr()) pickError = describeKeyboardError(result.error)
     }
-    catch { /* user dismissed the picker */ }
+    catch (e) {
+      // NotFoundError is the user dismissing the picker; a port that refuses to
+      // open throws NetworkError or InvalidStateError and must be shown.
+      if (e instanceof DOMException && e.name === 'NotFoundError') return
+      pickError = e instanceof Error ? e.message : String(e)
+    }
     finally {
       picking = false
     }
@@ -34,7 +43,7 @@
   <ToolsBar />
   <div class='w-full flex-1 overflow-auto'>
     {#if !canDiscover() && keyboardStore.connection?.phase !== 'connected'}
-      <div class='flex h-full items-center justify-center'>
+      <div class='flex h-full flex-col items-center justify-center gap-2'>
         <button
           class='
             cursor-pointer rounded-xl bg-base-100 px-4 py-2 shadow-lg ring
@@ -47,6 +56,9 @@
         >
           {picking ? 'Connecting…' : 'Connect keyboard'}
         </button>
+        {#if pickError}
+          <p class='max-w-sm text-center text-sm text-red-600'>{pickError}</p>
+        {/if}
       </div>
     {:else}
       <Keyboard />

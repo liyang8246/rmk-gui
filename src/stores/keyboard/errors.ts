@@ -1,4 +1,5 @@
 import type { RynkError } from '../../rynk'
+import { match } from 'ts-pattern'
 
 export type KeyboardError
   = | { type: 'rynk', code: RynkError }
@@ -7,7 +8,8 @@ export type KeyboardError
     | { type: 'unknown', cause: unknown }
 
 // A Record (not an array) so a new RynkError variant upstream fails this build.
-const RYNK_ERROR_CODES: Record<RynkError, true> = {
+// Exported so tests iterate this list instead of keeping a stale copy.
+export const RYNK_ERROR_CODES: Record<RynkError, true> = {
   Busy: true,
   Internal: true,
   Invalid: true,
@@ -41,4 +43,14 @@ export function toKeyboardError(e: unknown): KeyboardError {
     return { type: 'rynk', code: e.message }
   }
   return { type: 'unknown', cause: e }
+}
+
+/// Short, user-facing reason — for the status bar and the connect button.
+export function describeKeyboardError(e: KeyboardError): string {
+  return match(e)
+    .with({ type: 'rynk' }, x => `device rejected ${x.code}`)
+    .with({ type: 'transport' }, () => 'link lost')
+    .with({ type: 'invalid' }, x => x.cause)
+    .with({ type: 'unknown' }, x => (x.cause instanceof Error ? x.cause.message : 'unknown error'))
+    .exhaustive()
 }

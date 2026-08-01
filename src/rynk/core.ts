@@ -7,6 +7,10 @@ export interface JsByteLink {
 
 const GET_VERSION = 0x0001
 
+/// A device can open the port and then never answer. Without a deadline the
+/// probe parks forever and leaves the store stuck in `connecting`.
+const PROBE_TIMEOUT_MS = 10_000
+
 /// Each zero-free run is prefixed by its length + 1; 0x00 delimits frames.
 export function cobsEncode(data: Uint8Array): Uint8Array {
   const out = [0]
@@ -54,23 +58,43 @@ function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
   return c
 }
 
+/// `toKeyboardError` keys off the name, so a silent device reads as a dead link
+/// rather than an unknown fault.
+function transportError(message: string): Error {
+  const e = new Error(message)
+  e.name = 'TransportError'
+  return e
+}
+
 /// Frame: cmd=0x0001 LE, seq=1, empty payload; reply payload is [status, major, minor].
-export async function probeVersion(link: JsByteLink) {
+export async function probeVersion(link: JsByteLink, timeoutMs = PROBE_TIMEOUT_MS) {
   await link.send(cobsEncode(new Uint8Array([GET_VERSION & 0xFF, GET_VERSION >> 8, 1])))
-  let rx: Uint8Array = new Uint8Array(0)
-  for (;;) {
-    const delim = rx.indexOf(0)
-    if (delim === -1) {
-      const chunk = await link.recv()
-      if (!chunk.length) throw new Error('link closed')
-      rx = concat(rx, chunk)
-      continue
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<never>((_res, rej) => {
+    timer = setTimeout(() => rej(transportError('version probe timed out')), timeoutMs)
+  })
+  // The race usually resolves first; keep the loser from surfacing as an
+  // unhandled rejection.
+  deadline.catch(() => {})
+  try {
+    let rx: Uint8Array = new Uint8Array(0)
+    for (;;) {
+      const delim = rx.indexOf(0)
+      if (delim === -1) {
+        const chunk = await Promise.race([link.recv(), deadline])
+        if (!chunk.length) throw transportError('link closed')
+        rx = concat(rx, chunk)
+        continue
+      }
+      const frame = cobsDecode(rx.subarray(0, delim))
+      rx = rx.subarray(delim + 1)
+      // Topic pushes can interleave; keep reading until the GetVersion reply lands.
+      if (frame.length >= 6 && frame[0] === (GET_VERSION & 0xFF) && frame[1] === GET_VERSION >> 8)
+        return { major: frame[4]!, minor: frame[5]! }
     }
-    const frame = cobsDecode(rx.subarray(0, delim))
-    rx = rx.subarray(delim + 1)
-    // Topic pushes can interleave; keep reading until the GetVersion reply lands.
-    if (frame.length >= 6 && frame[0] === (GET_VERSION & 0xFF) && frame[1] === GET_VERSION >> 8)
-      return { major: frame[4]!, minor: frame[5]! }
+  }
+  finally {
+    clearTimeout(timer)
   }
 }
 
@@ -83,8 +107,8 @@ async function loadCore(major: number) {
 
 /// `wasm` overrides where the module is fetched from. The browser default
 /// resolves it next to the JS glue, which Node's fetch cannot do (file: URL).
-export async function connectClient(link: JsByteLink, wasm?: BufferSource) {
-  const { major, minor } = await probeVersion(link)
+export async function connectClient(link: JsByteLink, wasm?: BufferSource, timeoutMs?: number) {
+  const { major, minor } = await probeVersion(link, timeoutMs)
   const core = await loadCore(major)
   await core.default(wasm ? { module_or_path: wasm } : undefined)
   const client = await core.connect(link)

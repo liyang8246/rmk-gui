@@ -1,4 +1,4 @@
-import type { ConnectedDevice, DeviceCapabilities, KeyAction, RynkClient, TopicEvent } from '../../rynk'
+import type { ConnectedDevice, DeviceCapabilities, KeyAction, RynkClient, StorageResetMode, TopicEvent } from '../../rynk'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const connectClient = vi.hoisted(() => vi.fn())
@@ -30,6 +30,8 @@ const CAPS: DeviceCapabilities = {
   bulk_transfer_supported: true,
 }
 
+const BLE_CAPS: DeviceCapabilities = { ...CAPS, ble_enabled: true, num_ble_profiles: 3 }
+
 function rejection(name: string, message: string): Error {
   const e = new Error(message)
   e.name = name
@@ -39,6 +41,7 @@ function rejection(name: string, message: string): Error {
 /// Stands in for the wasm RynkClient. Only the methods the store actually
 /// reaches are implemented; the cast keeps the other ~40 off the fake.
 class FakeClient {
+  caps: DeviceCapabilities = CAPS
   keymap: KeyAction[] = ['No', 'No']
   locked = false
   freed = false
@@ -47,6 +50,9 @@ class FakeClient {
   /// Queued failure for the next set_key, so tests can force a rollback.
   failSetKey: Error | null = null
   matrixReads = 0
+  bleProfile = 0
+  /// Queued failure for the next session-ending command (reboot et al).
+  failEndSession: Error | null = null
   private killTopic: ((e: Error) => void) | null = null
 
   private log<T>(name: string, value: T): Promise<T> {
@@ -66,7 +72,7 @@ class FakeClient {
     })
   }
 
-  get_capabilities() { return this.log('get_capabilities', CAPS) }
+  get_capabilities() { return this.log('get_capabilities', this.caps) }
   get_layout() { return this.log('get_layout', { default_variant: 0, variants: [] }) }
   get_behavior() { return this.log('get_behavior', {}) }
   get_default_layer() { return this.log('get_default_layer', 0) }
@@ -83,7 +89,7 @@ class FakeClient {
   }
 
   get_battery_status() { return this.log('get_battery_status', 'Unavailable') }
-  get_ble_status() { return this.log('get_ble_status', { profile: 0, state: 'Inactive' }) }
+  get_ble_status() { return this.log('get_ble_status', { profile: this.bleProfile, state: 'Inactive' }) }
   get_connection_status() {
     return this.log('get_connection_status', {
       usb: 'Configured',
@@ -133,6 +139,34 @@ class FakeClient {
     this.calls.push('unlock_poll')
     this.locked = false
     return { locked: false, unlocking: false, remaining_keys: 0, key_positions: [] }
+  }
+
+  async switch_ble_profile(slot: number) {
+    this.calls.push(`switch_ble_profile:${slot}`)
+    this.bleProfile = slot
+  }
+
+  async clear_ble_profile(slot: number) {
+    this.calls.push(`clear_ble_profile:${slot}`)
+    if (this.bleProfile === slot) this.bleProfile = 0
+  }
+
+  async storage_reset(mode: StorageResetMode) {
+    this.calls.push(`storage_reset:${mode}`)
+    if (mode === 'LayoutOnly') throw rejection('Rejected', 'device rejected Unimplemented')
+    this.keymap = ['No', 'No']
+  }
+
+  reboot() { return this.endSession('reboot') }
+  bootloader_jump() { return this.endSession('bootloader_jump') }
+
+  /// The real device resets before it can ack, so tests queue the failure that
+  /// stands in for that — the store must still drop the session.
+  private async endSession(name: string) {
+    this.calls.push(name)
+    const fail = this.failEndSession
+    this.failEndSession = null
+    if (fail) throw fail
   }
 
   next_topic(): Promise<TopicEvent> {
@@ -293,6 +327,124 @@ describe('link death', () => {
     await vi.waitFor(() => expect(keyboardStore.connection?.phase).toBe('error'))
     const result = await keyboardStore.setKey(0, 0, 1, 'Transparent')
     expect(result._unsafeUnwrapErr().type).toBe('invalid')
+  })
+})
+
+describe('ble', () => {
+  async function bleConnected(): Promise<FakeClient> {
+    const client = new FakeClient()
+    client.caps = BLE_CAPS
+    return await connected(client)
+  }
+
+  it('caches the refreshed status', async () => {
+    const client = await bleConnected()
+    client.bleProfile = 2
+    const result = await keyboardStore.refreshBleStatus()
+    expect(result._unsafeUnwrap()).toEqual({ profile: 2, state: 'Inactive' })
+    expect(keyboardStore.status?.bleStatus).toEqual({ profile: 2, state: 'Inactive' })
+  })
+
+  it('switches a profile and reads the new status back', async () => {
+    const client = await bleConnected()
+    client.calls.length = 0
+    const result = await keyboardStore.switchBleProfile(1)
+    expect(result.isOk()).toBe(true)
+    expect(client.calls).toEqual(['switch_ble_profile:1', 'get_ble_status'])
+    expect(keyboardStore.status?.bleStatus?.profile).toBe(1)
+  })
+
+  it('clears a profile and reads the new status back', async () => {
+    const client = await bleConnected()
+    client.bleProfile = 1
+    client.calls.length = 0
+    const result = await keyboardStore.clearBleProfile(1)
+    expect(result.isOk()).toBe(true)
+    expect(client.calls).toEqual(['clear_ble_profile:1', 'get_ble_status'])
+    expect(keyboardStore.status?.bleStatus?.profile).toBe(0)
+  })
+
+  it('rejects an out-of-range slot without touching the device', async () => {
+    const client = await bleConnected()
+    const before = client.calls.length
+    expect((await keyboardStore.switchBleProfile(3))._unsafeUnwrapErr().type).toBe('invalid')
+    expect(client.calls).toHaveLength(before)
+  })
+
+  it('rejects profile commands on a device without BLE', async () => {
+    // The default fixture reports ble_enabled: false.
+    await connected()
+    const result = await keyboardStore.switchBleProfile(0)
+    expect(result._unsafeUnwrapErr()).toEqual({ type: 'invalid', cause: 'device has no BLE' })
+  })
+})
+
+describe('storage reset', () => {
+  it('refetches the wiped config in the same chain slot', async () => {
+    const client = await connected()
+    await keyboardStore.setKey(0, 0, 1, 'Transparent')
+    expect(keyboardStore.config?.keymap[0]![0]![1]).toBe('Transparent')
+
+    const result = await keyboardStore.storageReset('Full')
+    expect(result.isOk()).toBe(true)
+    expect(client.calls).toContain('storage_reset:Full')
+    expect(keyboardStore.config?.keymap[0]![0]![1]).toBe('No')
+  })
+
+  it('surfaces Unimplemented and leaves the session alone', async () => {
+    const client = await connected()
+    const result = await keyboardStore.storageReset('LayoutOnly')
+    expect(result._unsafeUnwrapErr()).toEqual({ type: 'rynk', code: 'Unimplemented' })
+    expect(keyboardStore.connection?.phase).toBe('connected')
+    expect(client.freed).toBe(false)
+  })
+})
+
+describe('session-ending commands', () => {
+  for (const [name, call] of [
+    ['reboot', () => keyboardStore.reboot()],
+    ['bootloader_jump', () => keyboardStore.bootloaderJump()],
+  ] as const) {
+    it(`${name} tears the session down before it settles`, async () => {
+      const client = await connected()
+      const result = await call()
+      expect(result.isOk()).toBe(true)
+      expect(client.calls).toContain(name)
+      // Awaited, not fire-and-forget: no waitFor here on purpose.
+      expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'fake' })
+      expect(keyboardStore.device).toBeNull()
+      expect(keyboardStore.config).toBeNull()
+      expect(client.freed).toBe(true)
+    })
+
+    it(`${name} still tears down when the ack never lands`, async () => {
+      const client = await connected()
+      // The device resets mid-command: the reply is a rejection, not a dead link.
+      client.failEndSession = rejection('Rejected', 'device rejected NotReady')
+      const result = await call()
+      expect(result._unsafeUnwrapErr()).toEqual({ type: 'rynk', code: 'NotReady' })
+      expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'fake' })
+      expect(client.freed).toBe(true)
+    })
+  }
+
+  it('reports disconnected, not link lost, when the device drops the link first', async () => {
+    const client = await connected()
+    client.failEndSession = rejection('Disconnected', 'link closed')
+    const result = await keyboardStore.reboot()
+    expect(result._unsafeUnwrapErr().type).toBe('transport')
+    // The death path fires too; the user-initiated teardown is the one that sticks.
+    expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'fake' })
+    expect(client.freed).toBe(true)
+  })
+
+  it('rejects a reboot after the link died without relabelling the phase', async () => {
+    const client = await connected()
+    client.die()
+    await vi.waitFor(() => expect(keyboardStore.connection?.phase).toBe('error'))
+    expect((await keyboardStore.reboot())._unsafeUnwrapErr().type).toBe('invalid')
+    // The command never reached the device, so 'link lost' must survive.
+    expect(keyboardStore.connection?.phase).toBe('error')
   })
 })
 

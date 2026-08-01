@@ -75,4 +75,21 @@ describe('probeVersion', () => {
   it('throws when the link closes before a reply', async () => {
     await expect(probeVersion(fakeLink([]))).rejects.toThrow('link closed')
   })
+
+  it('gives up on a device that opens the port and never answers', async () => {
+    // Without the deadline this parks forever and the store never leaves
+    // `connecting`.
+    const silent: JsByteLink = {
+      label: 'silent',
+      async send() {},
+      recv: () => new Promise<Uint8Array>(() => {}),
+      async close() {},
+    }
+    await expect(probeVersion(silent, 10)).rejects.toThrow('version probe timed out')
+  })
+
+  it('classifies both give-up paths as transport faults', async () => {
+    // toKeyboardError() keys off the name; anything else lands in `unknown`.
+    await expect(probeVersion(fakeLink([]))).rejects.toMatchObject({ name: 'TransportError' })
+  })
 })

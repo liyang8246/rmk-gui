@@ -1,13 +1,18 @@
 <script lang='ts'>
-  import { keyboardStore } from '../stores'
+  import { match } from 'ts-pattern'
+  import { describeKeyboardError, keyboardStore } from '../stores'
 
   const text = $derived.by(() => {
     const c = keyboardStore.connection
     if (!c) return 'No keyboard'
-    if (c.phase === 'connected') return c.label
-    if (c.phase === 'connecting') return `Connecting to ${c.label}…`
-    if (c.phase === 'disconnected') return `${c.label} — disconnected`
-    return `${c.label} — link lost`
+    // Exhaustive: a new ConnectionPhase fails this build instead of silently
+    // rendering the wrong message.
+    return match(c.phase)
+      .with('connected', () => c.label)
+      .with('connecting', () => `Connecting to ${c.label}…`)
+      .with('disconnected', () => `${c.label} — disconnected`)
+      .with('error', () => `${c.label} — ${c.cause ? describeKeyboardError(c.cause) : 'link lost'}`)
+      .exhaustive()
   })
 </script>
 

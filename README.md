@@ -70,9 +70,15 @@ CI=true pnpm lint
 `pnpm test:qemu` builds and runs `qemu/` itself, so there is nothing to start by
 hand. It needs `qemu-system-riscv32` (`brew install qemu`, or
 `apt install qemu-system-misc` on Debian/Ubuntu), the
-`riscv32imac-unknown-none-elf` target, and step 3 to have run. Don't leave
-`pnpm qemu` running alongside it — the fixture's serial port serves one client
-at a time.
+`riscv32imac-unknown-none-elf` target, and step 3 to have run. It picks a free
+TCP port per run; a manual `pnpm qemu` defaults to 7965 and takes
+`RMK_QEMU_PORT`. Don't point both at one port — the fixture's serial port serves
+one client at a time.
+
+The fixture firmware resolves `rmk` the same way step 3 does (`RMK_REPO`, then a
+sibling `../rmk`), so the firmware and the wasm client stay on one revision.
+With neither, cargo falls back to the `main` branch and the two can drift onto
+different protocol commits.
 
 `CI=true` matters for linting: the eslint config detects editors and relaxes
 some rules, so a bare `pnpm lint` is more permissive than CI.
