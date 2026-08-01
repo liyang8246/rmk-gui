@@ -4,10 +4,10 @@
   "dependencies": [
     {
       "name": "rmk",
-      "resolvedVersion": "feat/rynk@3f9f1f5b",
-      "repoUrl": "https://github.com/HaoboGu/rmk.git",
-      "ref": "feat/rynk",
-      "path": ".slim/clonedeps/repos/HaoboGu__rmk",
+      "resolvedVersion": "main@ae22ccda",
+      "repoUrl": "https://github.com/rmk-rs/rmk.git",
+      "ref": "main",
+      "path": ".slim/clonedeps/repos/rmk-rs__rmk",
       "packagePath": "",
       "reason": "Rynk protocol source: header+payload protocol, RynkHidService, WASM/TS type generation, command handlers, transports"
     },

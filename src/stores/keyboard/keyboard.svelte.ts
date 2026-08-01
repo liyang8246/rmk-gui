@@ -60,15 +60,17 @@ function runMutation<T>(m: Mutation<T>): ResultAsync<void, KeyboardError> {
 
 async function fetchKeymap(client: RynkClient, caps: DeviceCapabilities): Promise<KeyAction[][][]> {
   const keymap: KeyAction[][][] = []
+  // read_all_keymap pages the whole thing; a single get_keymap_bulk caps at
+  // max_bulk_keys and silently drops the tail of a larger layer.
+  const flat = await client.read_all_keymap()
+  const expected = caps.num_layers * caps.num_rows * caps.num_cols
+  if (flat.length !== expected)
+    throw new Error(`keymap: got ${flat.length} actions, expected ${expected}`)
   for (let layer = 0; layer < caps.num_layers; layer++) {
-    const { actions } = await client.get_keymap_bulk(layer, 0, 0)
     const rows: KeyAction[][] = []
     for (let r = 0; r < caps.num_rows; r++) {
-      const row: KeyAction[] = []
-      for (let c = 0; c < caps.num_cols; c++) {
-        row.push(actions[r * caps.num_cols + c]!)
-      }
-      rows.push(row)
+      const start = (layer * caps.num_rows + r) * caps.num_cols
+      rows.push(flat.slice(start, start + caps.num_cols))
     }
     keymap.push(rows)
   }
@@ -96,9 +98,15 @@ async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise
 }
 
 async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promise<number[]> {
-  if (caps.macro_space_size === 0) return []
-  const { data } = await client.get_macro(0)
-  return data
+  // No upstream pager for macros: each chunk is exactly macro_chunk_size bytes,
+  // zero-filled past the end, so walk the whole space by chunk.
+  const out: number[] = []
+  while (out.length < caps.macro_space_size) {
+    const { data } = await client.get_macro(out.length)
+    if (!data.length) break
+    out.push(...data)
+  }
+  return out.slice(0, caps.macro_space_size)
 }
 
 async function fetchStatus(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardStatus> {
@@ -177,8 +185,8 @@ class KeyboardStoreClass {
       const defaultLayer = await client.get_default_layer()
       const keymap = await fetchKeymap(client, capabilities)
       const encoders = await fetchEncoders(client, capabilities)
-      const combos = (await client.get_combo_bulk(0)).configs
-      const morses = (await client.get_morse_bulk(0)).configs
+      const combos = await client.read_all_combos()
+      const morses = await client.read_all_morses()
       const forks = await fetchForks(client, capabilities)
       const macros = await fetchMacros(client, capabilities)
       const newStatus = await fetchStatus(client, capabilities)

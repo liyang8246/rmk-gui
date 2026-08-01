@@ -10,7 +10,6 @@ use embassy_time::{Duration, Timer};
 use embedded_io_async::{Read, Write};
 use panic_halt as _;
 use rmk::config::{BehaviorConfig, LockConfig, PositionalConfig, RmkConfig};
-use rmk::host::run_rynk_uart;
 use rmk::keymap::KeymapData;
 use rmk::types::action::KeyAction;
 use rmk::types::fork::{Fork, StateBits};
@@ -97,7 +96,7 @@ async fn test_topics() {
     use rmk::types::connection::{ConnectionStatus, UsbState};
     use rmk::types::led_indicator::LedIndicator;
 
-    // Let run_rynk_uart enter run_session and create its topic subscribers.
+    // Let run_session start and create its topic subscribers.
     Timer::after(Duration::from_millis(50)).await;
 
     let mut wpm: u16 = 0;
@@ -130,8 +129,8 @@ async fn main(spawner: Spawner) {
 
     spawner.spawn(test_topics().unwrap());
 
-    let rx = Uart::new();
-    let tx = Uart::new();
+    let mut rx = Uart::new();
+    let mut tx = Uart::new();
 
     let mut keymap_data = KeymapData::new(get_default_keymap());
     let mut behavior_config = BehaviorConfig::default();
@@ -170,5 +169,8 @@ async fn main(spawner: Spawner) {
     });
 
     let service = rmk::host::HostService::new(&keymap, rmk_config);
-    run_rynk_uart(rx, tx, &service).await;
+    // run_session returns on link EOF; re-enter so a reconnecting host is served.
+    loop {
+        service.run_session(&mut rx, &mut tx).await;
+    }
 }

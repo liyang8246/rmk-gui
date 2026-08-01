@@ -2,7 +2,7 @@
 import os, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
-URL, BRANCH = "https://github.com/HaoboGu/rmk.git", "feat/rynk"
+URL, BRANCH = "https://github.com/rmk-rs/rmk.git", "main"
 ROOT = Path(__file__).resolve().parent.parent
 WASM_OUT = ROOT / "src" / "rynk" / "wasm"
 
