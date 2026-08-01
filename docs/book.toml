@@ -6,4 +6,4 @@ src = "src"
 
 [output.html]
 default-theme = "ayu"
-git-repository-url = "https://github.com/HaoboGu/rmk"
+git-repository-url = "https://github.com/rmk-rs/rmk"

@@ -1,7 +1,7 @@
 <div align="center">
 <img src="./src-tauri/icons/icon.png" alt="Clash" width="128" />
 <h3>
-Gui configuration for <a href="https://github.com/HaoboGu/rmk">RMK</a> based on <a href="https://github.com/tauri-apps/tauri">Tauri</a> and <a href="https://github.com/nuxt/nuxt">Nuxt</a>
+Gui configuration for <a href="https://github.com/rmk-rs/rmk">RMK</a> based on <a href="https://github.com/tauri-apps/tauri">Tauri</a> and <a href="https://github.com/nuxt/nuxt">Nuxt</a>
 <h3>
 </div>
 
@@ -61,7 +61,7 @@ RMK-GUI was based on or inspired by these projects and so on:
 - [PrimeVue](https://github.com/primefaces/primevue) A free open-source Vue 3 UI component library with rich features.
 - [Vial-gui](https://github.com/vial-kb/vial-gui) An open-source cross-platform (Windows, Linux and Mac) GUI and a QMK
   fork for configuring your keyboard in real time.
-- [RMK](https://github.com/HaoboGu/rmk) Rust keyboard firmware library with layers, macros, real-time keymap editing,
+- [RMK](https://github.com/rmk-rs/rmk) Rust keyboard firmware library with layers, macros, real-time keymap editing,
   wireless(BLE) and split support.
 
 ## License

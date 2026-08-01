@@ -7,7 +7,7 @@ Source: `rynk/rynk-kle/README.md`, `rynk/rynk-kle/Cargo.toml`
 `rynk-kle` converts a physical keyboard layout between
 [KLE](http://www.keyboard-layout-editor.com/) / [Vial](https://get.vial.today/)
 JSON and RMK/Rynk's `[layout]` section. It is a library, not a CLI; the
-`rmkit layout` CLI in [rmkit](https://github.com/haobogu/rmkit) wraps it. The
+`rmkit layout` CLI in [rmkit](https://github.com/rmk-rs/rmkit) wraps it. The
 `wasm` feature exposes the same pipeline to JavaScript.
 
 The crate builds as both an `rlib` (for native consumers like `rmkit`) and a
