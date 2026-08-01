@@ -56,6 +56,20 @@ async function freePort(): Promise<number> {
   return port
 }
 
+/// Printed by qemu/src/main.rs once its UART is initialised. Until then the
+/// fixture resets the 16550 FIFO, discarding anything the host already sent —
+/// and qemu accepts the connection during machine init, well before that.
+const UART_READY = '[RMK] uart ready'
+
+async function waitForLine(log: string[], needle: string, child: ChildProcess, deadlineMs: number) {
+  const start = Date.now()
+  while (!log.join('').includes(needle)) {
+    if (child.exitCode !== null) throw new Error(`qemu exited ${child.exitCode} before ${needle}`)
+    if (Date.now() - start > deadlineMs) throw new Error(`timed out waiting for ${needle}`)
+    await new Promise((r) => { setTimeout(r, 100) })
+  }
+}
+
 async function dial(port: number, deadlineMs: number): Promise<net.Socket> {
   const start = Date.now()
   for (;;) {
@@ -81,11 +95,24 @@ beforeAll(async () => {
   const port = await freePort()
   qemu = spawn('node', ['run.mjs'], {
     cwd: new URL('.', import.meta.url).pathname,
-    stdio: 'ignore',
+    stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, RMK_QEMU_PORT: String(port) },
   })
-  sock = await dial(port, 120_000)
-  client = (await connectClient(socketLink(sock), WASM)).client
+  // Held rather than inherited: cargo's progress would drown the reporter, but
+  // a failed handshake is undebuggable without the build and semihosting output.
+  const log: string[] = []
+  qemu.stdout?.on('data', (d: Buffer) => log.push(d.toString()))
+  qemu.stderr?.on('data', (d: Buffer) => log.push(d.toString()))
+  try {
+    // Generous: this also covers a cold cargo build of the riscv firmware.
+    await waitForLine(log, UART_READY, qemu, 600_000)
+    sock = await dial(port, 30_000)
+    client = (await connectClient(socketLink(sock), WASM)).client
+  }
+  catch (e) {
+    console.error(`--- qemu on port ${port} ---\n${log.join('')}`)
+    throw e
+  }
 })
 
 afterAll(() => {

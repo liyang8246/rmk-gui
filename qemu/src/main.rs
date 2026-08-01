@@ -158,6 +158,10 @@ async fn main(spawner: Spawner) {
 
     let mut rx = Uart::new();
     let mut tx = Uart::new();
+    // qemu binds the serial socket during machine init, so a host can connect
+    // and send before this point — and Uart::new() resets the 16550 FIFO, which
+    // discards whatever it queued. smoke.test.ts waits for this line.
+    println!("[RMK] uart ready");
 
     let mut keymap_data = KeymapData::new_with_encoder(get_default_keymap(), DEFAULT_ENCODER_MAP);
     let mut behavior_config = BehaviorConfig::default();
