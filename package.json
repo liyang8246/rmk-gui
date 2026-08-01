@@ -9,6 +9,8 @@
     "build:tauri": "tauri build",
     "build:wasm": "python3 scripts/build-rynk-wasm.py",
     "qemu": "node qemu/run.mjs",
+    "test": "vitest run",
+    "test:qemu": "vitest run --config vitest.qemu.config.ts",
     "lint": "run-s lint:ts lint:rs",
     "lint:ts": "eslint .",
     "lint:rs": "cd src-tauri && cargo clippy --all-targets -- -D warnings",
@@ -41,6 +43,7 @@
     "svelte-check": "^4.3.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.1.5"
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
   }
 }
