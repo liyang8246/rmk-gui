@@ -269,7 +269,11 @@ class KeyboardStoreClass {
         version,
         layout,
       }
-      this.#connection = { phase: 'connected', label: connected.label }
+      // Prefer the name the keyboard reports over the transport label: Web
+      // Serial only ever offers the constant 'WebSerial', since getInfo()
+      // exposes no string descriptors. Earlier phases keep the transport label —
+      // there is no device info before the handshake.
+      this.#connection = { phase: 'connected', label: info.product_name.trim() || connected.label }
       this.#device = newDevice
       this.#config = newConfig
       this.#status = newStatus
