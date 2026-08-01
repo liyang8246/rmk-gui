@@ -8,7 +8,7 @@ export interface JsByteLink {
 const GET_VERSION = 0x0001
 
 /// Each zero-free run is prefixed by its length + 1; 0x00 delimits frames.
-function cobsEncode(data: Uint8Array): Uint8Array {
+export function cobsEncode(data: Uint8Array): Uint8Array {
   const out = [0]
   let codeIdx = 0
   let code = 1
@@ -21,6 +21,12 @@ function cobsEncode(data: Uint8Array): Uint8Array {
     else {
       out.push(b)
       code++
+      // A full 0xFF block closes with no implicit zero; decode mirrors this.
+      if (code === 0xFF) {
+        out[codeIdx] = code
+        codeIdx = out.push(0) - 1
+        code = 1
+      }
     }
   }
   out[codeIdx] = code
@@ -29,7 +35,7 @@ function cobsEncode(data: Uint8Array): Uint8Array {
 }
 
 /// `frame` must exclude the trailing delimiter, else a spurious zero is appended.
-function cobsDecode(frame: Uint8Array): Uint8Array {
+export function cobsDecode(frame: Uint8Array): Uint8Array {
   const out: number[] = []
   let i = 0
   while (i < frame.length) {
@@ -49,7 +55,7 @@ function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
 }
 
 /// Frame: cmd=0x0001 LE, seq=1, empty payload; reply payload is [status, major, minor].
-async function probeVersion(link: JsByteLink) {
+export async function probeVersion(link: JsByteLink) {
   await link.send(cobsEncode(new Uint8Array([GET_VERSION & 0xFF, GET_VERSION >> 8, 1])))
   let rx: Uint8Array = new Uint8Array(0)
   for (;;) {
@@ -75,10 +81,12 @@ async function loadCore(major: number) {
   }
 }
 
-export async function connectClient(link: JsByteLink) {
+/// `wasm` overrides where the module is fetched from. The browser default
+/// resolves it next to the JS glue, which Node's fetch cannot do (file: URL).
+export async function connectClient(link: JsByteLink, wasm?: BufferSource) {
   const { major, minor } = await probeVersion(link)
   const core = await loadCore(major)
-  await core.default()
+  await core.default(wasm ? { module_or_path: wasm } : undefined)
   const client = await core.connect(link)
   return { client, major, minor }
 }
