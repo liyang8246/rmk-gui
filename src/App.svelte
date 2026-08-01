@@ -2,6 +2,7 @@
   import Keyboard from './components/Keyboard.svelte'
   import StateBar from './components/StateBar.svelte'
   import ToolsBar from './components/ToolsBar.svelte'
+  import PageHost from './lib/PageHost.svelte'
   import { discover } from './rynk'
   import { keyboardStore } from './stores'
 
@@ -23,3 +24,5 @@
   </div>
   <StateBar />
 </div>
+
+<PageHost />

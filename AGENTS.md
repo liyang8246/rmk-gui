@@ -1,5 +1,18 @@
 # AGENTS.md
 
+## Svelte Task Workflow
+
+Before any Svelte task: load the `svelte` skill from `.agents/skills/svelte/`.
+After completing any Svelte task: run these checks in order and fix all issues before considering the task done:
+
+```bash
+npx svelte-check --tsconfig ./tsconfig.json
+npx eslint .
+npx -y @sveltejs/mcp svelte-autofixer ./src/lib/PageHost.svelte   # repeat per .svelte file touched
+```
+
+All three must pass with zero errors and zero warnings.
+
 ## Comment Policy
 
 No verbose/long comments, no ornate dividers (`──`, box-drawing, ASCII art), no restating what code already shows. One-line comments only, and only for a non-obvious *why* (invariant, platform quirk, wire layout, cross-file sync, real TODO). When in doubt, delete it.
