@@ -42,6 +42,9 @@ function rejection(name: string, message: string): Error {
 /// reaches are implemented; the cast keeps the other ~40 off the fake.
 class FakeClient {
   caps: DeviceCapabilities = CAPS
+  /// Deliberately unlike the transport label, so tests show which one the
+  /// connection state picks up.
+  productName = 'Fake60'
   keymap: KeyAction[] = ['No', 'No']
   locked = false
   freed = false
@@ -67,7 +70,7 @@ class FakeClient {
       vendor_id: 1,
       product_id: 2,
       manufacturer: 'test',
-      product_name: 'fake',
+      product_name: this.productName,
       serial_number: 'x',
     })
   }
@@ -210,6 +213,29 @@ describe('connect', () => {
     expect(keyboardStore.config?.keymap).toEqual([[['No', 'No']]])
     expect(keyboardStore.status?.matrixState).toEqual({ pressed_bitmap: [0] })
     expect(client.freed).toBe(false)
+  })
+
+  it('labels the session with the reported product name', async () => {
+    // Web Serial can only offer the constant 'WebSerial' as a transport label,
+    // so the name the device reports is what the UI has to show.
+    await connected()
+    expect(keyboardStore.connection).toEqual({ phase: 'connected', label: 'Fake60' })
+  })
+
+  it('falls back to the transport label when the device reports no name', async () => {
+    const client = new FakeClient()
+    client.productName = '   '
+    await connected(client)
+    expect(keyboardStore.connection).toEqual({ phase: 'connected', label: 'fake' })
+  })
+
+  it('keeps the transport label while connecting and on a failed handshake', async () => {
+    // There is no device info before the handshake lands. connect() arms the
+    // resolved mock, so the rejection has to be installed after it.
+    const device = connect(new FakeClient())
+    connectClient.mockRejectedValue(rejection('Rejected', 'device rejected Busy'))
+    expect((await keyboardStore.initStore(device)).isErr()).toBe(true)
+    expect(keyboardStore.connection).toMatchObject({ phase: 'error', label: 'fake' })
   })
 
   it('connects a locked device without reading the gated matrix state', async () => {
@@ -411,7 +437,7 @@ describe('session-ending commands', () => {
       expect(result.isOk()).toBe(true)
       expect(client.calls).toContain(name)
       // Awaited, not fire-and-forget: no waitFor here on purpose.
-      expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'fake' })
+      expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'Fake60' })
       expect(keyboardStore.device).toBeNull()
       expect(keyboardStore.config).toBeNull()
       expect(client.freed).toBe(true)
@@ -423,7 +449,7 @@ describe('session-ending commands', () => {
       client.failEndSession = rejection('Rejected', 'device rejected NotReady')
       const result = await call()
       expect(result._unsafeUnwrapErr()).toEqual({ type: 'rynk', code: 'NotReady' })
-      expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'fake' })
+      expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'Fake60' })
       expect(client.freed).toBe(true)
     })
   }
@@ -434,7 +460,7 @@ describe('session-ending commands', () => {
     const result = await keyboardStore.reboot()
     expect(result._unsafeUnwrapErr().type).toBe('transport')
     // The death path fires too; the user-initiated teardown is the one that sticks.
-    expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'fake' })
+    expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'Fake60' })
     expect(client.freed).toBe(true)
   })
 
@@ -452,7 +478,7 @@ describe('disconnect', () => {
   it('keeps the label and frees the client', async () => {
     const client = await connected()
     await keyboardStore.disconnect()
-    expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'fake' })
+    expect(keyboardStore.connection).toEqual({ phase: 'disconnected', label: 'Fake60' })
     expect(keyboardStore.config).toBeNull()
     expect(client.freed).toBe(true)
   })
