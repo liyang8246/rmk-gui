@@ -1,16 +1,19 @@
 import type { Result } from 'neverthrow'
 import type {
   BehaviorConfig,
+  BleStatus,
   Combo,
   ConnectedDevice,
   DeviceCapabilities,
   EncoderAction,
   Fork,
   KeyAction,
+  LockStatus,
   MacroData,
   Morse,
   PeripheralStatus,
   RynkClient,
+  StorageResetMode,
 } from '../../rynk'
 import type { KeyboardError } from './errors'
 import type { ConnectionState, KeyboardConfig, KeyboardDevice, KeyboardStatus } from './types'
@@ -26,6 +29,12 @@ const session = {
   topicsReady: false,
   // Held so teardown can await the parked next_topic() before freeing the client.
   topicLoop: null as Promise<void> | null,
+  // Set at init so enqueue() can report a dead link without reaching into the store.
+  onDeath: null as ((cause: KeyboardError) => void) | null,
+}
+
+function notConnected<T>(): ResultAsync<T, KeyboardError> {
+  return errAsync<T, KeyboardError>({ type: 'invalid', cause: 'not connected' })
 }
 
 function enqueue<T>(
@@ -37,11 +46,27 @@ function enqueue<T>(
       (r: Result<T, KeyboardError>) => r,
       (e: unknown) => err<T, KeyboardError>(toKeyboardError(e)),
     )
+    .then((r: Result<T, KeyboardError>) => {
+      // A dead link never recovers, so drop the session rather than leave a
+      // connected-looking store the user can keep editing.
+      if (r.isErr() && r.error.type === 'transport') session.onDeath?.(r.error)
+      return r
+    })
   session.chain = result.then(
     () => {},
     () => {},
   )
   return new ResultAsync(result)
+}
+
+/// Commands and reads that need no optimistic update or rollback.
+function runCommand<T>(call: (c: RynkClient) => Promise<T>): ResultAsync<T, KeyboardError> {
+  return enqueue(() => {
+    const client = session.client
+    // Checked inside the chain, not at enqueue time: the link can die while queued.
+    if (!client) return notConnected<T>()
+    return ResultAsync.fromThrowable(() => call(client), toKeyboardError)()
+  })
 }
 
 interface Mutation<T> {
@@ -53,7 +78,7 @@ interface Mutation<T> {
 function runMutation<T>(m: Mutation<T>): ResultAsync<void, KeyboardError> {
   return enqueue(() => {
     const client = session.client
-    if (!client) throw new Error('not connected')
+    if (!client) return notConnected<void>()
     const snapshot = m.push()
     return ResultAsync.fromThrowable(() => m.call(client), toKeyboardError)()
       .orTee(() => m.undo(snapshot))
@@ -111,13 +136,28 @@ async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promis
   return out.slice(0, caps.macro_space_size)
 }
 
+async function fetchConfig(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardConfig> {
+  const behavior = await client.get_behavior()
+  const defaultLayer = await client.get_default_layer()
+  const keymap = await fetchKeymap(client, caps)
+  const encoders = await fetchEncoders(client, caps)
+  const combos = await client.read_all_combos()
+  const morses = await client.read_all_morses()
+  const forks = await fetchForks(client, caps)
+  const macros = await fetchMacros(client, caps)
+  return { behavior, combos, defaultLayer, encoders, forks, keymap, macros, morses }
+}
+
 async function fetchStatus(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardStatus> {
+  const lockStatus = await client.get_lock_status()
   const batteryStatus = caps.ble_enabled ? await client.get_battery_status() : 'Unavailable'
+  const bleStatus = caps.ble_enabled ? await client.get_ble_status() : null
   const connectionStatus = await client.get_connection_status()
+  const connectionType = await client.get_connection_type()
   const currentLayer = await client.get_current_layer()
   const ledIndicator = await client.get_led_indicator()
-  const lockStatus = await client.get_lock_status()
-  const matrixState = await client.get_matrix_state()
+  // GetMatrixState is unlock-gated upstream; asking while locked fails connect.
+  const matrixState = lockStatus.locked ? null : await client.get_matrix_state()
   const sleepState = await client.get_sleep_state()
   const wpm = await client.get_wpm()
   const peripheralStatus: PeripheralStatus[] = []
@@ -126,7 +166,9 @@ async function fetchStatus(client: RynkClient, caps: DeviceCapabilities): Promis
   }
   return {
     batteryStatus,
+    bleStatus,
     connectionStatus,
+    connectionType,
     currentLayer,
     ledIndicator,
     lockStatus,
@@ -167,7 +209,39 @@ class KeyboardStoreClass {
           .with({ BatteryStatusChange: P.select() }, (x) => { this.#status!.batteryStatus = x })
           .exhaustive()
       }
-    } catch { }
+    } catch (e) {
+      // next_topic() only rejects when the link dies. A teardown already in
+      // flight nulls session.client first, so handleDeath no-ops in that case.
+      await this.handleDeath(client, toKeyboardError(e), true)
+    }
+  }
+
+  /// `fromTopicLoop` marks the caller as the topic loop itself, so teardown
+  /// skips awaiting it — awaiting your own promise deadlocks.
+  private async handleDeath(client: RynkClient, cause: KeyboardError, fromTopicLoop: boolean): Promise<void> {
+    if (session.client !== client) return
+    await this.teardown({ phase: 'error', label: this.#connection?.label ?? '', cause }, fromTopicLoop)
+  }
+
+  private async teardown(next: ConnectionState | null, fromTopicLoop = false): Promise<void> {
+    const connected = session.connected
+    const client = session.client
+    const topicLoop = fromTopicLoop ? null : session.topicLoop
+    session.connected = null
+    session.client = null
+    session.topicLoop = null
+    session.chain = Promise.resolve()
+    session.topicsReady = false
+    session.onDeath = null
+    this.#connection = next
+    this.#device = null
+    this.#config = null
+    this.#status = null
+    // Order matters: a parked next_topic() borrows the client, so free() must
+    // wait for the link EOF to unwind the topic loop or wasm-bindgen throws.
+    await connected?.link?.close()
+    await topicLoop
+    client?.free()
   }
 
   private async doInit(connected: ConnectedDevice): Promise<void> {
@@ -177,32 +251,18 @@ class KeyboardStoreClass {
 
       const { client } = await connectClient(connected.link)
       session.client = client
+      session.onDeath = (cause) => {
+        void this.handleDeath(client, cause, false)
+      }
       session.topicLoop = this.startTopicLoop(client)
 
       const version = await client.get_version()
       const info = await client.get_device_info()
       const capabilities = await client.get_capabilities()
       const layout = await client.get_layout()
-      const behavior = await client.get_behavior()
-      const defaultLayer = await client.get_default_layer()
-      const keymap = await fetchKeymap(client, capabilities)
-      const encoders = await fetchEncoders(client, capabilities)
-      const combos = await client.read_all_combos()
-      const morses = await client.read_all_morses()
-      const forks = await fetchForks(client, capabilities)
-      const macros = await fetchMacros(client, capabilities)
+      const newConfig = await fetchConfig(client, capabilities)
       const newStatus = await fetchStatus(client, capabilities)
 
-      const newConfig: KeyboardConfig = {
-        behavior,
-        combos,
-        defaultLayer,
-        encoders,
-        forks,
-        keymap,
-        macros,
-        morses,
-      }
       const newDevice: KeyboardDevice = {
         capabilities,
         info,
@@ -216,7 +276,7 @@ class KeyboardStoreClass {
       session.chain = Promise.resolve()
       session.topicsReady = true
     } catch (e) {
-      await this.resetStore()
+      await this.teardown({ phase: 'error', label: connected.label, cause: toKeyboardError(e) })
       throw e
     }
   }
@@ -225,24 +285,16 @@ class KeyboardStoreClass {
     return ResultAsync.fromThrowable(() => this.doInit(connected), toKeyboardError)()
   }
 
+  /// Hard reset: drops the session and leaves no connection state behind.
   async resetStore(): Promise<void> {
-    const connected = session.connected
-    const client = session.client
-    const topicLoop = session.topicLoop
-    session.connected = null
-    session.client = null
-    session.topicLoop = null
-    session.chain = Promise.resolve()
-    session.topicsReady = false
-    this.#connection = null
-    this.#device = null
-    this.#config = null
-    this.#status = null
-    // Order matters: a parked next_topic() borrows the client, so free() must
-    // wait for the link EOF to unwind the topic loop or wasm-bindgen throws.
-    await connected?.link?.close()
-    await topicLoop
-    client?.free()
+    await this.teardown(null)
+  }
+
+  /// User-initiated close; keeps the label visible so the UI can offer a reconnect.
+  async disconnect(): Promise<void> {
+    await this.teardown(
+      this.#connection ? { phase: 'disconnected', label: this.#connection.label } : null,
+    )
   }
 
   setKey(
@@ -450,6 +502,100 @@ class KeyboardStoreClass {
       call: c => c.set_default_layer(layer),
       undo: (snapshot) => { if (this.#config) this.#config.defaultLayer = snapshot },
     })
+  }
+
+  /// Re-poll everything topic pushes don't cover (matrix, peripherals, lock).
+  refreshStatus(): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!caps) return notConnected<void>()
+    return runCommand(async (c) => {
+      this.#status = await fetchStatus(c, caps)
+    })
+  }
+
+  refreshLockStatus(): ResultAsync<LockStatus, KeyboardError> {
+    return runCommand(c => c.get_lock_status())
+      .andTee((s) => { if (this.#status) this.#status.lockStatus = s })
+  }
+
+  lock(): ResultAsync<void, KeyboardError> {
+    return runCommand(async (c) => {
+      await c.lock()
+      const status = await c.get_lock_status()
+      if (!this.#status) return
+      this.#status.lockStatus = status
+      // Matrix state is unlock-gated, so the cached bitmap is now unreadable.
+      this.#status.matrixState = null
+    })
+  }
+
+  /// One step of the unlock ceremony: the user holds `lockStatus.key_positions`
+  /// while the host polls. Call until `locked` clears or `unlocking` lapses.
+  unlockPoll(): ResultAsync<LockStatus, KeyboardError> {
+    return runCommand(async (c) => {
+      const status = await c.unlock_poll()
+      if (this.#status) {
+        this.#status.lockStatus = status
+        if (!status.locked && !this.#status.matrixState)
+          this.#status.matrixState = await c.get_matrix_state()
+      }
+      return status
+    })
+  }
+
+  refreshBleStatus(): ResultAsync<BleStatus, KeyboardError> {
+    return runCommand(c => c.get_ble_status())
+      .andTee((s) => { if (this.#status) this.#status.bleStatus = s })
+  }
+
+  switchBleProfile(slot: number): ResultAsync<void, KeyboardError> {
+    return this.bleProfileCmd(slot, (c, s) => c.switch_ble_profile(s))
+  }
+
+  /// Unlock-gated upstream: deleting a bond opens a re-pair hijack window.
+  clearBleProfile(slot: number): ResultAsync<void, KeyboardError> {
+    return this.bleProfileCmd(slot, (c, s) => c.clear_ble_profile(s))
+  }
+
+  private bleProfileCmd(
+    slot: number,
+    call: (c: RynkClient, slot: number) => Promise<void>,
+  ): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!caps) return notConnected<void>()
+    if (!caps.ble_enabled) return invalid('device has no BLE')
+    if (slot < 0 || slot >= caps.num_ble_profiles) return invalid(`ble profile ${slot} out of range`)
+    return runCommand(async (c) => {
+      await call(c, slot)
+      if (this.#status) this.#status.bleStatus = await c.get_ble_status()
+    })
+  }
+
+  reboot(): ResultAsync<void, KeyboardError> {
+    return this.endSession(c => c.reboot())
+  }
+
+  bootloaderJump(): ResultAsync<void, KeyboardError> {
+    return this.endSession(c => c.bootloader_jump())
+  }
+
+  /// Firmware only implements `Full`; `LayoutOnly` comes back `Unimplemented`.
+  /// The refetch shares this chain slot so nothing reads the wiped config.
+  storageReset(mode: StorageResetMode): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!caps) return notConnected<void>()
+    return runCommand(async (c) => {
+      await c.storage_reset(mode)
+      this.#config = await fetchConfig(c, caps)
+    })
+  }
+
+  /// Reboot and bootloader jump are fire-and-forget upstream — the device resets
+  /// before it can reply, so the ack may never land. Either way the session ends.
+  private endSession(call: (c: RynkClient) => Promise<void>): ResultAsync<void, KeyboardError> {
+    const label = this.#connection?.label ?? ''
+    return runCommand(call)
+      .andTee(() => { void this.teardown({ phase: 'disconnected', label }) })
   }
 }
 
