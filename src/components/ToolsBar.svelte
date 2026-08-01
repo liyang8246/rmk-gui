@@ -10,12 +10,12 @@
   import Wireless from '../pages/Wireless.svelte'
 
   const tools = [
-    { name: 'Layers', icon: 'lucide:layers', page: { id: 'layers', title: 'Layers', component: Layers } satisfies PageEntry },
-    { name: 'Macros', icon: 'lucide:zap', page: { id: 'macros', title: 'Macros', component: Macros } satisfies PageEntry },
-    { name: 'Combos', icon: 'lucide:combine', page: { id: 'combos', title: 'Combos', component: Combos } satisfies PageEntry },
-    { name: 'Wireless', icon: 'lucide:bluetooth', page: { id: 'wireless', title: 'Wireless', component: Wireless } satisfies PageEntry },
-    { name: 'Firmware', icon: 'lucide:cpu', page: { id: 'firmware', title: 'Firmware', component: Firmware } satisfies PageEntry },
-    { name: 'Settings', icon: 'lucide:settings', page: { id: 'settings', title: 'Settings', component: Settings } satisfies PageEntry },
+    { name: 'Layers', icon: 'lucide:layers', page: { title: 'Layers', component: Layers } satisfies PageEntry },
+    { name: 'Macros', icon: 'lucide:zap', page: { title: 'Macros', component: Macros } satisfies PageEntry },
+    { name: 'Combos', icon: 'lucide:combine', page: { title: 'Combos', component: Combos } satisfies PageEntry },
+    { name: 'Wireless', icon: 'lucide:bluetooth', page: { title: 'Wireless', component: Wireless } satisfies PageEntry },
+    { name: 'Firmware', icon: 'lucide:cpu', page: { title: 'Firmware', component: Firmware } satisfies PageEntry },
+    { name: 'Settings', icon: 'lucide:settings', page: { title: 'Settings', component: Settings } satisfies PageEntry },
   ] as const
 </script>
 
@@ -30,7 +30,6 @@
       class='
         flex cursor-pointer items-center gap-1 rounded-xl p-2 text-base-content
         hover:bg-base-300
-        {nav.current?.id === tool.page.id ? 'bg-base-300' : ''}
       '
       onclick={() => nav.open(tool.page)}
     >

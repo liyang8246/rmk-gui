@@ -4,17 +4,21 @@
   import { nav } from './nav.svelte'
 </script>
 
-{#each nav.stack as page, i (page.uid)}
+{#each nav.stack as page, i (i)}
   <Dialog.Root
     open
     closeOnInteractOutside={false}
     onOpenChange={(e) => { if (!e.open) nav.back() }}
   >
-    <Dialog.Backdrop class='fixed inset-0 bg-black/40 backdrop-blur-sm' />
-    <Dialog.Positioner class='fixed inset-0 flex p-6'>
+    {#if i === 0}
+      <Dialog.Backdrop class='fixed inset-0 bg-black/40 backdrop-blur-sm' />
+    {/if}
+    <Dialog.Positioner class='
+      fixed inset-0 flex items-center justify-center p-8
+    '>
       <Dialog.Content class='
-        flex size-full flex-col overflow-hidden rounded-2xl bg-base-100
-        shadow-2xl
+        flex size-full max-h-[768px] max-w-[1024px] flex-col overflow-hidden
+        rounded-2xl bg-base-100 shadow-2xl
       '>
         <header class='
           flex items-center gap-3 border-b border-base-300 px-6 py-4
@@ -46,7 +50,7 @@
           </button>
         </header>
         <div class='flex-1 overflow-auto p-6'>
-          <page.component {...page.props} />
+          <page.component />
         </div>
       </Dialog.Content>
     </Dialog.Positioner>
