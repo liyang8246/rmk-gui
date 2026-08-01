@@ -35,6 +35,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:wasm
       - run: pnpm lint
+      - run: pnpm check
+      - run: pnpm test
       - run: pnpm build:tauri
 
       - uses: actions/upload-artifact@v7
@@ -48,8 +50,34 @@ jobs:
             src-tauri/target/release/bundle/**/*.AppImage
           if-no-files-found: error
 
+  # End-to-end against the riscv fixture firmware: real rynk protocol over a
+  # real UART-to-TCP bridge. Linux-only — it needs qemu, not a desktop bundle.
+  qemu:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: cargo-bins/cargo-binstall@main
+
+      - name: Install toolchains and qemu
+        run: |
+          rustup target add wasm32-unknown-unknown riscv32imac-unknown-none-elf
+          cargo binstall wasm-pack --no-confirm
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-misc
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:wasm
+      - run: pnpm test:qemu
+
   deploy:
-    needs: ci
+    needs: [ci, qemu]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
