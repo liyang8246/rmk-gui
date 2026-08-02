@@ -11,7 +11,7 @@
     onOpenChange={(e) => { if (!e.open) nav.back() }}
   >
     {#if i === 0}
-      <Dialog.Backdrop class='fixed inset-0 bg-black/40 backdrop-blur-sm' />
+      <Dialog.Backdrop class='fixed inset-0 bg-black/25 backdrop-blur-[1px]' />
     {/if}
     <Dialog.Positioner class='
       fixed inset-0 flex items-center justify-center p-8
