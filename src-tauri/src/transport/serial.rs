@@ -1,8 +1,8 @@
 use serde::Serialize;
 use tauri::State;
-use tokio_serial::{SerialPortBuilderExt, SerialPortType, available_ports};
+use tokio_serial::SerialPortBuilderExt;
 
-use super::{ConnectResponse, DeviceDescriptor, Sessions, spawn_tokio_io};
+use super::{Sessions, spawn_tokio_io};
 
 #[derive(Serialize)]
 pub struct SerialDeviceInfo {
@@ -34,24 +34,10 @@ pub async fn rynk_discover_serial() -> Result<Vec<SerialDeviceInfo>, String> {
 }
 
 #[tauri::command]
-pub async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Result<ConnectResponse, String> {
-    let stream = tokio_serial::new(&path, 115_200).open_native_async().map_err(|e| e.to_string())?;
+pub async fn rynk_connect_serial(path: String, sessions: State<'_, Sessions>) -> Result<String, String> {
+    let stream = tokio_serial::new(&path, 115_200)
+        .open_native_async()
+        .map_err(|e| e.to_string())?;
     let (read, write) = tokio::io::split(stream);
-    let session = spawn_tokio_io(sessions, read, write).await;
-
-    let descriptor = available_ports().map_err(|e| e.to_string())?
-        .into_iter().find(|p| p.port_name == path)
-        .and_then(|p| match p.port_type {
-            SerialPortType::UsbPort(info) => Some(DeviceDescriptor {
-                vendor_id: info.vid,
-                product_id: info.pid,
-                manufacturer: info.manufacturer.unwrap_or_default(),
-                product_name: info.product.unwrap_or_default(),
-                serial_number: info.serial_number.unwrap_or_default(),
-            }),
-            _ => None,
-        })
-        .unwrap_or_default();
-
-    Ok(ConnectResponse { session, descriptor })
+    Ok(spawn_tokio_io(sessions, read, write).await)
 }
