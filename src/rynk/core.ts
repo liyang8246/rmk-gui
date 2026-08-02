@@ -115,4 +115,18 @@ export async function connectClient(link: JsByteLink, wasm?: BufferSource, timeo
   return { client, major, minor }
 }
 
+/// The keycode tables the firmware understands, straight out of `rmk-types`.
+/// A host that keeps its own copy stops offering whatever the firmware gains
+/// next; a TS union cannot be iterated, so the wasm hands over the values.
+/// Initialising twice is cheap — the glue returns the module it already has.
+export async function keycodeTables(wasm?: BufferSource) {
+  const core = await loadCore(0)
+  await core.default(wasm ? { module_or_path: wasm } : undefined)
+  return {
+    hid: core.all_hid_keycodes(),
+    consumer: core.all_consumer_keys(),
+    systemControl: core.all_system_control_keys(),
+  }
+}
+
 export type * from './wasm/rynk_wasm.js'
