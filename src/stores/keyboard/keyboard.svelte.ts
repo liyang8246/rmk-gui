@@ -10,6 +10,7 @@ import type {
   KeyAction,
   LockStatus,
   MacroData,
+  MatrixState,
   Morse,
   PeripheralStatus,
   RynkClient,
@@ -515,6 +516,13 @@ class KeyboardStoreClass {
     return runCommand(async (c) => {
       this.#status = await fetchStatus(c, caps)
     })
+  }
+
+  /// Matrix state has no topic push, so a live view polls it. Unlock-gated:
+  /// rejects with `Locked` until the ceremony completes.
+  refreshMatrix(): ResultAsync<MatrixState, KeyboardError> {
+    return runCommand(c => c.get_matrix_state())
+      .andTee((m) => { if (this.#status) this.#status.matrixState = m })
   }
 
   refreshLockStatus(): ResultAsync<LockStatus, KeyboardError> {

@@ -47,7 +47,7 @@ export async function discover(): Promise<TransportInfo[]> {
   ]
 }
 
-export { connectClient } from './core'
+export { connectClient, keycodeTables } from './core'
 export type { JsByteLink } from './core'
 export { closeAllSessions }
 export type * from './wasm/rynk_wasm.js'
