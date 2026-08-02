@@ -1,21 +1,204 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-base-100: oklch(100% 0 0);
-  --color-base-200: #f2f2f2;
-  --color-base-300: #e5e6e6;
-  --color-base-content: #1f2937;
-  --color-primary: oklch(49.12% 0.3096 275.75);
-  --color-primary-content: oklch(98.71% 0.0106 342.55);
-  --color-success: oklch(64.8% 0.15 160);
-  --color-warning: oklch(84.71% 0.199 83.87);
-  --color-error: oklch(71.76% 0.221 22.18);
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Neutrals and brand come from design/_ds/…/tokens/colors.css verbatim. Stored
+   as HSL channels so `.dark` can re-point them without touching a utility. */
+:root {
+  --rmk-brand-darker: #ff6900;
+  --rmk-brand-dark: #ff8904;
+  --rmk-brand: #ffb900;
+  --rmk-brand-light: #ffb86a;
+  --rmk-brand-lighter: #ffd6a7;
+
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --destructive: 0 84.2% 60.2%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 10% 3.9%;
+
+  --base-100: 0 0% 100%;
+  --base-200: 240 12% 94%;
+  --base-300: 240 5% 84%;
+
+
+  /* Keycap surface — the `warm` tone at the design's shipped defaults. */
+  --kc-top: 40 25% 99%;
+  --kc-border: 40 10% 85%;
+  --kc-fg: 240 6% 26%;
+  --kc-fg-soft: 240 4% 46%;
+  --kc-mod-top: 40 16% 95%;
+  --kc-trns-top: 40 10% 96%;
+  --kc-plate: 40 14% 93%;
+  --kc-case: 40 12% 87%;
+  --kc-amber-top: #fbe7c0;
+  --kc-amber-border: #ecca82;
+  --kc-amber-fg: #8a5718;
+  --kc-blue-top: #dceafb;
+  --kc-blue-border: #b3cdf0;
+  --kc-blue-fg: #2c5ea6;
+  --kc-ring: rgb(255 185 0 / 0.22);
 }
 
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --popover: 240 10% 3.9%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --destructive: 0 62.8% 30.6%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 240 4.9% 83.9%;
+
+  --base-100: 240 5% 15%;
+  --base-200: 240 5% 23%;
+  --base-300: 240 4% 31%;
+
+
+  --kc-top: 240 4% 25%;
+  --kc-border: 240 4% 33%;
+  --kc-fg: 40 22% 90%;
+  --kc-fg-soft: 240 6% 70%;
+  --kc-mod-top: 240 4% 19%;
+  --kc-trns-top: 240 4% 17%;
+  --kc-plate: 240 5% 16%;
+  --kc-case: 240 5% 12%;
+  --kc-amber-top: #493516;
+  --kc-amber-border: #6e4e1e;
+  --kc-amber-fg: #f5ce86;
+  --kc-blue-top: #26344b;
+  --kc-blue-border: #35496a;
+  --kc-blue-fg: #a9c8f2;
+}
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-popover: hsl(var(--popover));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-base-100: hsl(var(--base-100));
+  --color-base-200: hsl(var(--base-200));
+  --color-base-300: hsl(var(--base-300));
+
+  --color-brand: var(--rmk-brand);
+  --color-brand-dark: var(--rmk-brand-dark);
+  --color-brand-darker: var(--rmk-brand-darker);
+  /* The amber wash behind selected tabs/rows, at the design's three strengths. */
+  --color-brand-tint: rgb(255 185 0 / 0.12);
+  --color-brand-tint-strong: rgb(255 185 0 / 0.16);
+  --color-ok: hsl(160 70% 34%);
+  --color-ok-bright: hsl(160 70% 42%);
+  --color-info: hsl(217 80% 52%);
+
+  --color-kc-top: hsl(var(--kc-top));
+  --color-kc-border: hsl(var(--kc-border));
+  --color-kc-fg: hsl(var(--kc-fg));
+  --color-kc-fg-soft: hsl(var(--kc-fg-soft));
+  --color-kc-mod-top: hsl(var(--kc-mod-top));
+  --color-kc-trns-top: hsl(var(--kc-trns-top));
+  --color-kc-plate: hsl(var(--kc-plate));
+  --color-kc-case: hsl(var(--kc-case));
+  --color-kc-amber-top: var(--kc-amber-top);
+  --color-kc-amber-border: var(--kc-amber-border);
+  --color-kc-amber-fg: var(--kc-amber-fg);
+  --color-kc-blue-top: var(--kc-blue-top);
+  --color-kc-blue-border: var(--kc-blue-border);
+  --color-kc-blue-fg: var(--kc-blue-fg);
+
+  /* The floating panels: warm, wide, low-contrast lift. */
+  --shadow-card: 0 6px 20px -6px rgb(60 50 35 / 0.22), 0 2px 6px -2px rgb(60 50 35 / 0.12);
+  --shadow-bar: 0 3px 10px -3px rgb(60 50 35 / 0.16), 0 1px 3px -1px rgb(60 50 35 / 0.1);
+
+  --animate-toast: toast 0.2s ease;
+  --animate-fade: fade 0.15s ease;
+  --animate-pop: pop 0.18s ease;
+
+  @keyframes toast {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.98) translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  body {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--base-300));
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+    background-clip: padding-box;
+  }
+
+  input::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+}
+
+/* The app canvas: a plain surface ruled into 64px boxes. Both colours are
+   theme tokens, so the grid follows light and dark without a second rule. */
 @utility grid-canvas {
-  background-color: var(--color-base-100);
+  background-color: hsl(var(--background));
+  /* Ruled off the foreground rather than a surface token, so one alpha reads
+     equally faint on a white canvas and a near-black one. */
   background-image:
-    linear-gradient(to right, var(--color-base-200) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--color-base-200) 1px, transparent 1px);
+    linear-gradient(to right, hsl(var(--foreground) / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
   background-size: 64px 64px;
+}
+
+/* Category rails and layer strips scroll, but a visible bar would cut into the
+   36px control height the design allots them. */
+@utility noscroll {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

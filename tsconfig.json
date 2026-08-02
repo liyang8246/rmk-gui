@@ -9,6 +9,7 @@
       "@/*": ["./src/*"]
     },
     "resolveJsonModule": true,
+    "types": ["node", "w3c-web-serial", "w3c-web-hid"],
     "allowImportingTsExtensions": true,
     "strict": true,
     "noEmit": true,

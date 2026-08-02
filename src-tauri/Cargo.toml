@@ -20,9 +20,12 @@ tokio = { version = "1.53.1", features = [
   "sync",
   "time"
 ] }
-tokio-serial = "5.5.0"
-tokio-stream = "0.1.18"
-btleplug = "0.12.0"
+# The Rynk host transports live upstream: rynk-serial recognises a keyboard by
+# its USB serial marker, rynk-ble lists already-connected GATT peers. Neither is
+# reimplemented here — discovery rules belong with the protocol.
+rynk = { git = "https://github.com/rmk-rs/rmk.git", branch = "main" }
+rynk-serial = { git = "https://github.com/rmk-rs/rmk.git", branch = "main" }
+rynk-ble = { git = "https://github.com/rmk-rs/rmk.git", branch = "main" }
 uuid = { version = "1.24.0", features = [ "v4" ] }
 
 [lints.clippy]

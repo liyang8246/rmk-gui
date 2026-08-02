@@ -1,72 +1,29 @@
 <script lang='ts'>
-  import Keyboard from './components/Keyboard.svelte'
-  import StateBar from './components/StateBar.svelte'
-  import ToolsBar from './components/ToolsBar.svelte'
-  import PageHost from './lib/PageHost.svelte'
-  import Toaster from './lib/Toaster.svelte'
-  import { canDiscover, connectWebSerial, discover } from './rynk'
-  import { describeKeyboardError, keyboardStore } from './stores'
+  import Toast from './components/Toast.svelte'
+  import Workspace from './components/Workspace.svelte'
+  import { catalog } from './lib/catalog.svelte'
+  import Connect from './pages/Connect.svelte'
+  import { deviceStore, keyboardStore } from './stores'
 
-  let picking = $state(false)
-  let pickError = $state<string | null>(null)
+  const connected = $derived(keyboardStore.connection?.phase === 'connected')
+  /// Keys the workspace: swapping keyboards rebuilds it, so the selected layer
+  /// and the undo stack cannot outlive the keymap they address.
+  const deviceId = $derived(keyboardStore.device?.info.serial_number.trim() ?? '')
 
-  $effect(() => {
-    if (!canDiscover()) return
-    void (async () => {
-      const devices = await discover()
-      if (devices.length) await keyboardStore.initStore(await devices[0]!.connect())
-    })()
-  })
-
-  // Must run from a click: the browser port picker requires a user gesture.
-  async function pickWebSerial() {
-    picking = true
-    pickError = null
-    try {
-      // initStore returns a ResultAsync: a failed handshake is an Err, not a throw.
-      const result = await keyboardStore.initStore(await connectWebSerial())
-      if (result.isErr()) pickError = describeKeyboardError(result.error)
-    }
-    catch (e) {
-      // NotFoundError is the user dismissing the picker; a port that refuses to
-      // open throws NetworkError or InvalidStateError and must be shown.
-      if (e instanceof DOMException && e.name === 'NotFoundError') return
-      pickError = e instanceof Error ? e.message : String(e)
-    }
-    finally {
-      picking = false
-    }
-  }
+  void catalog.load()
+  void deviceStore.boot()
 </script>
 
-<div class='flex h-screen w-screen flex-col items-center gap-4 grid-canvas p-8'>
-  <ToolsBar />
-  <div class='w-full flex-1 overflow-auto'>
-    {#if !canDiscover() && keyboardStore.connection?.phase !== 'connected'}
-      <div class='flex h-full flex-col items-center justify-center gap-2'>
-        <button
-          class='
-            cursor-pointer rounded-xl bg-base-100 px-4 py-2 shadow-lg ring
-            ring-base-300
-            hover:bg-base-300
-            disabled:opacity-50
-          '
-          disabled={picking}
-          onclick={pickWebSerial}
-        >
-          {picking ? 'Connecting…' : 'Connect keyboard'}
-        </button>
-        {#if pickError}
-          <p class='max-w-sm text-center text-sm text-red-600'>{pickError}</p>
-        {/if}
-      </div>
-    {:else}
-      <Keyboard />
-    {/if}
-  </div>
-  <StateBar />
+<div class='absolute inset-0 flex flex-col overflow-hidden bg-background'>
+  {#if connected}
+    {#key deviceId}
+      <Workspace />
+    {/key}
+  {:else}
+    <div class='relative flex-1'>
+      <Connect />
+    </div>
+  {/if}
+
+  <Toast />
 </div>
-
-<PageHost />
-
-<Toaster />
