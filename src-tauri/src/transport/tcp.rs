@@ -1,7 +1,7 @@
 use serde::Serialize;
 use tauri::State;
 
-use super::{ConnectResponse, Sessions, spawn_tokio_io};
+use super::{Sessions, spawn_tokio_io};
 
 #[derive(Serialize)]
 pub struct TcpDeviceInfo {
@@ -25,9 +25,9 @@ pub async fn rynk_discover_tcp() -> Vec<TcpDeviceInfo> {
 }
 
 #[tauri::command]
-pub async fn rynk_connect_tcp(addr: String, sessions: State<'_, Sessions>) -> Result<ConnectResponse, String> {
+pub async fn rynk_connect_tcp(addr: String, sessions: State<'_, Sessions>) -> Result<String, String> {
     let stream = tokio::net::TcpStream::connect(&addr).await.map_err(|e| e.to_string())?;
     let (read, write) = tokio::io::split(stream);
     let session = spawn_tokio_io(sessions, read, write).await;
-    Ok(ConnectResponse { session, descriptor: Default::default() })
+    Ok(session)
 }

@@ -191,7 +191,7 @@ function connect(client: FakeClient): ConnectedDevice {
     close: async () => { client.die() },
   }
   connectClient.mockResolvedValue({ client: client as unknown as RynkClient, major: 1, minor: 0 })
-  return { link, descriptor: {}, label: 'fake' } as unknown as ConnectedDevice
+  return { link, label: 'fake' } as unknown as ConnectedDevice
 }
 
 async function connected(client = new FakeClient()): Promise<FakeClient> {

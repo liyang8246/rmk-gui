@@ -1,4 +1,4 @@
-import type { ConnectedDevice, DeviceDescriptor } from './index'
+import type { ConnectedDevice } from './index'
 
 function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
   const c = new Uint8Array(a.length + b.length)
@@ -64,22 +64,10 @@ export class WebByteLink {
   }
 }
 
-// WebSerial exposes only usbVendorId / usbProductId via getInfo(); no string descriptors.
-function serialDescriptor(port: SerialPort): DeviceDescriptor {
-  const info = port.getInfo()
-  return {
-    vendor_id: info.usbVendorId ?? 0,
-    product_id: info.usbProductId ?? 0,
-    manufacturer: '',
-    product_name: '',
-    serial_number: '',
-  }
-}
-
 export async function connectWebSerial(): Promise<ConnectedDevice> {
   const port = await navigator.serial.requestPort()
   await port.open({ baudRate: 115200 })
-  return { link: new WebByteLink(port, 'WebSerial'), descriptor: serialDescriptor(port), label: 'WebSerial' }
+  return { link: new WebByteLink(port, 'WebSerial'), label: 'WebSerial' }
 }
 
 // TODO: WebHID support — see rynk-wasm/index.html hidLink() for reference.

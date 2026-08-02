@@ -5,22 +5,16 @@ import { closeAllSessions, connectBle, connectSerial, connectTcp, discoverBle, d
 
 export type ByteLink = TauriByteLink | WebByteLink
 
-export interface DeviceDescriptor {
-  vendor_id: number
-  product_id: number
-  manufacturer: string
-  product_name: string
-  serial_number: string
-}
-
 export interface ConnectedDevice {
   link: ByteLink
-  descriptor: DeviceDescriptor
   label: string
 }
 
 export interface TransportInfo {
   kind: 'serial' | 'ble' | 'tcp'
+  /// Stable across scans (port path / BLE id / socket address); identifies the
+  /// live session so a rescan can leave it alone.
+  id: string
   label: string
   connect: () => Promise<ConnectedDevice>
 }
@@ -33,7 +27,6 @@ export function canDiscover(): boolean {
 
 export async function discover(): Promise<TransportInfo[]> {
   if (!canDiscover()) return []
-  await closeAllSessions()
   const [serials, bles, tcps] = await Promise.all([
     discoverSerial().catch(() => []),
     discoverBle().catch(() => []),
@@ -42,20 +35,20 @@ export async function discover(): Promise<TransportInfo[]> {
   return [
     ...serials.map((s) => {
       const label = s.name ?? s.path
-      return { kind: 'serial' as const, label, connect: () => connectSerial(s.path, label) }
+      return { kind: 'serial' as const, id: s.path, label, connect: () => connectSerial(s.path, label) }
     }),
     ...bles.map((b) => {
       const label = b.name ?? b.id
-      return { kind: 'ble' as const, label, connect: () => connectBle(b.id, label) }
+      return { kind: 'ble' as const, id: b.id, label, connect: () => connectBle(b.id, label) }
     }),
     ...tcps.map((t) => {
-      const label = t.name
-      return { kind: 'tcp' as const, label, connect: () => connectTcp(t.addr, label) }
+      return { kind: 'tcp' as const, id: t.addr, label: t.name, connect: () => connectTcp(t.addr, t.name) }
     }),
   ]
 }
 
 export { connectClient } from './core'
 export type { JsByteLink } from './core'
+export { closeAllSessions }
 export type * from './wasm/rynk_wasm.js'
 export { connectWebHid, connectWebSerial } from './web'
