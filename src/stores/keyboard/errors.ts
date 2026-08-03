@@ -1,4 +1,5 @@
 import type { RynkError } from '../../rynk'
+import { match } from 'ts-pattern'
 
 export type KeyboardError
   = | { type: 'rynk', code: RynkError }
@@ -6,22 +7,27 @@ export type KeyboardError
     | { type: 'invalid', cause: string }
     | { type: 'unknown', cause: unknown }
 
-const RYNK_ERROR_CODES = [
-  'Malformed',
-  'NotReady',
-  'StorageFault',
-  'Internal',
-  'Unimplemented',
-  'Invalid',
-  'UnknownCmd',
-  'Locked',
-] as const satisfies readonly RynkError[]
+// A Record (not an array) so a new RynkError variant upstream fails this build.
+// Exported so tests iterate this list instead of keeping a stale copy.
+export const RYNK_ERROR_CODES: Record<RynkError, true> = {
+  Busy: true,
+  Internal: true,
+  Invalid: true,
+  Locked: true,
+  Malformed: true,
+  NotReady: true,
+  StorageFault: true,
+  Unimplemented: true,
+  UnknownCmd: true,
+}
 
 const REJECTED_RE = /^device rejected (\w+)$/
 const TRANSPORT_NAMES: readonly string[] = ['Disconnected', 'TransportError']
 
+const RYNK_ERROR_NAMES = new Set<string>(Object.keys(RYNK_ERROR_CODES))
+
 function isRynkError(s: string): s is RynkError {
-  return (RYNK_ERROR_CODES as readonly string[]).includes(s)
+  return RYNK_ERROR_NAMES.has(s)
 }
 
 export function toKeyboardError(e: unknown): KeyboardError {
@@ -37,4 +43,14 @@ export function toKeyboardError(e: unknown): KeyboardError {
     return { type: 'rynk', code: e.message }
   }
   return { type: 'unknown', cause: e }
+}
+
+/// Short, user-facing reason — for the status bar and the connect button.
+export function describeKeyboardError(e: KeyboardError): string {
+  return match(e)
+    .with({ type: 'rynk' }, x => `device rejected ${x.code}`)
+    .with({ type: 'transport' }, () => 'link lost')
+    .with({ type: 'invalid' }, x => x.cause)
+    .with({ type: 'unknown' }, x => (x.cause instanceof Error ? x.cause.message : 'unknown error'))
+    .exhaustive()
 }

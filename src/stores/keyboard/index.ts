@@ -1,4 +1,4 @@
-export { toKeyboardError } from './errors'
+export { describeKeyboardError, toKeyboardError } from './errors'
 export type { KeyboardError } from './errors'
 export { keyboardStore } from './keyboard.svelte'
 export type {

@@ -2,6 +2,10 @@ name: CI
 
 on: [push, pull_request]
 
+# Least privilege by default; the deploy job widens this for itself.
+permissions:
+  contents: read
+
 jobs:
   ci:
     strategy:
@@ -11,6 +15,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v6
         with:
           version: 11
@@ -18,7 +24,7 @@ jobs:
         with:
           node-version: 24
 
-      - uses: cargo-bins/cargo-binstall@main
+      - uses: cargo-bins/cargo-binstall@e00d2c94cc0067b77737821097a62d91c0301baa # v1.21.1
 
       - name: Install wasm-pack
         shell: bash
@@ -35,6 +41,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:wasm
       - run: pnpm lint
+      - run: pnpm check
+      - run: pnpm test
       - run: pnpm build:tauri
 
       - uses: actions/upload-artifact@v7
@@ -48,8 +56,46 @@ jobs:
             src-tauri/target/release/bundle/**/*.AppImage
           if-no-files-found: error
 
+  # End-to-end against the riscv fixture firmware: real rynk protocol over a
+  # real UART-to-TCP bridge. Linux-only — it needs qemu, not a desktop bundle.
+  qemu:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: cargo-bins/cargo-binstall@e00d2c94cc0067b77737821097a62d91c0301baa # v1.21.1
+
+      - name: Install toolchains and qemu
+        run: |
+          rustup target add wasm32-unknown-unknown riscv32imac-unknown-none-elf
+          cargo binstall wasm-pack --no-confirm
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-misc
+
+      # One clone for both artifacts. The firmware and the wasm client speak one
+      # protocol, so resolving `main` twice can put them on different commits and
+      # fail the run on wire errors. RMK_REPO is honoured by both build:wasm and
+      # qemu/run.mjs.
+      - name: Check out rmk once
+        run: |
+          git clone --depth 1 https://github.com/rmk-rs/rmk.git "$RUNNER_TEMP/rmk"
+          echo "rmk at $(git -C "$RUNNER_TEMP/rmk" rev-parse HEAD)"
+          echo "RMK_REPO=$RUNNER_TEMP/rmk" >> "$GITHUB_ENV"
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:wasm
+      - run: pnpm test:qemu
+
   deploy:
-    needs: ci
+    needs: [ci, qemu]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -59,6 +105,8 @@ jobs:
       github.event_name == 'pull_request' && github.base_ref == 'main'
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v6
         with:
           version: 11
@@ -66,7 +114,7 @@ jobs:
         with:
           node-version: 24
 
-      - uses: cargo-bins/cargo-binstall@main
+      - uses: cargo-bins/cargo-binstall@e00d2c94cc0067b77737821097a62d91c0301baa # v1.21.1
 
       - name: Install wasm-pack
         run: |

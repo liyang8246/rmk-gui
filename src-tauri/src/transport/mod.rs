@@ -5,26 +5,10 @@ pub mod tcp;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use serde::Serialize;
 use tauri::State;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, Mutex, oneshot};
 use uuid::Uuid;
-
-#[derive(Serialize, Clone, Default)]
-pub struct DeviceDescriptor {
-    pub vendor_id: u16,
-    pub product_id: u16,
-    pub manufacturer: String,
-    pub product_name: String,
-    pub serial_number: String,
-}
-
-#[derive(Serialize)]
-pub struct ConnectResponse {
-    pub session: String,
-    pub descriptor: DeviceDescriptor,
-}
 
 pub enum SessionCmd {
     Send(Vec<u8>, oneshot::Sender<()>),
@@ -69,6 +53,61 @@ where
             }
         }
     });
+    insert_session(&sessions, cmd_tx, data_rx).await
+}
+
+/// Same pump as [`spawn_tokio_io`], over the `embedded-io-async` halves the
+/// `rynk` transports hand out. `write` is not guaranteed to take the whole
+/// buffer, so the send loop drains it.
+///
+/// Not spawned here: `Read::read` returns an anonymous future whose `Send`-ness
+/// a generic cannot name, and only becomes provable once the half is a concrete
+/// type. [`spawn_session`] is what the transports hand this to.
+pub async fn rynk_pump<R, W>(
+    mut reader: R,
+    mut writer: W,
+    mut cmd_rx: mpsc::Receiver<SessionCmd>,
+    data_tx: mpsc::Sender<Vec<u8>>,
+) where
+    R: rynk::io::Read,
+    W: rynk::io::Write,
+{
+    let mut buf = [0u8; 4096];
+    loop {
+        tokio::select! {
+            biased;
+            cmd = cmd_rx.recv() => match cmd {
+                Some(SessionCmd::Send(data, ack)) => {
+                    let mut sent = 0;
+                    while sent < data.len() {
+                        match writer.write(&data[sent..]).await {
+                            Ok(0) | Err(_) => break,
+                            Ok(n) => sent += n,
+                        }
+                    }
+                    let _ = ack.send(());
+                }
+                Some(SessionCmd::Close) | None => break,
+            },
+            result = reader.read(&mut buf) => match result {
+                Ok(0) | Err(_) => { let _ = data_tx.send(Vec::new()).await; break; }
+                Ok(n) => { if data_tx.send(buf[..n].to_vec()).await.is_err() { break; } }
+            },
+        }
+    }
+}
+
+/// Registers a session around a pump built at the caller's concrete types.
+pub async fn spawn_session<F>(
+    sessions: State<'_, Sessions>,
+    pump: impl FnOnce(mpsc::Receiver<SessionCmd>, mpsc::Sender<Vec<u8>>) -> F,
+) -> String
+where
+    F: std::future::Future<Output = ()> + Send + 'static,
+{
+    let (cmd_tx, cmd_rx) = mpsc::channel::<SessionCmd>(64);
+    let (data_tx, data_rx) = mpsc::channel::<Vec<u8>>(64);
+    tokio::spawn(pump(cmd_rx, data_tx));
     insert_session(&sessions, cmd_tx, data_rx).await
 }
 
