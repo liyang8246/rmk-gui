@@ -1,5 +1,6 @@
 <script lang='ts' generics='T extends string'>
   import Icon from '@iconify/svelte'
+  import { RadioGroup } from 'bits-ui'
 
   interface Item {
     value: T
@@ -20,16 +21,22 @@
   const { items, value, fill = false, height = 30, disabled = false, onchange }: Props = $props()
 </script>
 
-<div
+<!-- A radio group rather than a row of buttons: exactly one segment is on,
+     and the arrow keys walk the track. The binding stays a function pair so
+     the pressed segment is whatever `value` confirms, not the last click. -->
+<RadioGroup.Root
   class={[
     'flex gap-[3px] rounded-md bg-muted p-[3px]',
     disabled && 'opacity-45',
     fill && 'w-full',
   ]}
+  orientation='horizontal'
+  bind:value={() => value, v => onchange(v as T)}
+  {disabled}
 >
   {#each items as item (item.value)}
     {@const on = item.value === value}
-    <button
+    <RadioGroup.Item
       class={[
         `
           inline-flex cursor-pointer items-center justify-center gap-1.5
@@ -38,16 +45,15 @@
           disabled:cursor-not-allowed
         `,
         fill && 'flex-1',
-        on ? 'bg-card text-brand-darker shadow-xs' : 'text-muted-foreground',
+        on ? 'bg-card text-brand-darker shadow-xs dark:text-brand-fill' : 'text-muted-foreground',
       ]}
-      style:height='{height}px'
-      {disabled}
-      onclick={() => onchange(item.value)}
+      style='height: {height}px'
+      value={item.value}
     >
       {#if item.icon}
         <Icon icon={item.icon} width={15} height={15} />
       {/if}
       {item.label}
-    </button>
+    </RadioGroup.Item>
   {/each}
-</div>
+</RadioGroup.Root>

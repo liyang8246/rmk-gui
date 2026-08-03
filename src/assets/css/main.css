@@ -101,6 +101,10 @@
   --color-brand: var(--rmk-brand);
   --color-brand-dark: var(--rmk-brand-dark);
   --color-brand-darker: var(--rmk-brand-darker);
+  /* Primary-action fill: the brand scale's `light` stop — solid in both
+     themes. Ink is the light-theme foreground, pinned so it never inverts. */
+  --color-brand-fill: var(--rmk-brand-light);
+  --color-brand-fill-fg: hsl(240 10% 3.9%);
   /* The amber wash behind selected tabs/rows, at the design's three strengths. */
   --color-brand-tint: rgb(255 185 0 / 0.12);
   --color-brand-tint-strong: rgb(255 185 0 / 0.16);
@@ -129,19 +133,14 @@
 
   --animate-toast: toast 0.2s ease;
   --animate-fade: fade 0.15s ease;
-  --animate-pop: pop 0.18s ease;
 
   @keyframes toast {
-    from { opacity: 0; transform: translate(-50%, 8px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
   }
   @keyframes fade {
     from { opacity: 0; }
     to { opacity: 1; }
-  }
-  @keyframes pop {
-    from { opacity: 0; transform: scale(0.98) translateY(6px); }
-    to { opacity: 1; transform: none; }
   }
 }
 

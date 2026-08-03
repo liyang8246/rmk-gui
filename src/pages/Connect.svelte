@@ -174,9 +174,9 @@
         <button
           class={`
             mt-2 flex w-full flex-none cursor-pointer items-center
-            justify-center gap-2 rounded-md bg-brand px-4 py-3 text-[13.5px]
-            font-bold text-[#1a1205] transition-[filter]
-            hover:brightness-95
+            justify-center gap-2 rounded-md bg-brand-fill px-4 py-3
+            text-[13.5px] font-bold text-brand-fill-fg transition-[filter]
+            hover:enabled:brightness-95
             disabled:cursor-wait disabled:opacity-60
           `}
           type='button'

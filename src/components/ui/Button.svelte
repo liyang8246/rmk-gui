@@ -1,5 +1,6 @@
 <script lang='ts'>
   import type { Snippet } from 'svelte'
+  import { Button as BitsButton } from 'bits-ui'
 
   interface Props {
     variant?: 'brand' | 'outline'
@@ -22,7 +23,7 @@
   }: Props = $props()
 </script>
 
-<button
+<BitsButton.Root
   class={[
     `
       inline-flex flex-none cursor-pointer items-center justify-center gap-2
@@ -32,8 +33,8 @@
     size === 'sm' ? 'h-8 px-3 text-[12.5px]' : 'h-9 px-4 text-[13px]',
     variant === 'brand'
       ? `
-        bg-brand text-[#1a1205]
-        hover:brightness-95
+        bg-brand-fill text-brand-fill-fg
+        hover:enabled:brightness-95
       `
       : `
         border border-border bg-card text-foreground
@@ -46,4 +47,4 @@
   {onclick}
 >
   {@render children()}
-</button>
+</BitsButton.Root>

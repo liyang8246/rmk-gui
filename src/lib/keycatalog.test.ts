@@ -1,7 +1,6 @@
 import type { DeviceCapabilities, HidKeyCode } from '../rynk'
 import { describe, expect, it } from 'vitest'
-import { actionCatalog, asAction, withModifiers } from './keycatalog'
-import { NO_MODIFIERS } from './keycode'
+import { actionCatalog, asAction } from './keycatalog'
 
 /// A stand-in for the firmware table: one code from each family the groups match.
 const HID = [
@@ -100,20 +99,6 @@ describe('actionCatalog', () => {
   it('keeps the error codes off the board', () => {
     const groups = actionCatalog(CAPS, ['No', 'ErrorRollover', 'PostFail', 'ErrorUndefined'])
     expect(groups.find(g => g.name === 'Other')).toBeUndefined()
-  })
-})
-
-describe('withModifiers', () => {
-  it('rewrites a plain key as a modified one', () => {
-    const entry = actionCatalog(CAPS, HID)[0]!.entries.find(e => e.hid === 'A')!
-    expect(withModifiers(entry, NO_MODIFIERS)).toEqual(entry.action)
-    expect(withModifiers(entry, { ...NO_MODIFIERS, left_ctrl: true }))
-      .toEqual({ Single: { KeyWithModifier: ['A', { ...NO_MODIFIERS, left_ctrl: true }] } })
-  })
-
-  it('leaves an entry that carries no keycode alone', () => {
-    const layerEntry = actionCatalog(CAPS, HID).find(g => g.name === 'Layer')!.entries[0]!
-    expect(withModifiers(layerEntry, { ...NO_MODIFIERS, left_ctrl: true })).toEqual(layerEntry.action)
   })
 })
 

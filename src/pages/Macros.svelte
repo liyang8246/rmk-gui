@@ -58,10 +58,10 @@
   function commit(next: (MacroStep[] | null)[]) {
     const bytes = encodeMacros(next.map(s => s ?? []), capacity)
     if (!bytes) {
-      toast.show('Macro storage is full')
+      toast.warning('Macro storage is full')
       return
     }
-    void keyboardStore.setMacroRegion(bytes).mapErr(e => toast.show(describeKeyboardError(e)))
+    void keyboardStore.setMacroRegion(bytes).mapErr(e => toast.error(describeKeyboardError(e)))
   }
 
   function update(steps: MacroStep[]) {
@@ -88,7 +88,7 @@
     if (at === null || hid === null) return
     const code = catalog.table.byCode(hid)
     if (code === undefined) {
-      toast.show(`${hidLabel(hid)} has no macro encoding`)
+      toast.warning(`${hidLabel(hid)} has no macro encoding`)
       return
     }
     const step = current[at]

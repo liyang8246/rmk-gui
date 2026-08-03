@@ -29,7 +29,7 @@
     a.download = `${device.info.product_name.trim() || 'keyboard'}.json`
     a.click()
     URL.revokeObjectURL(url)
-    toast.show(`Exported ${a.download}`)
+    toast.success(`Exported ${a.download}`)
   }
 </script>
 

@@ -8,6 +8,7 @@
   import Overlay from '../components/ui/Overlay.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
   import Segmented from '../components/ui/Segmented.svelte'
+  import Select from '../components/ui/Select.svelte'
   import Unsupported from '../components/ui/Unsupported.svelte'
   import { capLegend } from '../lib/legend'
   import { toast } from '../lib/toast.svelte'
@@ -30,7 +31,7 @@
   const maxKeys = $derived(caps?.max_combo_keys ?? 0)
 
   function save(slot: number, combo: Combo) {
-    void keyboardStore.setCombo(slot, combo).mapErr(e => toast.show(describeKeyboardError(e)))
+    void keyboardStore.setCombo(slot, combo).mapErr(e => toast.error(describeKeyboardError(e)))
   }
 
   function add() {
@@ -41,7 +42,7 @@
 
   function remove(slot: number) {
     save(slot, { actions: [], output: 'No', layer: undefined })
-    toast.show(`Cleared combo ${slot}`)
+    toast.success(`Cleared combo ${slot}`)
   }
 
   function apply(action: KeyAction) {
@@ -126,22 +127,21 @@
           <span class='text-xs text-muted-foreground'>
             Pick the keys that trigger this combo
           </span>
-          <label class='flex items-center gap-2 text-xs text-muted-foreground'>
+          <span class='flex items-center gap-2 text-xs text-muted-foreground'>
             on layer
-            <select
-              class={`
-                h-8 rounded-md border border-input bg-background px-2
-                text-[12.5px] text-foreground outline-none
-              `}
+            <Select
+              items={[
+                { value: 'any', label: 'any' },
+                ...Array.from({ length: caps?.num_layers ?? 0 }, (_, l) => ({
+                  value: String(l),
+                  label: String(l),
+                })),
+              ]}
               value={combo.layer === undefined ? 'any' : String(combo.layer)}
-              onchange={e => setLayer(entry.slot, e.currentTarget.value)}
-            >
-              <option value='any'>any</option>
-              {#each { length: caps?.num_layers ?? 0 } as _, l (l)}
-                <option value={String(l)}>{l}</option>
-              {/each}
-            </select>
-          </label>
+              label='Combo layer'
+              onchange={v => setLayer(entry.slot, v)}
+            />
+          </span>
           <div class='ml-auto flex items-center gap-2'>
             <span class='text-xs text-muted-foreground'>outputs</span>
             {@render chip(combo.output, true, () => (picking = { slot: entry.slot, kind: 'output' }))}

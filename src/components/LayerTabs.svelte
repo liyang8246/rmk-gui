@@ -1,5 +1,6 @@
 <script lang='ts'>
   import Icon from '@iconify/svelte'
+  import { RadioGroup } from 'bits-ui'
   import { layerColor } from '../lib/layer-colors'
 
   interface Props {
@@ -18,10 +19,14 @@
   '>
     Layer
   </span>
-  <div class='noscroll flex gap-0.5 overflow-x-auto'>
+  <RadioGroup.Root
+    class='noscroll flex gap-0.5 overflow-x-auto'
+    orientation='horizontal'
+    bind:value={() => String(layer), v => onselect(Number(v))}
+  >
     {#each { length: count } as _, i (i)}
       {@const on = i === layer}
-      <button
+      <RadioGroup.Item
         class={[
           `
             inline-flex h-6.5 flex-none cursor-pointer items-center gap-[5px]
@@ -35,14 +40,13 @@
               hover:bg-base-200
             `,
         ]}
-        type='button'
-        onclick={() => onselect(i)}
+        value={String(i)}
       >
         <span class='size-2 rounded-full' style:background={layerColor(i)}></span>
         {i}
-      </button>
+      </RadioGroup.Item>
     {/each}
-  </div>
+  </RadioGroup.Root>
   <!-- The layer count is fixed at build time by the firmware's keyboard.toml. -->
   <button
     class={`

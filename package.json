@@ -21,9 +21,9 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@ark-ui/svelte": "^5.22.1",
     "@iconify/svelte": "^5.0.1",
     "@tauri-apps/api": "^2.11.1",
+    "bits-ui": "^2.18.1",
     "neverthrow": "^8.2.0",
     "ts-pattern": "^5.9.0"
   },

@@ -39,7 +39,7 @@
     if (before === undefined) return
     void keyboardStore.setKey(layer, row, col, action).match(
       () => history.record({ layer, row, col, before, after: action }),
-      e => toast.show(describeKeyboardError(e)),
+      e => toast.error(describeKeyboardError(e)),
     )
   }
 
@@ -76,7 +76,7 @@
     // Undo is another write, not a rollback: the keyboard already has the edit.
     void keyboardStore
       .setKey(edit.layer, edit.row, edit.col, e.shiftKey ? edit.after : edit.before)
-      .mapErr(err => toast.show(describeKeyboardError(err)))
+      .mapErr(err => toast.error(describeKeyboardError(err)))
   }
 
   function step(direction: 'undo' | 'redo') {
@@ -84,7 +84,7 @@
     if (!edit) return
     void keyboardStore
       .setKey(edit.layer, edit.row, edit.col, direction === 'undo' ? edit.before : edit.after)
-      .mapErr(err => toast.show(describeKeyboardError(err)))
+      .mapErr(err => toast.error(describeKeyboardError(err)))
   }
 </script>
 

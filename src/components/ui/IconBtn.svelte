@@ -1,5 +1,6 @@
 <script lang='ts'>
   import Icon from '@iconify/svelte'
+  import { Button as BitsButton } from 'bits-ui'
 
   interface Props {
     icon: string
@@ -23,7 +24,7 @@
   }: Props = $props()
 </script>
 
-<button
+<BitsButton.Root
   class={[
     `
       inline-flex flex-none cursor-pointer items-center justify-center
@@ -38,12 +39,11 @@
       `,
     klass,
   ]}
-  style:width='{size}px'
-  style:height='{size}px'
+  style='width: {size}px; height: {size}px'
   aria-label={title}
   {title}
   {disabled}
   {onclick}
 >
   <Icon {icon} width={Math.round(size * 0.45)} height={Math.round(size * 0.45)} />
-</button>
+</BitsButton.Root>

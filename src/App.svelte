@@ -1,7 +1,7 @@
 <script lang='ts'>
-  import Toast from './components/Toast.svelte'
   import Workspace from './components/Workspace.svelte'
   import { catalog } from './lib/catalog.svelte'
+  import Toaster from './lib/Toaster.svelte'
   import Connect from './pages/Connect.svelte'
   import { deviceStore, keyboardStore } from './stores'
 
@@ -25,5 +25,5 @@
     </div>
   {/if}
 
-  <Toast />
+  <Toaster />
 </div>

@@ -9,9 +9,6 @@ import type {
   Fork,
   KeyAction,
   LockStatus,
-  MacroData,
-  MatrixState,
-  Morse,
   PeripheralStatus,
   RynkClient,
   StorageResetMode,
@@ -355,61 +352,6 @@ class KeyboardStoreClass {
     })
   }
 
-  setCombos(combos: Combo[]): ResultAsync<void, KeyboardError> {
-    const caps = this.#device?.capabilities
-    if (!this.#config || !caps) return invalid('not connected')
-    if (combos.length !== caps.max_combos)
-      return invalid(`combos: ${combos.length}, expected ${caps.max_combos}`)
-
-    return runMutation({
-      push: () => {
-        const snapshot = this.#config!.combos
-        this.#config!.combos = combos
-        return snapshot
-      },
-      call: c => c.write_all_combos(combos),
-      undo: (snapshot) => { if (this.#config) this.#config.combos = snapshot },
-    })
-  }
-
-  setMorses(morses: Morse[]): ResultAsync<void, KeyboardError> {
-    const caps = this.#device?.capabilities
-    if (!this.#config || !caps) return invalid('not connected')
-    if (morses.length !== caps.max_morse)
-      return invalid(`morses: ${morses.length}, expected ${caps.max_morse}`)
-
-    return runMutation({
-      push: () => {
-        const snapshot = this.#config!.morses
-        this.#config!.morses = morses
-        return snapshot
-      },
-      call: c => c.write_all_morses(morses),
-      undo: (snapshot) => { if (this.#config) this.#config.morses = snapshot },
-    })
-  }
-
-  setEncoder(
-    encoderId: number,
-    layer: number,
-    action: EncoderAction,
-  ): ResultAsync<void, KeyboardError> {
-    if (!this.#config) return invalid('not connected')
-    const enc = this.#config.encoders[encoderId]
-    if (!enc) return invalid(`encoder ${encoderId} out of range`)
-    if (layer < 0 || layer >= enc.length) return invalid(`layer ${layer} out of range`)
-
-    return runMutation({
-      push: () => {
-        const snapshot = this.#config!.encoders[encoderId]![layer]!
-        this.#config!.encoders[encoderId]![layer] = action
-        return snapshot
-      },
-      call: c => c.set_encoder(encoderId, layer, action),
-      undo: (snapshot) => { if (this.#config) this.#config.encoders[encoderId]![layer] = snapshot },
-    })
-  }
-
   setCombo(index: number, combo: Combo): ResultAsync<void, KeyboardError> {
     if (!this.#config) return invalid('not connected')
     if (index < 0 || index >= this.#config.combos.length) return invalid(`combo ${index} out of range`)
@@ -422,60 +364,6 @@ class KeyboardStoreClass {
       },
       call: c => c.set_combo(index, combo),
       undo: (snapshot) => { if (this.#config) this.#config.combos[index] = snapshot },
-    })
-  }
-
-  setMorse(index: number, morse: Morse): ResultAsync<void, KeyboardError> {
-    if (!this.#config) return invalid('not connected')
-    if (index < 0 || index >= this.#config.morses.length) return invalid(`morse ${index} out of range`)
-
-    return runMutation({
-      push: () => {
-        const snapshot = this.#config!.morses[index]!
-        this.#config!.morses[index] = morse
-        return snapshot
-      },
-      call: c => c.set_morse(index, morse),
-      undo: (snapshot) => { if (this.#config) this.#config.morses[index] = snapshot },
-    })
-  }
-
-  setFork(index: number, fork: Fork): ResultAsync<void, KeyboardError> {
-    if (!this.#config) return invalid('not connected')
-    if (index < 0 || index >= this.#config.forks.length) return invalid(`fork ${index} out of range`)
-
-    return runMutation({
-      push: () => {
-        const snapshot = this.#config!.forks[index]!
-        this.#config!.forks[index] = fork
-        return snapshot
-      },
-      call: c => c.set_fork(index, fork),
-      undo: (snapshot) => { if (this.#config) this.#config.forks[index] = snapshot },
-    })
-  }
-
-  setMacro(offset: number, data: MacroData): ResultAsync<void, KeyboardError> {
-    if (!this.#config) return invalid('not connected')
-    const bytes = data.data
-    if (offset < 0 || offset + bytes.length > this.#config.macros.length)
-      return invalid(`macro offset ${offset}+${bytes.length} out of range`)
-
-    return runMutation({
-      push: () => {
-        const snapshot = bytes.map((_, i) => this.#config!.macros[offset + i]!)
-        bytes.forEach((b, i) => {
-          this.#config!.macros[offset + i] = b
-        })
-        return snapshot
-      },
-      call: c => c.set_macro(offset, data),
-      undo: (snapshot) => {
-        if (!this.#config) return
-        snapshot.forEach((old, i) => {
-          this.#config!.macros[offset + i] = old
-        })
-      },
     })
   }
 
@@ -516,43 +404,6 @@ class KeyboardStoreClass {
       call: c => c.set_behavior(behavior),
       undo: (snapshot) => { if (this.#config) this.#config.behavior = snapshot },
     })
-  }
-
-  setDefaultLayer(layer: number): ResultAsync<void, KeyboardError> {
-    if (!this.#config) return invalid('not connected')
-    if (layer < 0 || layer >= this.#config.keymap.length)
-      return invalid(`default layer ${layer} out of range`)
-
-    return runMutation({
-      push: () => {
-        const snapshot = this.#config!.defaultLayer
-        this.#config!.defaultLayer = layer
-        return snapshot
-      },
-      call: c => c.set_default_layer(layer),
-      undo: (snapshot) => { if (this.#config) this.#config.defaultLayer = snapshot },
-    })
-  }
-
-  /// Re-poll everything topic pushes don't cover (matrix, peripherals, lock).
-  refreshStatus(): ResultAsync<void, KeyboardError> {
-    const caps = this.#device?.capabilities
-    if (!caps) return notConnected<void>()
-    return runCommand(async (c) => {
-      this.#status = await fetchStatus(c, caps)
-    })
-  }
-
-  /// Matrix state has no topic push, so a live view polls it. Unlock-gated:
-  /// rejects with `Locked` until the ceremony completes.
-  refreshMatrix(): ResultAsync<MatrixState, KeyboardError> {
-    return runCommand(c => c.get_matrix_state())
-      .andTee((m) => { if (this.#status) this.#status.matrixState = m })
-  }
-
-  refreshLockStatus(): ResultAsync<LockStatus, KeyboardError> {
-    return runCommand(c => c.get_lock_status())
-      .andTee((s) => { if (this.#status) this.#status.lockStatus = s })
   }
 
   lock(): ResultAsync<void, KeyboardError> {

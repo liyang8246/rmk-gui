@@ -68,10 +68,6 @@ function modifiersOf(names: (keyof ModifierCombination)[]): ModifierCombination 
   return names.reduce<ModifierCombination>((acc, n) => ({ ...acc, [n]: true }), { ...NO_MODIFIERS })
 }
 
-export function anyModifier(mods: ModifierCombination): boolean {
-  return Object.values(mods).some(Boolean)
-}
-
 /// The GUI addresses a fixed number of macro slots: the protocol exposes the
 /// macro region as flat bytes, and the firmware finds macro `n` by counting
 /// `0x00` terminators, so the slot count is ours to pick.
@@ -192,9 +188,4 @@ export function asHidKey(action: KeyAction): HidKeyCode | null {
   if (plain === null || typeof plain !== 'object' || !('Key' in plain)) return null
   const code = plain.Key
   return typeof code === 'object' && 'Hid' in code ? code.Hid : null
-}
-
-export function withModifiers(entry: CatalogEntry, mods: ModifierCombination): KeyAction {
-  if (!entry.hid || !anyModifier(mods)) return entry.action
-  return { Single: { KeyWithModifier: [entry.hid, mods] } }
 }

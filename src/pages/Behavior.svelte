@@ -82,7 +82,7 @@
     if (!behavior) return
     void keyboardStore
       .setBehavior({ ...behavior, [field]: value })
-      .mapErr(e => toast.show(describeKeyboardError(e)))
+      .mapErr(e => toast.error(describeKeyboardError(e)))
   }
 </script>
 

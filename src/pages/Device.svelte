@@ -22,22 +22,23 @@
 
   function bootloader() {
     void keyboardStore.bootloaderJump().match(
-      () => toast.show('Rebooting into bootloader…'),
-      e => toast.show(describeKeyboardError(e)),
+      // Not `success`: the jump ends the session, it does not complete a change.
+      () => toast.info('Rebooting into bootloader…'),
+      e => toast.error(describeKeyboardError(e)),
     )
   }
 
   function switchProfile(slot: number) {
     void keyboardStore.switchBleProfile(slot).match(
-      () => toast.show(`Switched to profile ${slot}`),
-      e => toast.show(describeKeyboardError(e)),
+      () => toast.success(`Switched to profile ${slot}`),
+      e => toast.error(describeKeyboardError(e)),
     )
   }
 
   function clearProfile(slot: number) {
     void keyboardStore.clearBleProfile(slot).match(
-      () => toast.show(`Cleared profile ${slot}`),
-      e => toast.show(describeKeyboardError(e)),
+      () => toast.success(`Cleared profile ${slot}`),
+      e => toast.error(describeKeyboardError(e)),
     )
   }
 </script>
@@ -191,7 +192,7 @@
               rounded-lg text-xs font-extrabold
             `,
             active
-              ? 'bg-brand text-[#1a1205]'
+              ? 'bg-brand-fill text-brand-fill-fg'
               : `bg-muted text-muted-foreground`,
           ]}
         >{slot}</span>

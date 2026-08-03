@@ -3,6 +3,7 @@
   import type { CatalogEntry } from '../lib/keycatalog'
   import type { DeviceCapabilities, KeyAction } from '../rynk'
   import Icon from '@iconify/svelte'
+  import { RadioGroup } from 'bits-ui'
   import { catalog } from '../lib/catalog.svelte'
   import { actionCatalog } from '../lib/keycatalog'
   import { capLegend } from '../lib/legend'
@@ -89,10 +90,16 @@
       border-base-300 bg-base-100 px-1.5 py-[5px] shadow-bar
     `}
   >
-    <div class='noscroll flex min-w-0 flex-1 gap-0.5 overflow-x-auto'>
+    <!-- While a search runs no group is current, so the bound value walks off
+         every radio rather than pinning the rail to a stale tab. -->
+    <RadioGroup.Root
+      class='noscroll flex min-w-0 flex-1 gap-0.5 overflow-x-auto'
+      orientation='horizontal'
+      bind:value={() => (query ? '' : group), selectGroup}
+    >
       {#each tabs as name (name)}
         {@const on = name === group && !query}
-        <button
+        <RadioGroup.Item
           class={[
             `
               inline-flex h-[34px] flex-none cursor-pointer items-center gap-1.5
@@ -106,14 +113,13 @@
                 hover:bg-base-200 hover:text-foreground
               `,
           ]}
-          type='button'
-          onclick={() => selectGroup(name)}
+          value={name}
         >
           <Icon icon={GROUP_ICONS[name] ?? 'lucide:layout-grid'} width={15} height={15} />
           {name}
-        </button>
+        </RadioGroup.Item>
       {/each}
-    </div>
+    </RadioGroup.Root>
 
     {#if !holdTap}
       <div class='relative flex-none basis-44'>

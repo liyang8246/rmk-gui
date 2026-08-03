@@ -1,16 +1,14 @@
 <script lang='ts'>
   import type { Snippet } from 'svelte'
-  import Icon from '@iconify/svelte'
 
   interface Props {
     tone?: 'ok' | 'blue' | 'muted'
-    icon?: string
     /// Renders the small filled dot the status pills lead with.
     dot?: boolean
     children: Snippet
   }
 
-  const { tone = 'muted', icon, dot = false, children }: Props = $props()
+  const { tone = 'muted', dot = false, children }: Props = $props()
 
   const TONES = {
     ok: 'border-ok-bright/30 bg-ok-bright/10 text-ok',
@@ -30,9 +28,6 @@
 >
   {#if dot}
     <span class='size-1.5 rounded-full bg-current'></span>
-  {/if}
-  {#if icon}
-    <Icon {icon} width={14} height={14} />
   {/if}
   {@render children()}
 </span>

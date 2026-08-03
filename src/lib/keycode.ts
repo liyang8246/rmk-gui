@@ -270,9 +270,3 @@ export function keyActionText(action: KeyAction): string {
   const { main, sub } = keyActionLabel(action)
   return sub ? `${main} / ${sub}` : main
 }
-
-/// Serialising is enough because every `KeyAction` on both sides comes out of
-/// the same serde-generated shape, so field order is fixed.
-export function sameKeyAction(a: KeyAction, b: KeyAction): boolean {
-  return JSON.stringify(a) === JSON.stringify(b)
-}
