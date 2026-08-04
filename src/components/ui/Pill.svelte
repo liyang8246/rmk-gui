@@ -2,7 +2,7 @@
   import type { Snippet } from 'svelte'
 
   interface Props {
-    tone?: 'ok' | 'blue' | 'muted'
+    tone?: 'ok' | 'blue' | 'muted' | 'bad'
     /// Renders the small filled dot the status pills lead with.
     dot?: boolean
     children: Snippet
@@ -14,6 +14,7 @@
     ok: 'border-ok-bright/30 bg-ok-bright/10 text-ok',
     blue: 'border-info/30 bg-info/10 text-info',
     muted: 'border-border bg-muted text-muted-foreground',
+    bad: 'border-destructive/30 bg-destructive/10 text-destructive',
   }
 </script>
 

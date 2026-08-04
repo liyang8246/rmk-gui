@@ -54,3 +54,50 @@ export function describeKeyboardError(e: KeyboardError): string {
     .with({ type: 'unknown' }, x => (x.cause instanceof Error ? x.cause.message : 'unknown error'))
     .exhaustive()
 }
+
+/// A headline plus what to try next — for the connect screen, where the user
+/// has room to read and a next step to take.
+export interface KeyboardErrorHelp {
+  title: string
+  hint?: string
+}
+
+/// The shapes an occupied or unreachable device fails an open with: Web Serial
+/// throws NetworkError/InvalidStateError, WebHID NotAllowedError, and the
+/// native serial and BLE stacks report busy/denied in prose.
+const OPEN_FAILED_NAMES: readonly string[] = ['NetworkError', 'InvalidStateError', 'NotAllowedError']
+const OPEN_FAILED_RE = /\bbusy\b|in use|access denied|permission/i
+
+const IN_USE_HELP: KeyboardErrorHelp = {
+  title: 'Couldn’t open the device',
+  hint: 'Another app may be using it — close other configurator software, then try again.',
+}
+
+export function explainKeyboardError(e: KeyboardError): KeyboardErrorHelp {
+  return match(e)
+    .with({ type: 'rynk' }, x => ({
+      title: 'The keyboard rejected the request',
+      hint: `Error code: ${x.code}.`,
+    }))
+    .with({ type: 'transport' }, (x): KeyboardErrorHelp => {
+      if (x.cause instanceof Error && x.cause.message.includes('timed out')) {
+        return {
+          title: 'The keyboard didn’t respond',
+          hint: 'It may not be running RMK firmware, or another app is holding the connection.',
+        }
+      }
+      return {
+        title: 'Connection lost',
+        hint: 'The keyboard was unplugged, powered off, or went out of range.',
+      }
+    })
+    .with({ type: 'invalid' }, x => ({ title: x.cause }))
+    .with({ type: 'unknown' }, (x): KeyboardErrorHelp => {
+      if (!(x.cause instanceof Error)) return { title: 'Connection failed' }
+      if (OPEN_FAILED_NAMES.includes(x.cause.name) || OPEN_FAILED_RE.test(x.cause.message)) {
+        return IN_USE_HELP
+      }
+      return { title: 'Connection failed', hint: x.cause.message || undefined }
+    })
+    .exhaustive()
+}

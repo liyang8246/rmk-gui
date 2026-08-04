@@ -22,18 +22,36 @@
   aria-live='polite'
 >
   {#each toast.items as t (t.id)}
+    <!-- items-start with the icon nudged down: on a one-line toast that lands
+         where items-center did, and a detail line grows below rather than
+         pushing the icon into the middle of the block. -->
     <div
       role='status'
       class='
-        pointer-events-auto flex animate-toast items-center gap-2.5 rounded-md
-        border border-border bg-card px-[18px] py-[11px] text-foreground
-        shadow-card
+        pointer-events-auto flex max-w-[420px] animate-toast items-start gap-2.5
+        rounded-md border border-border bg-card px-[18px] py-[11px]
+        text-foreground shadow-card
       '
       onmouseenter={() => toast.hold(t.id)}
       onmouseleave={() => toast.release(t.id)}
     >
-      <Icon class={ICONS[t.type].class} icon={ICONS[t.type].icon} width={16} height={16} />
-      <span class='text-[13.5px] font-semibold'>{t.title}</span>
+      <Icon
+        class={`
+          ${ICONS[t.type].class}
+          mt-0.5 flex-none
+        `}
+        icon={ICONS[t.type].icon}
+        width={16}
+        height={16}
+      />
+      <span class='min-w-0'>
+        <span class='block text-[13.5px] font-semibold'>{t.title}</span>
+        {#if t.detail}
+          <span class='mt-0.5 block text-xs/relaxed text-muted-foreground'>
+            {t.detail}
+          </span>
+        {/if}
+      </span>
       <button
         type='button'
         aria-label='Dismiss'

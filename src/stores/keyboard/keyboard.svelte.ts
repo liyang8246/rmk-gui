@@ -17,8 +17,9 @@ import type { KeyboardError } from './errors'
 import type { ConnectionState, KeyboardConfig, KeyboardDevice, KeyboardStatus } from './types'
 import { err, errAsync, ResultAsync } from 'neverthrow'
 import { match, P } from 'ts-pattern'
+import { toast } from '../../lib/toast.svelte'
 import { connectClient } from '../../rynk'
-import { toKeyboardError } from './errors'
+import { explainKeyboardError, toKeyboardError } from './errors'
 
 const session = {
   client: null as RynkClient | null,
@@ -218,6 +219,11 @@ class KeyboardStoreClass {
   /// skips awaiting it — awaiting your own promise deadlocks.
   private async handleDeath(client: RynkClient, cause: KeyboardError, fromTopicLoop: boolean): Promise<void> {
     if (session.client !== client) return
+    // The one death the connect screen cannot report: the session was up and
+    // ended on its own, so the user lands back there with no attempt of their
+    // own to blame the failure on.
+    const help = explainKeyboardError(cause)
+    toast.error(help.title, help.hint)
     await this.teardown({ phase: 'error', label: this.#connection?.label ?? '', cause }, fromTopicLoop)
   }
 

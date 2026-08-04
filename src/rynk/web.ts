@@ -117,12 +117,14 @@ export class WebHidLink extends BufferedLink {
   async close(): Promise<void> {
     this.device.removeEventListener('inputreport', this.listener)
     this.end()
-    try {
-      await this.device.close()
-    }
-    catch {
-      // Already gone; the session is over either way.
-    }
+    // close() queues behind any sendReport the device never accepted, so it can
+    // park as long as the send does. The session is already over once the
+    // listener is gone — give the OS handle a moment, then move on rather than
+    // wedge the teardown that the connect screen is waiting on.
+    await Promise.race([
+      this.device.close().catch(() => {}),
+      new Promise<void>(resolve => setTimeout(resolve, 1_000)),
+    ])
   }
 }
 

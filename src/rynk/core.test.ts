@@ -88,6 +88,38 @@ describe('probeVersion', () => {
     await expect(probeVersion(silent, 10)).rejects.toThrow('version probe timed out')
   })
 
+  it('keeps waiting as long as the device keeps talking', async () => {
+    // The window is idle time, not a cap on the whole probe: ten topic pushes
+    // 20ms apart blow far past a 100ms total budget, and only then does the
+    // reply land. An absolute deadline would cut this device off mid-sentence.
+    const topic = cobsEncode(new Uint8Array([0x10, 0x80, 0, 0, 9, 9]))
+    let calls = 0
+    const chatty: JsByteLink = {
+      label: 'chatty',
+      async send() {},
+      recv: () => new Promise((resolve) => {
+        calls += 1
+        const frame = calls <= 10 ? topic : versionReply(0x0001, 1, 2)
+        setTimeout(resolve, 20, frame)
+      }),
+      async close() {},
+    }
+    await expect(probeVersion(chatty, 100)).resolves.toEqual({ major: 1, minor: 2 })
+  })
+
+  it('gives up when the send itself never settles', async () => {
+    // WebHID sendReport can park forever on a device that matches the vendor
+    // usage without being an RMK keyboard (a Vial board). The deadline has to
+    // cover the send, or the connect screen wedges before the recv loop starts.
+    const stuck: JsByteLink = {
+      label: 'stuck',
+      send: () => new Promise<void>(() => {}),
+      recv: () => new Promise<Uint8Array>(() => {}),
+      async close() {},
+    }
+    await expect(probeVersion(stuck, 10)).rejects.toThrow('version probe timed out')
+  })
+
   it('classifies both give-up paths as transport faults', async () => {
     // toKeyboardError() keys off the name; anything else lands in `unknown`.
     await expect(probeVersion(fakeLink([]))).rejects.toMatchObject({ name: 'TransportError' })

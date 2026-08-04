@@ -1,8 +1,10 @@
-import type { TransportInfo } from '../rynk'
+import type { ConnectedDevice, TransportInfo } from '../rynk'
+import type { KeyboardError } from './keyboard'
 import { isTauri } from '@tauri-apps/api/core'
 import { rememberDeviceName } from '../lib/device-names'
+import { toast } from '../lib/toast.svelte'
 import { canUseWebHid, canUseWebSerial, closeAllSessions, discover, requestHidDevice, requestSerialPort } from '../rynk'
-import { describeKeyboardError, keyboardStore } from './keyboard'
+import { explainKeyboardError, keyboardStore, toKeyboardError } from './keyboard'
 
 function describe(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
@@ -13,20 +15,55 @@ function describe(e: unknown): string {
 /// connect clears it.
 const STAY_DISCONNECTED_KEY = 'rmk-stay-disconnected'
 
+/// Opening can park forever, not just fail: WebHID open/sendReport never
+/// settles on some devices that match the usage filter without being RMK
+/// keyboards. Generous enough for a slow BLE link, but bounded, so the store
+/// always gets its `connecting` state back. Named TransportError so the error
+/// mapping reads it as the link's fault, not the app's.
+const OPEN_TIMEOUT_MS = 15_000
+
+async function connectWithDeadline(info: TransportInfo): Promise<ConnectedDevice> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const opening = info.connect()
+  try {
+    return await Promise.race([
+      opening,
+      new Promise<never>((_res, rej) => {
+        timer = setTimeout(() => {
+          const e = new Error('connect timed out')
+          e.name = 'TransportError'
+          rej(e)
+        }, OPEN_TIMEOUT_MS)
+      }),
+    ])
+  }
+  catch (e) {
+    // An open that succeeds after the deadline would hold the port and block
+    // every later attempt; close it whenever it finally lands.
+    opening.then(d => void d.link.close().catch(() => {})).catch(() => {})
+    throw e
+  }
+  finally {
+    clearTimeout(timer)
+  }
+}
+
 class DeviceStoreClass {
   #devices = $state<TransportInfo[]>([])
   #scanning = $state(false)
   /// Transport id being connected, so only that row shows a spinner.
   #connecting = $state<string | null>(null)
+  /// Rows whose last connect attempt failed: falling back to 'ready' would be
+  /// a lie about a keyboard that just proved otherwise. A new attempt on the
+  /// same row clears its mark.
+  #failed = $state<string[]>([])
   #connectedId = $state<string | null>(null)
   #connectedKind = $state<TransportInfo['kind'] | null>(null)
-  #error = $state<string | null>(null)
   #booted = false
 
   get devices() { return this.#devices }
   get scanning() { return this.#scanning }
   get connecting() { return this.#connecting }
-  get error() { return this.#error }
 
   /// Only meaningful while the session is live: the keyboard store owns the
   /// connection, and it can drop the link without telling us which id died.
@@ -46,7 +83,7 @@ class DeviceStoreClass {
       this.#devices = await discover()
     }
     catch (e) {
-      this.#error = describe(e)
+      toast.error(describe(e))
     }
     finally {
       this.#scanning = false
@@ -82,13 +119,11 @@ class DeviceStoreClass {
   /// Opens a listed device into the keyboard store. Assumes the caller owns
   /// `#connecting` and has already dropped any previous session.
   private async open(info: TransportInfo): Promise<void> {
-    this.#error = null
+    this.#failed = this.#failed.filter(id => id !== info.id)
     try {
-      const result = await keyboardStore.initStore(await info.connect())
+      const result = await keyboardStore.initStore(await connectWithDeadline(info))
       if (result.isErr()) {
-        this.#error = describeKeyboardError(result.error)
-        this.#connectedId = null
-        this.#connectedKind = null
+        this.fail(result.error, info.id)
         return
       }
       this.#connectedId = info.id
@@ -101,10 +136,21 @@ class DeviceStoreClass {
       }
     }
     catch (e) {
-      this.#error = describe(e)
-      this.#connectedId = null
-      this.#connectedKind = null
+      this.fail(toKeyboardError(e), info.id)
     }
+  }
+
+  /// `id` is the row to mark failed; picker-level faults have no row.
+  private fail(error: KeyboardError, id?: string) {
+    const help = explainKeyboardError(error)
+    toast.error(help.title, help.hint)
+    if (id !== undefined) this.#failed.push(id)
+    this.#connectedId = null
+    this.#connectedKind = null
+  }
+
+  hasFailed(id: string): boolean {
+    return this.#failed.includes(id)
   }
 
   /// Browser path: the picker the browser opens *is* the device list, and it
@@ -115,7 +161,6 @@ class DeviceStoreClass {
     if (this.#connecting) return
     localStorage.removeItem(STAY_DISCONNECTED_KEY)
     this.#connecting = `web-${kind}`
-    this.#error = null
     try {
       // The picker only grants access; the grant then joins the same list every
       // other device comes from, so one device never has two identities.
@@ -130,7 +175,9 @@ class DeviceStoreClass {
     }
     catch (e) {
       // NotFoundError is the user dismissing the picker, not a failure.
-      if (!(e instanceof DOMException && e.name === 'NotFoundError')) this.#error = describe(e)
+      if (!(e instanceof DOMException && e.name === 'NotFoundError')) {
+        this.fail(toKeyboardError(e))
+      }
     }
     finally {
       this.#connecting = null
@@ -149,7 +196,6 @@ class DeviceStoreClass {
     localStorage.setItem(STAY_DISCONNECTED_KEY, '1')
     this.#connectedId = null
     this.#connectedKind = null
-    this.#error = null
     await keyboardStore.disconnect()
   }
 }
