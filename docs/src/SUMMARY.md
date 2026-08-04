@@ -20,7 +20,7 @@
 
 # Native Transports
 
-- [Serial (USB CDC)](./native-transports/serial.md)
+- [USB (Vendor Bulk)](./native-transports/usb.md)
 - [BLE (GATT)](./native-transports/ble.md)
 
 # Tooling & Integration

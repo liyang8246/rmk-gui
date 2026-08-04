@@ -76,16 +76,19 @@ describe('probeVersion', () => {
     await expect(probeVersion(fakeLink([]))).rejects.toThrow('link closed')
   })
 
-  it('gives up on a device that opens the port and never answers', async () => {
-    // Without the deadline this parks forever and the store never leaves
-    // `connecting`.
-    const silent: JsByteLink = {
-      label: 'silent',
-      async send() {},
-      recv: () => new Promise<Uint8Array>(() => {}),
-      async close() {},
+  it('gives up on a device that opens and then never settles anything', async () => {
+    // Without the watchdog either shape parks forever and the store never
+    // leaves `connecting`. `stuck` is the WebHID case: sendReport itself can
+    // park on a granted device that is not actually speaking rynk, so the
+    // watchdog must cover the send, not just the wait for a reply.
+    const never = <T>() => new Promise<T>(() => {})
+    const links: JsByteLink[] = [
+      { label: 'silent', async send() {}, recv: () => never(), async close() {} },
+      { label: 'stuck', send: () => never(), recv: () => never(), async close() {} },
+    ]
+    for (const link of links) {
+      await expect(probeVersion(link, 10)).rejects.toThrow('version probe timed out')
     }
-    await expect(probeVersion(silent, 10)).rejects.toThrow('version probe timed out')
   })
 
   it('keeps waiting as long as the device keeps talking', async () => {
@@ -105,19 +108,6 @@ describe('probeVersion', () => {
       async close() {},
     }
     await expect(probeVersion(chatty, 100)).resolves.toEqual({ major: 1, minor: 2 })
-  })
-
-  it('gives up when the send itself never settles', async () => {
-    // WebHID sendReport can park forever on a device that matches the vendor
-    // usage without being an RMK keyboard (a Vial board). The deadline has to
-    // cover the send, or the connect screen wedges before the recv loop starts.
-    const stuck: JsByteLink = {
-      label: 'stuck',
-      send: () => new Promise<void>(() => {}),
-      recv: () => new Promise<Uint8Array>(() => {}),
-      async close() {},
-    }
-    await expect(probeVersion(stuck, 10)).rejects.toThrow('version probe timed out')
   })
 
   it('classifies both give-up paths as transport faults', async () => {

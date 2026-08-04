@@ -2,7 +2,7 @@
 
 Rynk's architecture separates protocol logic, transport I/O, and device
 lifecycle into distinct layers. This separation is what lets the same client
-run over USB serial, BLE GATT, and browser transports.
+run over raw USB, BLE GATT, and browser transports.
 
 ## Three-Layer Split
 
@@ -87,7 +87,7 @@ own `discover()`.
 
 | Transport | Discovery | Link |
 |-----------|-----------|------|
-| `rynk-serial` | `SerialDevice::discover()` — enumerate USB CDC ports by magic marker | `SerialTransport` (tokio-serial) |
+| `rynk-usb` | `UsbDevice::discover()` — match the vendor interface class triple | bulk halves (nusb) |
 | `rynk-ble` | `BleDevice::discover()` — list already-connected devices by service UUID | `BleTransport` (bluest GATT) |
 | `rynk-wasm` | JS owns discovery (browser chooser) | `WasmTransport` (JsByteLink) |
 

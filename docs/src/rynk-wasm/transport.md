@@ -1,7 +1,7 @@
 # WasmTransport
 
 `WasmTransport` adapts a JS-owned byte link to the `rynk::io::Read` and `Write`
-traits. It is the bridge between the browser transport (Web Serial, WebHID, or
+traits. It is the bridge between the browser transport (WebUSB, WebHID, or
 any custom `JsByteLink`) and the protocol client.
 
 Source: `rynk/rynk-wasm/src/transport.rs`
@@ -174,7 +174,7 @@ impl Drop for WasmTransport {
 
 When `WasmTransport` is dropped (the `RynkClient` goes out of scope, or the link
 is replaced), `Drop` clones the link handle and spawns `link.close()` via
-`spawn_local`. This releases the browser transport resources (serial port lock,
+`spawn_local`. This releases the browser transport resources (USB interface claim,
 HID device handle) even if the JS side did not call `close()` explicitly.
 
 `close()` should be idempotent — the JS implementation must tolerate being
@@ -201,7 +201,7 @@ contract (from `rynk/rynk-wasm/README.md`):
   link to `connect()`.
 - **Transport-specific framing must be hidden below this boundary.** For
   example, WebHID report padding must be stripped so wasm sees the same clean
-  Rynk byte stream that Web Serial exposes.
+  Rynk byte stream that the USB bulk endpoint exposes.
 
 Reference implementations for both built-in transports are in
 [JS Byte Link Implementations](./js-byte-link.md).

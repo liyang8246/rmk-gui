@@ -31,6 +31,9 @@ function isRynkError(s: string): s is RynkError {
 }
 
 export function toKeyboardError(e: unknown): KeyboardError {
+  // Tauri commands reject with the Rust error as a bare string; wrap it so
+  // every later match — and the user-facing hint — works on one shape.
+  if (typeof e === 'string') e = new Error(e)
   if (!(e instanceof Error)) return { type: 'unknown', cause: e }
   if (e.message === 'link closed' || TRANSPORT_NAMES.includes(e.name)) {
     return { type: 'transport', cause: e }
@@ -62,16 +65,13 @@ export interface KeyboardErrorHelp {
   hint?: string
 }
 
-/// The shapes an occupied or unreachable device fails an open with: Web Serial
+/// The shapes an occupied or unreachable device fails an open with: WebUSB
 /// throws NetworkError/InvalidStateError, WebHID NotAllowedError, and the
-/// native serial and BLE stacks report busy/denied in prose.
+/// native USB and BLE stacks report busy/denied in prose — macOS says
+/// "exclusive access" (kIOReturnExclusiveAccess) when another app holds the
+/// vendor interface claim.
 const OPEN_FAILED_NAMES: readonly string[] = ['NetworkError', 'InvalidStateError', 'NotAllowedError']
-const OPEN_FAILED_RE = /\bbusy\b|in use|access denied|permission/i
-
-const IN_USE_HELP: KeyboardErrorHelp = {
-  title: 'Couldn’t open the device',
-  hint: 'Another app may be using it — close other configurator software, then try again.',
-}
+const OPEN_FAILED_RE = /\bbusy\b|in use|access denied|permission|exclusive access/i
 
 export function explainKeyboardError(e: KeyboardError): KeyboardErrorHelp {
   return match(e)
@@ -95,7 +95,10 @@ export function explainKeyboardError(e: KeyboardError): KeyboardErrorHelp {
     .with({ type: 'unknown' }, (x): KeyboardErrorHelp => {
       if (!(x.cause instanceof Error)) return { title: 'Connection failed' }
       if (OPEN_FAILED_NAMES.includes(x.cause.name) || OPEN_FAILED_RE.test(x.cause.message)) {
-        return IN_USE_HELP
+        return {
+          title: 'Couldn’t open the device',
+          hint: 'Another app may be using it — close other configurator software, then try again.',
+        }
       }
       return { title: 'Connection failed', hint: x.cause.message || undefined }
     })

@@ -9,7 +9,7 @@
   /// output transport — that answers a different question and lives on the
   /// Device screen; here, beside the link state, the session is what matters.
   const LINKS: Record<TransportInfo['kind'], { label: string, icon: string, tone: string }> = {
-    serial: { label: 'USB', icon: 'lucide:usb', tone: 'text-muted-foreground' },
+    usb: { label: 'USB', icon: 'lucide:usb', tone: 'text-muted-foreground' },
     ble: { label: 'BLE', icon: 'lucide:bluetooth', tone: 'text-info' },
     hid: { label: 'HID', icon: 'lucide:usb', tone: 'text-muted-foreground' },
     tcp: { label: 'TCP', icon: 'lucide:wifi', tone: 'text-muted-foreground' },

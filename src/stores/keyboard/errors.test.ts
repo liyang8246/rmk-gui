@@ -65,14 +65,18 @@ describe('explainKeyboardError', () => {
   })
 
   it('reads the open failures every stack reports as a busy device', () => {
-    // Web Serial and WebHID fail an occupied open with a DOMException name;
-    // the native serial and BLE stacks say busy/denied in prose.
+    // WebUSB and WebHID fail an occupied open with a DOMException name; the
+    // native USB and BLE stacks say busy/denied in prose.
     const causes = [
-      named('NetworkError', 'Failed to open serial port.'),
-      named('InvalidStateError', 'The port is already open.'),
+      named('NetworkError', 'Unable to claim interface.'),
+      named('InvalidStateError', 'The device is already open.'),
       named('NotAllowedError', 'Failed to open the device.'),
       new Error('Resource busy'),
       new Error('Access denied'),
+      // macOS kIOReturnExclusiveAccess, verbatim from nusb — and as the bare
+      // string a Tauri command rejection actually delivers it as.
+      new Error('claim_interface: could not open interface for exclusive access (error 0xe00002c5)'),
+      'transport error at claim_interface: could not open interface for exclusive access (error 0xe00002c5)',
     ]
     for (const cause of causes) {
       const help = explainKeyboardError(toKeyboardError(cause))
@@ -84,6 +88,8 @@ describe('explainKeyboardError', () => {
   it('falls back to the raw message as the hint', () => {
     const help = explainKeyboardError({ type: 'unknown', cause: new Error('boom') })
     expect(help).toEqual({ title: 'Connection failed', hint: 'boom' })
+    // A bare-string rejection (Tauri) must keep its message as the hint too.
+    expect(explainKeyboardError(toKeyboardError('boom'))).toEqual({ title: 'Connection failed', hint: 'boom' })
     expect(explainKeyboardError({ type: 'unknown', cause: 42 })).toEqual({ title: 'Connection failed' })
   })
 

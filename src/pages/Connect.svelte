@@ -9,23 +9,28 @@
   import Segmented from '../components/ui/Segmented.svelte'
   import { deviceStore, keyboardStore } from '../stores'
 
-  type Method = 'serial' | 'ble'
+  type Method = 'usb' | 'ble'
 
   const METHODS = [
-    { value: 'serial', label: 'USB', icon: 'lucide:usb' },
+    { value: 'usb', label: 'USB', icon: 'lucide:usb' },
     { value: 'ble', label: 'Bluetooth', icon: 'lucide:bluetooth' },
   ] as const satisfies readonly { value: Method, label: string, icon: string }[]
 
-  /// Each tab covers the transports that reach a keyboard that way. The
-  /// debug-only TCP transport rides with USB rather than becoming unreachable,
-  /// and WebHID is how the browser reaches an already-bonded Bluetooth board.
-  const KINDS: Record<Method, TransportInfo['kind'][]> = {
-    serial: ['serial', 'tcp'],
-    ble: ['ble', 'hid'],
+  /// `Segmented` reconciles by item identity, so hand it one stable array.
+  const METHOD_ITEMS = [...METHODS]
+
+  /// Which tab lists a transport. The debug-only TCP transport rides with USB
+  /// rather than becoming unreachable, and WebHID is how the browser reaches
+  /// an already-bonded Bluetooth board.
+  const TAB_OF: Record<TransportInfo['kind'], Method> = {
+    usb: 'usb',
+    tcp: 'usb',
+    ble: 'ble',
+    hid: 'ble',
   }
 
   const KIND_LABELS: Record<TransportInfo['kind'], string> = {
-    serial: 'USB',
+    usb: 'USB',
     ble: 'Bluetooth',
     tcp: 'Network',
     hid: 'Bluetooth',
@@ -34,9 +39,9 @@
   /// In the browser only a picker can open a device, and it must run inside the
   /// click. `hid` is the Bluetooth path: Web Bluetooth would demand its own
   /// pairing and cannot see the bond the OS already holds.
-  const PICKS: Record<Method, 'serial' | 'hid'> = { serial: 'serial', ble: 'hid' }
+  const PICKS: Record<Method, 'usb' | 'hid'> = { usb: 'usb', ble: 'hid' }
 
-  let method = $state<Method>('serial')
+  let method = $state<Method>('usb')
 
   const native = isTauri()
 
@@ -44,14 +49,21 @@
   /// hint is about the keyboard; the browser build must explain the OS bond
   /// it rides on instead.
   const HINTS: Record<Method, string> = {
-    serial: 'Plug the keyboard in over USB.',
+    usb: 'Plug the keyboard in over USB.',
     ble: native
       ? 'Turn the keyboard on and bring it in range.'
       : 'Pair the keyboard with this computer first — the browser can only reach a keyboard the system has already bonded.',
   }
   const available = $derived(deviceStore.browserTransports)
   const canPick = $derived(!native && available.includes(PICKS[method]))
-  const found = $derived(deviceStore.devices.filter(d => KINDS[method].includes(d.kind)))
+  /// One pass, both tabs: the stacked grid renders each tab's list on every
+  /// update, and the pick-button label needs the active one.
+  const lists = $derived.by(() => {
+    const groups: Record<Method, TransportInfo[]> = { usb: [], ble: [] }
+    for (const d of deviceStore.devices) groups[TAB_OF[d.kind]].push(d)
+    return groups
+  })
+  const found = $derived(lists[method])
   const connecting = $derived(keyboardStore.connection?.phase === 'connecting')
   const busy = $derived(connecting || deviceStore.connecting !== null)
 
@@ -89,7 +101,7 @@
     <Card class='flex w-[460px] max-w-full flex-none flex-col'>
       <div class='mb-4 flex flex-none items-center gap-2'>
         <Segmented
-          items={METHODS.map(m => ({ value: m.value, label: m.label, icon: m.icon }))}
+          items={METHOD_ITEMS}
           value={method}
           fill
           height={38}
@@ -118,7 +130,7 @@
            keyboard never sits above a block of reserved space. -->
       <div class='grid min-h-[66px]'>
         {#each METHODS as m (m.value)}
-          {@const list = deviceStore.devices.filter(d => KINDS[m.value].includes(d.kind))}
+          {@const list = lists[m.value]}
           <div
             class={[
               `

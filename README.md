@@ -21,7 +21,7 @@ and macOS 10.15+ (intel/apple).
 
 - Based on Rust and Tauri2 frameworks.
 - Concise and modern user interface, built with Svelte 5 and Tailwind CSS 4.
-- Talks the rynk protocol over USB serial, BLE, and Web Serial.
+- Talks the rynk protocol over raw USB (WebUSB in the browser), BLE, and WebHID.
 - Support for Windows, macOS, and Linux.
 
 ## Development

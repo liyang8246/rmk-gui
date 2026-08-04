@@ -18,12 +18,12 @@ export class TauriByteLink {
   }
 }
 
-interface SerialDeviceInfo { path: string, name: string | null }
+interface UsbDeviceInfo { id: string, name: string }
 interface BleDeviceInfo { id: string, name: string | null }
 interface TcpDeviceInfo { addr: string, name: string }
 
-export async function discoverSerial(): Promise<SerialDeviceInfo[]> {
-  return invoke<SerialDeviceInfo[]>('rynk_discover_serial')
+export async function discoverUsb(): Promise<UsbDeviceInfo[]> {
+  return invoke<UsbDeviceInfo[]>('rynk_discover_usb')
 }
 
 export async function discoverBle(): Promise<BleDeviceInfo[]> {
@@ -34,8 +34,8 @@ export async function discoverTcp(): Promise<TcpDeviceInfo[]> {
   return invoke<TcpDeviceInfo[]>('rynk_discover_tcp')
 }
 
-export async function connectSerial(path: string, label: string): Promise<ConnectedDevice> {
-  const session = await invoke<string>('rynk_connect_serial', { path })
+export async function connectUsb(id: string, label: string): Promise<ConnectedDevice> {
+  const session = await invoke<string>('rynk_connect_usb', { id })
   return { link: new TauriByteLink(session, label), label }
 }
 

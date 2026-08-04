@@ -6,6 +6,8 @@ interface Toast {
   title: string
   /// A second, smaller line — connection errors carry a next step to try.
   detail?: string
+  /// Never auto-dismissed; the close button is the only way out.
+  sticky?: boolean
 }
 
 /// Long enough to read a `describeKeyboardError`; hovering holds the clock.
@@ -21,22 +23,19 @@ class ToastStore {
   #timers = new Map<number, ReturnType<typeof setTimeout>>()
 
   #push(type: ToastType, title: string, detail?: string) {
-    // A retried failure repeats its toast; replace the stale copy rather than
-    // stack persistent duplicates the user has to close one by one.
-    if (type === 'error') {
-      for (const t of [...this.items]) {
-        if (t.type === 'error' && t.title === title && t.detail === detail) this.dismiss(t.id)
-      }
-    }
+    // A retried failure repeats its toast; sticky errors never expire, so the
+    // copy already showing says everything the new one would.
+    if (type === 'error' && this.items.some(t => t.title === title && t.detail === detail)) return
     const id = ++this.#seq
-    this.items.push({ id, type, title, detail })
+    // Errors stay until dismissed: an expired one leaves a user who looked
+    // away facing a blank connect screen with no explanation.
+    this.items.push({ id, type, title, detail, sticky: type === 'error' })
     this.#arm(id)
   }
 
-  /// Errors stay until dismissed: an expired one leaves a user who looked away
-  /// facing a blank connect screen with no explanation. The rest self-expire.
   #arm(id: number) {
-    if (this.items.find(t => t.id === id)?.type === 'error') return
+    const toast = this.items.find(t => t.id === id)
+    if (!toast || toast.sticky) return
     this.#timers.set(id, setTimeout(() => this.dismiss(id), DURATION_MS))
   }
 

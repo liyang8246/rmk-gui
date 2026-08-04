@@ -126,7 +126,7 @@
               `}
               onSelect={() => void deviceStore.pick(kind)}
             >
-              {kind === 'hid' ? 'Choose a Bluetooth keyboard…' : 'Choose a serial port…'}
+              {kind === 'hid' ? 'Choose a Bluetooth keyboard…' : 'Choose a USB keyboard…'}
             </DropdownMenu.Item>
           {/each}
         {/if}
