@@ -479,6 +479,31 @@ class KeyboardStoreClass {
     })
   }
 
+  /// Replace the whole macro region. Macros are one packed byte run with no
+  /// per-slot addressing, so editing any of them rewrites all of them; the
+  /// chunked writes share a chain slot to keep that atomic from the UI's side.
+  setMacroRegion(bytes: number[]): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!this.#config || !caps) return invalid('not connected')
+    if (bytes.length !== caps.macro_space_size)
+      return invalid(`macros: ${bytes.length} bytes, expected ${caps.macro_space_size}`)
+
+    return runMutation({
+      push: () => {
+        const snapshot = this.#config!.macros
+        this.#config!.macros = bytes
+        return snapshot
+      },
+      call: async (c) => {
+        const chunk = Math.max(1, caps.macro_chunk_size)
+        for (let offset = 0; offset < bytes.length; offset += chunk) {
+          await c.set_macro(offset, { data: bytes.slice(offset, offset + chunk) })
+        }
+      },
+      undo: (snapshot) => { if (this.#config) this.#config.macros = snapshot },
+    })
+  }
+
   setBehavior(behavior: BehaviorConfig): ResultAsync<void, KeyboardError> {
     if (!this.#config) return invalid('not connected')
 

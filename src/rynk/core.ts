@@ -124,6 +124,9 @@ export async function keycodeTables(wasm?: BufferSource) {
   await core.default(wasm ? { module_or_path: wasm } : undefined)
   return {
     hid: core.all_hid_keycodes(),
+    // Parallel to `hid`: the wire byte a keyboard macro stores a key as. The
+    // enum is not contiguous, so this cannot be derived from the index.
+    hidValues: core.hid_keycode_values(),
     consumer: core.all_consumer_keys(),
     systemControl: core.all_system_control_keys(),
   }

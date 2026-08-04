@@ -1,17 +1,40 @@
 import { describe, expect, it } from 'vitest'
-import { actionLabel, hidLabel, keyActionLabel, keyActionText, modifierLabel, NO_MODIFIERS } from './keycode'
+import { actionLabel, hidLabel, hidLegend, keyActionLabel, keyActionText, modifierLabel, NO_MODIFIERS } from './keycode'
 
 describe('hidLabel', () => {
   it('prints the glyph where the variant name reads badly', () => {
     expect(hidLabel('Kc1')).toBe('1')
     expect(hidLabel('Minus')).toBe('-')
     expect(hidLabel('Left')).toBe('←')
-    expect(hidLabel('Kp7')).toBe('KP 7')
+    expect(hidLabel('MediaPlayPause')).toBe('Play')
   })
 
   it('falls back to the name rynk generated', () => {
     expect(hidLabel('A')).toBe('A')
-    expect(hidLabel('MediaPlayPause')).toBe('MediaPlayPause')
+    expect(hidLabel('F5')).toBe('F5')
+    expect(hidLabel('Help')).toBe('Help')
+  })
+})
+
+describe('hidLegend', () => {
+  it('qualifies the keypad, which shares its glyphs with the main block', () => {
+    expect(hidLegend('Kp7')).toEqual({ label: '7', qualifier: 'num' })
+    expect(hidLegend('Kc7')).toEqual({ label: '7', qualifier: undefined })
+  })
+
+  it('separates the keyboard page from the consumer page', () => {
+    expect(hidLegend('KbMute')).toEqual({ label: 'Mute', qualifier: 'kbd' })
+    expect(hidLegend('AudioMute')).toEqual({ label: 'Mute', qualifier: undefined })
+  })
+
+  it('names the international and language blocks by their number', () => {
+    expect(hidLegend('International2')).toEqual({ label: 'Intl 2', qualifier: 'intl' })
+    expect(hidLegend('Language3')).toEqual({ label: 'Lang 3', qualifier: 'intl' })
+  })
+
+  it('puts the side of a modifier in the qualifier, not the label', () => {
+    expect(hidLegend('LCtrl')).toEqual({ label: 'Ctrl', qualifier: 'left' })
+    expect(hidLegend('RCtrl')).toEqual({ label: 'Ctrl', qualifier: 'right' })
   })
 })
 

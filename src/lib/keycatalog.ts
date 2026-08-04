@@ -1,11 +1,13 @@
 import type { Action, DeviceCapabilities, HidKeyCode, KeyAction, KeyboardAction, LightAction, ModifierCombination } from '../rynk'
-import { hidLabel, NO_MODIFIERS } from './keycode'
+import { hidLegend, humanize, NO_MODIFIERS } from './keycode'
 
 export interface CatalogEntry {
   /// Keys the picker grid. Labels collide — `Backslash` and `NonusBackslash`
   /// both print `\` — and a duplicate key tears down the each block.
   id: string
   label: string
+  /// Small second line that tells colliding labels apart: `num`, `web`, `left`.
+  sub?: string
   action: KeyAction
   /// Set for plain HID keys: the modifier row can re-emit them as
   /// `KeyWithModifier` without re-deriving what was picked.
@@ -19,11 +21,14 @@ export interface CatalogGroup {
 }
 
 function key(code: HidKeyCode): CatalogEntry {
-  return { id: code, label: hidLabel(code), action: { Single: { Key: { Hid: code } } }, hid: code, title: code }
+  const { label, qualifier } = hidLegend(code)
+  return { id: code, label, sub: qualifier, action: { Single: { Key: { Hid: code } } }, hid: code, title: code }
 }
 
-function act(label: string, action: Action, title?: string): CatalogEntry {
-  return { id: label, label, action: { Single: action }, title: title ?? label }
+/// `id` and `title` keep the firmware's own spelling; only the label is spaced,
+/// so a long action name has somewhere to wrap on a fixed-width chip.
+function act(name: string, action: Action, title?: string): CatalogEntry {
+  return { id: name, label: humanize(name), action: { Single: action }, title: title ?? name }
 }
 
 /// Whole families of keycodes are named by pattern, so match them instead of
@@ -35,7 +40,7 @@ const FUNCTION = /^F([1-9]|1\d|2[0-4])$/
 const KEYPAD = /^(?:Kp|NumLock$)/
 const MODIFIER = /^[LR](?:Ctrl|Shift|Alt|Gui)$/
 const MOUSE = /^Mouse/
-const MEDIA = /^(?:Audio|Media|Brightness|KbMute|KbVolume)/
+const MEDIA = /^(?:Audio|Media|Brightness)/
 // Anchored on the three power codes: `SystemRequest` is the SysRq on a
 // keyboard, not a way to control the computer.
 const COMPUTER = /^(?:System(?:Power|Sleep|Wake)$|Www)/
@@ -70,7 +75,7 @@ export function anyModifier(mods: ModifierCombination): boolean {
 /// The GUI addresses a fixed number of macro slots: the protocol exposes the
 /// macro region as flat bytes, and the firmware finds macro `n` by counting
 /// `0x00` terminators, so the slot count is ours to pick.
-const MACRO_SLOTS = 8
+export const MACRO_SLOTS = 8
 
 /// Not keys: the HID error codes a keyboard reports when it cannot keep up.
 /// Offering them would let someone bind a rollover error to a keycap.
@@ -131,19 +136,20 @@ export function actionCatalog(
       // contents live on the device.
       name: 'Advanced',
       entries: [
-        ...Object.entries(SINGLE_MODIFIER).map(([code, flag]) => act(
-          `OSM ${hidLabel(code as HidKeyCode)}`,
-          { OneShotModifier: modifiersOf([flag]) },
-          `One-shot ${code}`,
-        )),
+        // The id keeps the side, because the label no longer carries it: both
+        // one-shot Ctrls would otherwise collide on `OSM Ctrl`.
+        ...Object.entries(SINGLE_MODIFIER).map(([code, flag]) => {
+          const { label, qualifier } = hidLegend(code as HidKeyCode)
+          return {
+            id: `OSM ${code}`,
+            label: `OSM ${label}`,
+            sub: qualifier,
+            action: { Single: { OneShotModifier: modifiersOf([flag]) } } satisfies KeyAction,
+            title: `One-shot ${code}`,
+          }
+        }),
         act('GraveEsc', { Special: 'GraveEscape' }, 'Grave, or Escape when a modifier is held'),
         act('Repeat', { Special: 'Repeat' }, 'Repeat the last key'),
-        ...Array.from({ length: caps?.max_morse ?? 0 }, (_, i) => ({
-          id: `morse-${i}`,
-          label: `Morse ${i}`,
-          action: { Morse: i } satisfies KeyAction,
-          title: `Morse key ${i}`,
-        })),
         ...Array.from(
           { length: (caps?.macro_space_size ?? 0) > 0 ? MACRO_SLOTS : 0 },
           (_, i) => act(`Macro ${i}`, { TriggerMacro: i }),
@@ -177,6 +183,15 @@ export function asAction(action: KeyAction): Action | null {
   if (typeof action === 'object' && 'Single' in action) return action.Single
   if (typeof action === 'object' && 'Tap' in action) return action.Tap
   return null
+}
+
+/// The plain HID key behind a pick, or null when it is anything richer. Macros
+/// store a bare keycode, so they can only take the former.
+export function asHidKey(action: KeyAction): HidKeyCode | null {
+  const plain = asAction(action)
+  if (plain === null || typeof plain !== 'object' || !('Key' in plain)) return null
+  const code = plain.Key
+  return typeof code === 'object' && 'Hid' in code ? code.Hid : null
 }
 
 export function withModifiers(entry: CatalogEntry, mods: ModifierCombination): KeyAction {

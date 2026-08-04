@@ -54,3 +54,5 @@ docs/book
 
 .vercel
 .env*
+
+design/
