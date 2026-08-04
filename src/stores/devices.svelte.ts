@@ -8,6 +8,11 @@ function describe(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
 }
 
+/// Set by an explicit disconnect: a reload must land on the connect screen,
+/// not silently re-adopt the keyboard the user just left. Any deliberate
+/// connect clears it.
+const STAY_DISCONNECTED_KEY = 'rmk-stay-disconnected'
+
 class DeviceStoreClass {
   #devices = $state<TransportInfo[]>([])
   #scanning = $state(false)
@@ -56,12 +61,14 @@ class DeviceStoreClass {
     // Native only: a reloaded frontend leaves the Rust side holding the port.
     if (isTauri()) await closeAllSessions().catch(() => {})
     await this.scan()
+    if (localStorage.getItem(STAY_DISCONNECTED_KEY) !== null) return
     const only = this.#devices.length === 1 ? this.#devices[0] : undefined
     if (only && !keyboardStore.connection) await this.connect(only)
   }
 
   async connect(info: TransportInfo): Promise<void> {
     if (this.#connecting) return
+    localStorage.removeItem(STAY_DISCONNECTED_KEY)
     this.#connecting = info.id
     try {
       if (keyboardStore.connection) await keyboardStore.resetStore()
@@ -106,6 +113,7 @@ class DeviceStoreClass {
   /// would demand a second pairing and cannot see an established one.
   async pick(kind: 'serial' | 'hid'): Promise<void> {
     if (this.#connecting) return
+    localStorage.removeItem(STAY_DISCONNECTED_KEY)
     this.#connecting = `web-${kind}`
     this.#error = null
     try {
@@ -138,6 +146,7 @@ class DeviceStoreClass {
   }
 
   async disconnect(): Promise<void> {
+    localStorage.setItem(STAY_DISCONNECTED_KEY, '1')
     this.#connectedId = null
     this.#connectedKind = null
     this.#error = null
