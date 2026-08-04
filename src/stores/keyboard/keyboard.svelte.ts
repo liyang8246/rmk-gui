@@ -591,11 +591,22 @@ class KeyboardStoreClass {
   }
 
   /// Reboot and bootloader jump are fire-and-forget upstream — the device resets
-  /// before it can reply, so the ack may never land. Either way the session ends.
+  /// before it can reply, so the ack may never land. The session is gone either
+  /// way, so the teardown runs on both outcomes and is awaited before we settle:
+  /// a caller that reconnects immediately must not race a half-closed link.
   private endSession(call: (c: RynkClient) => Promise<void>): ResultAsync<void, KeyboardError> {
     const label = this.#connection?.label ?? ''
+    // Never rejects: a close() fault must not mask the command's own outcome.
+    const close = () => ResultAsync.fromSafePromise(
+      this.teardown({ phase: 'disconnected', label }).catch(() => {}),
+    )
     return runCommand(call)
-      .andTee(() => { void this.teardown({ phase: 'disconnected', label }) })
+      .andThrough(close)
+      // `invalid` is the not-connected guard: the command never reached the
+      // device, so leave whatever phase the death path already recorded.
+      .orElse(e => (e.type === 'invalid'
+        ? errAsync<void, KeyboardError>(e)
+        : close().andThen(() => errAsync<void, KeyboardError>(e))))
   }
 }
 

@@ -1,4 +1,4 @@
-export { keyboardStore, toKeyboardError } from './keyboard'
+export { describeKeyboardError, keyboardStore, toKeyboardError } from './keyboard'
 export type { KeyboardError } from './keyboard'
 export type {
   ConnectionPhase,

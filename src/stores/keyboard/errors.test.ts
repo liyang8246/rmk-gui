@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toKeyboardError } from './errors'
+import { describeKeyboardError, RYNK_ERROR_CODES, toKeyboardError } from './errors'
 
 function named(name: string, message: string): Error {
   const e = new Error(message)
@@ -9,17 +9,10 @@ function named(name: string, message: string): Error {
 
 describe('toKeyboardError', () => {
   it('maps every rynk rejection code, including Busy', () => {
-    const codes = [
-      'Busy',
-      'Internal',
-      'Invalid',
-      'Locked',
-      'Malformed',
-      'NotReady',
-      'StorageFault',
-      'Unimplemented',
-      'UnknownCmd',
-    ]
+    // Read off the source of truth: a new upstream variant lands here, not in a
+    // literal that silently goes stale.
+    const codes = Object.keys(RYNK_ERROR_CODES)
+    expect(codes).toContain('Busy')
     for (const code of codes) {
       expect(toKeyboardError(named('Rejected', `device rejected ${code}`)))
         .toEqual({ type: 'rynk', code })
@@ -40,5 +33,18 @@ describe('toKeyboardError', () => {
     expect(toKeyboardError(named('Rejected', 'device rejected Nonsense')).type).toBe('unknown')
     expect(toKeyboardError('a string').type).toBe('unknown')
     expect(toKeyboardError(new Error('something else')).type).toBe('unknown')
+  })
+})
+
+describe('describeKeyboardError', () => {
+  it('names the rejection code', () => {
+    expect(describeKeyboardError({ type: 'rynk', code: 'Locked' })).toBe('device rejected Locked')
+  })
+
+  it('describes the non-rynk variants', () => {
+    expect(describeKeyboardError({ type: 'transport', cause: new Error('x') })).toBe('link lost')
+    expect(describeKeyboardError({ type: 'invalid', cause: 'not connected' })).toBe('not connected')
+    expect(describeKeyboardError({ type: 'unknown', cause: new Error('boom') })).toBe('boom')
+    expect(describeKeyboardError({ type: 'unknown', cause: 42 })).toBe('unknown error')
   })
 })

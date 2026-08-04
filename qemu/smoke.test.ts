@@ -7,7 +7,6 @@ import process from 'node:process'
 import { afterAll, beforeAll, expect, it } from 'vitest'
 import { connectClient } from '../src/rynk/core'
 
-const PORT = 7965
 const WASM = readFileSync(new URL('../src/rynk/wasm/rynk_wasm_bg.wasm', import.meta.url))
 
 // Mirrors qemu/src/main.rs.
@@ -44,12 +43,25 @@ function socketLink(sock: net.Socket): JsByteLink {
   }
 }
 
-async function dial(deadlineMs: number): Promise<net.Socket> {
+/// Let the OS pick the port, then hand it to qemu. A fixed one lets an
+/// unrelated listener answer dial(), or makes the spawn fail outright.
+async function freePort(): Promise<number> {
+  const srv = net.createServer()
+  await new Promise<void>((res, rej) => {
+    srv.once('error', rej)
+    srv.listen(0, '127.0.0.1', res)
+  })
+  const { port } = srv.address() as net.AddressInfo
+  await new Promise<void>((res) => { srv.close(() => res()) })
+  return port
+}
+
+async function dial(port: number, deadlineMs: number): Promise<net.Socket> {
   const start = Date.now()
   for (;;) {
     try {
       return await new Promise<net.Socket>((res, rej) => {
-        const s = net.createConnection({ host: '127.0.0.1', port: PORT })
+        const s = net.createConnection({ host: '127.0.0.1', port })
         s.once('connect', () => res(s))
         s.once('error', rej)
       })
@@ -66,8 +78,13 @@ let sock: net.Socket
 let client: RynkClient
 
 beforeAll(async () => {
-  qemu = spawn('node', ['run.mjs'], { cwd: new URL('.', import.meta.url).pathname, stdio: 'ignore' })
-  sock = await dial(120_000)
+  const port = await freePort()
+  qemu = spawn('node', ['run.mjs'], {
+    cwd: new URL('.', import.meta.url).pathname,
+    stdio: 'ignore',
+    env: { ...process.env, RMK_QEMU_PORT: String(port) },
+  })
+  sock = await dial(port, 120_000)
   client = (await connectClient(socketLink(sock), WASM)).client
 })
 
