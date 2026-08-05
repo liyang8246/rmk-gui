@@ -23,10 +23,11 @@ tokio = { version = "1.53.1", features = [
 # The Rynk host transports live upstream: rynk-usb recognises a keyboard by
 # the vendor interface class triple, rynk-ble lists already-connected GATT
 # peers. Neither is reimplemented here — discovery rules belong with the
-# protocol. Branch pins rmk-rs/rmk#1023 until it merges; back to main after.
-rynk = { git = "https://github.com/rmk-rs/rmk.git", branch = "feat/rynk-usb" }
-rynk-usb = { git = "https://github.com/rmk-rs/rmk.git", branch = "feat/rynk-usb" }
-rynk-ble = { git = "https://github.com/rmk-rs/rmk.git", branch = "feat/rynk-usb" }
+# protocol. Pinned by rev: the firmware fixture and the wasm client must speak
+# the same protocol commit, so all three rmk pins move together.
+rynk = { git = "https://github.com/rmk-rs/rmk.git", rev = "65df15775026bad1189139613ee3d338139bec3d" }
+rynk-usb = { git = "https://github.com/rmk-rs/rmk.git", rev = "65df15775026bad1189139613ee3d338139bec3d" }
+rynk-ble = { git = "https://github.com/rmk-rs/rmk.git", rev = "65df15775026bad1189139613ee3d338139bec3d" }
 uuid = { version = "1.24.0", features = [ "v4" ] }
 
 [lints.clippy]

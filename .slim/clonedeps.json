@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-07-23T00:00:00.000Z",
+  "updatedAt": "2026-08-06T00:00:00.000Z",
   "dependencies": [
     {
       "name": "rmk",
-      "resolvedVersion": "main@ae22ccda",
+      "resolvedVersion": "main@65df1577",
       "repoUrl": "https://github.com/rmk-rs/rmk.git",
       "ref": "main",
       "path": ".slim/clonedeps/repos/rmk-rs__rmk",
