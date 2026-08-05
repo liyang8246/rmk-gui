@@ -2,7 +2,9 @@
 import os, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
-URL, BRANCH = "https://github.com/rmk-rs/rmk.git", "main"
+# Keep REV in step with the rmk pins in qemu/Cargo.toml and src-tauri/Cargo.toml —
+# firmware and wasm client must come from one protocol commit.
+URL, REV = "https://github.com/rmk-rs/rmk.git", "65df15775026bad1189139613ee3d338139bec3d"
 ROOT = Path(__file__).resolve().parent.parent
 WASM_OUT = ROOT / "src" / "rynk" / "wasm"
 
@@ -21,7 +23,10 @@ def resolve_repo():
     if has_rynk(sibling):
         return sibling, False
     work = Path(tempfile.mkdtemp(prefix="rmk-wasm-"))
-    subprocess.run(["git", "clone", "--depth", "1", "--branch", BRANCH, URL, str(work)], check=True)
+    # fetch, not clone: `clone --branch` takes a ref, never a sha.
+    subprocess.run(["git", "init", "-q", str(work)], check=True)
+    subprocess.run(["git", "-C", str(work), "fetch", "-q", "--depth", "1", URL, REV], check=True)
+    subprocess.run(["git", "-C", str(work), "checkout", "-q", "FETCH_HEAD"], check=True)
     return work, True
 
 repo, temporary = resolve_repo()

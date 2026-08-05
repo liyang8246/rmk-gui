@@ -7,9 +7,11 @@ export interface JsByteLink {
 
 const GET_VERSION = 0x0001
 
-/// A device can open the port and then never answer. Without a deadline the
-/// probe parks forever and leaves the store stuck in `connecting`.
-const PROBE_TIMEOUT_MS = 10_000
+/// A device can open the port and then never answer. Without a watchdog the
+/// probe parks forever and leaves the store stuck in `connecting`. This is
+/// idle time, not a cap on the whole probe: every answer rearms the clock, so
+/// a slow link that is still talking gets to keep going — only silence gives up.
+const PROBE_TIMEOUT_MS = 5_000
 
 /// Each zero-free run is prefixed by its length + 1; 0x00 delimits frames.
 export function cobsEncode(data: Uint8Array): Uint8Array {
@@ -66,23 +68,53 @@ function transportError(message: string): Error {
   return e
 }
 
+/// Rejects with a TransportError once `ms` elapse without `promise` settling.
+export async function withDeadline<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_res, rej) => {
+        timer = setTimeout(() => rej(transportError(message)), ms)
+      }),
+    ])
+  }
+  finally {
+    clearTimeout(timer)
+  }
+}
+
 /// Frame: cmd=0x0001 LE, seq=1, empty payload; reply payload is [status, major, minor].
 export async function probeVersion(link: JsByteLink, timeoutMs = PROBE_TIMEOUT_MS) {
-  await link.send(cobsEncode(new Uint8Array([GET_VERSION & 0xFF, GET_VERSION >> 8, 1])))
   let timer: ReturnType<typeof setTimeout> | undefined
+  let expire: () => void = () => {}
   const deadline = new Promise<never>((_res, rej) => {
-    timer = setTimeout(() => rej(transportError('version probe timed out')), timeoutMs)
+    expire = () => rej(transportError('version probe timed out'))
   })
-  // The race usually resolves first; keep the loser from surfacing as an
-  // unhandled rejection.
+  /// The watchdog: each call pushes the deadline out by a full window.
+  const arm = () => {
+    clearTimeout(timer)
+    timer = setTimeout(expire, timeoutMs)
+  }
+  // The race usually resolves first; keep the losers from surfacing as
+  // unhandled rejections.
   deadline.catch(() => {})
   try {
+    arm()
+    // The watchdog covers the send too: WebHID's sendReport can itself park
+    // forever on a granted device that is not actually speaking rynk.
+    const sent = link.send(cobsEncode(new Uint8Array([GET_VERSION & 0xFF, GET_VERSION >> 8, 1])))
+    sent.catch(() => {})
+    await Promise.race([sent, deadline])
     let rx: Uint8Array = new Uint8Array(0)
     for (;;) {
       const delim = rx.indexOf(0)
       if (delim === -1) {
-        const chunk = await Promise.race([link.recv(), deadline])
+        const received = link.recv()
+        received.catch(() => {})
+        const chunk = await Promise.race([received, deadline])
         if (!chunk.length) throw transportError('link closed')
+        arm()
         rx = concat(rx, chunk)
         continue
       }
@@ -108,6 +140,10 @@ async function loadCore(major: number) {
 /// `wasm` overrides where the module is fetched from. The browser default
 /// resolves it next to the JS glue, which Node's fetch cannot do (file: URL).
 export async function connectClient(link: JsByteLink, wasm?: BufferSource, timeoutMs?: number) {
+  // Every protocol major we support maps to the same module, so its fetch and
+  // compile overlap the probe round trip instead of following it. loadCore
+  // resolves to this same in-flight import; a failed probe leaves it caught.
+  import('./wasm/rynk_wasm.js').catch(() => {})
   const { major, minor } = await probeVersion(link, timeoutMs)
   const core = await loadCore(major)
   await core.default(wasm ? { module_or_path: wasm } : undefined)

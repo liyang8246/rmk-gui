@@ -80,17 +80,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-system-misc
 
-      # One clone for both artifacts. The firmware and the wasm client speak one
-      # protocol, so resolving `main` twice can put them on different commits and
-      # fail the run on wire errors. RMK_REPO is honoured by both build:wasm and
-      # qemu/run.mjs.
-      - name: Check out rmk once
-        run: |
-          git clone --depth 1 https://github.com/rmk-rs/rmk.git "$RUNNER_TEMP/rmk"
-          echo "rmk at $(git -C "$RUNNER_TEMP/rmk" rev-parse HEAD)"
-          echo "RMK_REPO=$RUNNER_TEMP/rmk" >> "$GITHUB_ENV"
-
       - run: pnpm install --frozen-lockfile
+      # No shared rmk checkout and no RMK_REPO: the wasm client and the firmware
+      # each resolve the rev pinned in scripts/build-rynk-wasm.py and
+      # qemu/Cargo.toml, so both land on one protocol commit.
       - run: pnpm build:wasm
       - run: pnpm test:qemu
 

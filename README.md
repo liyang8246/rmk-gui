@@ -21,7 +21,7 @@ and macOS 10.15+ (intel/apple).
 
 - Based on Rust and Tauri2 frameworks.
 - Concise and modern user interface, built with Svelte 5 and Tailwind CSS 4.
-- Talks the rynk protocol over USB serial, BLE, and Web Serial.
+- Talks the rynk protocol over raw USB (WebUSB in the browser), BLE, and WebHID.
 - Support for Windows, macOS, and Linux.
 
 ## Development
@@ -45,8 +45,8 @@ Make sure you have Rust, NodeJS and Python installed on your system.
    ```
    `src/rynk/wasm/` is a build artifact and is not checked in, so this step is
    required before anything else runs. It compiles `rynk-wasm` from a sibling
-   `../rmk` checkout when one exists, otherwise it clones `rmk-rs/rmk`; set
-   `RMK_REPO` to point somewhere else.
+   `../rmk` checkout when one exists, otherwise it fetches the rmk revision
+   pinned in the script; set `RMK_REPO` to point somewhere else.
 4. Start the development server:
    ```bash
    pnpm dev:web     # browser only
@@ -77,8 +77,9 @@ one client at a time.
 
 The fixture firmware resolves `rmk` the same way step 3 does (`RMK_REPO`, then a
 sibling `../rmk`), so the firmware and the wasm client stay on one revision.
-With neither, cargo falls back to the `main` branch and the two can drift onto
-different protocol commits.
+With neither, both fall back to the same pinned rmk revision — bump it in
+`qemu/Cargo.toml`, `src-tauri/Cargo.toml` and `scripts/build-rynk-wasm.py`
+together.
 
 `CI=true` matters for linting: the eslint config detects editors and relaxes
 some rules, so a bare `pnpm lint` is more permissive than CI.

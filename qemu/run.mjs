@@ -14,9 +14,9 @@ const port = process.env.RMK_QEMU_PORT ?? '7965'
 
 const RMK_GIT = 'https://github.com/rmk-rs/rmk.git'
 
-/// Same resolution order as scripts/build-rynk-wasm.py. The firmware and the
-/// wasm client speak one protocol, so they must come from one rmk revision —
-/// letting cargo resolve `branch = "main"` on its own can drift them apart.
+/// Same resolution order as scripts/build-rynk-wasm.py: a local checkout builds
+/// both the firmware and the wasm client from one working tree. With none, both
+/// fall back to the rmk rev pinned in Cargo.toml and the script.
 function rmkRepo() {
   const env = process.env.RMK_REPO
   if (env) return resolve(env)

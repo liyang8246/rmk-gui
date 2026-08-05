@@ -13,7 +13,7 @@ The protocol client (`rynk::Client<T>`) owns the link lifecycle. Its source is
 
 The full connect sequence, as implemented by the `index.html` reference shell:
 
-1. **JS opens the browser transport** (Web Serial or WebHID) via a user gesture
+1. **JS opens the browser transport** (WebUSB or WebHID) via a user gesture
    (button click). Both APIs require a user activation.
 2. **JS optionally probes the version**: `link.probeVersion()` returns
    `{ major, minor }` by sending a raw `GetVersion` frame and reading the reply.
@@ -225,61 +225,61 @@ JS-side teardown:
 ```js
 async function teardown() {
   // Closing the link EOFs the transport, ending any parked next_event() pump.
-  if (l) {
-    await l.close()
+  if (link) {
+    await link.close()
   }
-  else if (port) {
-    try { await port.close() }
+  else if (device) {
+    try { await device.close() }
     catch {}
   }
-  port = null; device = null; l = null; core = null; client = null; connected = false
+  device = null; link = null; core = null; client = null; connected = false
   // ... reset UI ...
 }
 ```
-
-Source: `rynk/rynk-wasm/index.html`, lines 258-267.
 
 ### Auto-reconnect
 
 After a disconnect, the page can reconnect to previously granted devices without
 a new chooser prompt:
 
-- `navigator.serial.getPorts()` — serial ports the user previously granted.
+- `navigator.usb.getDevices()` — USB devices the user previously granted,
+  filtered by the Rynk vendor interface class triple.
 - `navigator.hid.getDevices()` — HID devices the user previously granted.
 
 ```js
-async function grantedSerialPort() {
-  try { return navigator.serial ? (await navigator.serial.getPorts())[0] || null : null }
+async function grantedUsbDevice() {
+  try {
+    const devs = navigator.usb ? await navigator.usb.getDevices() : []
+    return devs.find(hasRynkVendorInterface) || null // class 0xFF, subclass 0x52, protocol 0x52
+  }
   catch { return null }
 }
 async function grantedHidDevice() {
   try {
     const devs = navigator.hid ? await navigator.hid.getDevices() : []
-    return devs.find(d => (d.collections || []).some(c => c.usagePage === 0xFF60)) || devs[0] || null
+    return devs.find(d => (d.collections || []).some(c => c.usagePage === 0xFF14)) || null
   }
   catch { return null }
 }
 ```
 
-Source: `rynk/rynk-wasm/index.html`, lines 370-379.
-
 ### Transport removal events
 
-The browser fires `connect` / `disconnect` events on `navigator.serial` and
-`navigator.hid` when a device is plugged or unplugged. The reference shell uses
-them to auto-connect when idle and to tear down when the active transport is
-removed:
+The browser fires `connect` / `disconnect` events on `navigator.usb` and
+`navigator.hid` when a device is plugged or unplugged. A page can use them to
+auto-connect when idle and to tear down when the active transport is removed:
 
 ```js
 // Reconnect when idle; disconnect on active transport removal.
-navigator.serial?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
+navigator.usb?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
 navigator.hid?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
 function onDrop() { if (connected) teardown().then(() => log('\n— transport disconnected —')) }
-navigator.serial?.addEventListener?.('disconnect', onDrop)
+navigator.usb?.addEventListener?.('disconnect', onDrop)
 navigator.hid?.addEventListener?.('disconnect', onDrop)
 ```
 
-Source: `rynk/rynk-wasm/index.html`, lines 399-403.
+An unplug also rejects the link's pending `transferIn`, so the link signals EOF
+on its own — the events are for UI state, not correctness.
 
 The pattern: reconnect when idle, disconnect on active transport removal. Do
 not attempt to reconnect over an active transport that was just removed — tear
@@ -291,25 +291,25 @@ reconnect.
 The reference shell's teardown function, annotated:
 
 ```js
-let port = null; let device = null; let l = null; let core = null; let client = null; let connected = false
+let device = null; let link = null; let core = null; let client = null; let connected = false
 
 async function teardown() {
   // Closing the link EOFs the transport, ending any parked next_event() pump.
   // Always close the link first so the topic pump's next_event() rejects.
-  if (l) {
-    await l.close()
+  if (link) {
+    await link.close()
   }
-  else if (port) {
-    try { await port.close() }
+  else if (device) {
+    try { await device.close() }
     catch {}
   }
   // Null out all references so the RynkClient (and its WasmTransport) is dropped.
   // WasmTransport::drop also calls link.close() — safe because close is idempotent.
-  port = null; device = null; l = null; core = null; client = null; connected = false
+  device = null; link = null; core = null; client = null; connected = false
   // Reset UI state.
-  serialBtn.textContent = 'Connect via Serial (USB)'
+  usbBtn.textContent = 'Connect via USB (WebUSB)'
   bleBtn.textContent = 'Connect via BLE (WebHID)'
-  serialBtn.disabled = false; bleBtn.disabled = false
+  usbBtn.disabled = false; bleBtn.disabled = false
   unlockBtn.hidden = true; unlockBtn.disabled = false
 }
 ```

@@ -76,16 +76,38 @@ describe('probeVersion', () => {
     await expect(probeVersion(fakeLink([]))).rejects.toThrow('link closed')
   })
 
-  it('gives up on a device that opens the port and never answers', async () => {
-    // Without the deadline this parks forever and the store never leaves
-    // `connecting`.
-    const silent: JsByteLink = {
-      label: 'silent',
+  it('gives up on a device that opens and then never settles anything', async () => {
+    // Without the watchdog either shape parks forever and the store never
+    // leaves `connecting`. `stuck` is the WebHID case: sendReport itself can
+    // park on a granted device that is not actually speaking rynk, so the
+    // watchdog must cover the send, not just the wait for a reply.
+    const never = <T>() => new Promise<T>(() => {})
+    const links: JsByteLink[] = [
+      { label: 'silent', async send() {}, recv: () => never(), async close() {} },
+      { label: 'stuck', send: () => never(), recv: () => never(), async close() {} },
+    ]
+    for (const link of links) {
+      await expect(probeVersion(link, 10)).rejects.toThrow('version probe timed out')
+    }
+  })
+
+  it('keeps waiting as long as the device keeps talking', async () => {
+    // The window is idle time, not a cap on the whole probe: ten topic pushes
+    // 20ms apart blow far past a 100ms total budget, and only then does the
+    // reply land. An absolute deadline would cut this device off mid-sentence.
+    const topic = cobsEncode(new Uint8Array([0x10, 0x80, 0, 0, 9, 9]))
+    let calls = 0
+    const chatty: JsByteLink = {
+      label: 'chatty',
       async send() {},
-      recv: () => new Promise<Uint8Array>(() => {}),
+      recv: () => new Promise((resolve) => {
+        calls += 1
+        const frame = calls <= 10 ? topic : versionReply(0x0001, 1, 2)
+        setTimeout(resolve, 20, frame)
+      }),
       async close() {},
     }
-    await expect(probeVersion(silent, 10)).rejects.toThrow('version probe timed out')
+    await expect(probeVersion(chatty, 100)).resolves.toEqual({ major: 1, minor: 2 })
   })
 
   it('classifies both give-up paths as transport faults', async () => {

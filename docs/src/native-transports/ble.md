@@ -138,4 +138,4 @@ impl RynkDevice for BleDevice {
 A failure means the device is gone or isn't a Rynk keyboard.
 
 The full connect flow mirrors the serial transport; see
-[Serial (USB CDC)](./serial.md).
+[USB (Vendor Bulk)](./usb.md).
