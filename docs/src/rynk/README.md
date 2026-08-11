@@ -26,7 +26,7 @@ ends of the wire can never disagree about a message's types.
 
 ### 3. Transport-Agnostic Byte Link
 
-All transports — USB serial, BLE GATT, browser Web Serial/WebHID — present the
+All transports — raw USB, BLE GATT, browser WebUSB/WebHID — present the
 same `embedded-io-async` `Read + Write` interface to the client. The
 `RynkDevice` trait abstracts the lifecycle common to every transport
 (`label` → `open` → `connect`), while discovery remains transport-specific.
@@ -47,7 +47,7 @@ rynk/
 │       ├── client.rs # RynkClient: #[wasm_bindgen] API + endpoints! macro
 │       ├── device.rs # WebDevice: RynkDevice for browser
 │       └── transport.rs # WasmTransport: JsByteLink → Read/Write
-├── rynk-serial/      # USB CDC-ACM serial transport (native)
+├── rynk-usb/         # Raw-USB vendor bulk transport (native, nusb)
 ├── rynk-ble/         # BLE GATT transport (native)
 └── rynk-kle/         # KLE/Vial layout conversion (native + wasm)
 ```
@@ -66,8 +66,8 @@ rynk/
 ```text
 Host Application
     │
-    ├── rynk-wasm (browser) ─── JsByteLink ─── Web Serial / WebHID
-    ├── rynk-serial (native) ── SerialTransport ── USB CDC-ACM
+    ├── rynk-wasm (browser) ─── JsByteLink ─── WebUSB / WebHID
+    ├── rynk-usb (native) ───── bulk halves ────── USB vendor interface
     └── rynk-ble (native) ──── BleTransport ──── BLE GATT
     │
     └──► Client<T: Read + Write> ──► Rynk Protocol ──► RMK Firmware

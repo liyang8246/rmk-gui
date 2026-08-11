@@ -1,12 +1,24 @@
 import type { ConnectedDevice } from './index'
 
-/// The firmware's `RynkHidService` report, and the vendor-defined usage it sits
-/// on. Serial and HID carry the same Rynk byte stream; only the framing differs.
+/// The firmware's `RynkHidReport`, and the vendor-defined usage it sits on.
+/// USB bulk and HID carry the same Rynk byte stream; only the framing differs.
+/// 0xFF14 is Rynk's own page — rmk-rs/rmk#1022 moved it off 0xFF60, which
+/// Via/Vial keyboards use, so their boards no longer match the picker filter.
 const RYNK_HID_REPORT_SIZE = 32
-const RYNK_HID_USAGE_PAGE = 0xFF60
+const RYNK_HID_USAGE_PAGE = 0xFF14
 const RYNK_HID_USAGE = 0x61
 /// The firmware's collection is the only one on the report; report id 0.
 const RYNK_HID_REPORT_ID = 0
+
+/// The RMK vendor bulk interface — the class triple the firmware advertises
+/// (`RYNK_USB_INTERFACE_*` in rmk-types), matched instead of any VID/PID.
+const RYNK_USB_CLASS = 0xFF
+const RYNK_USB_SUBCLASS = 0x52
+const RYNK_USB_PROTOCOL = 0x52
+/// Covers a whole Rynk frame per transfer, and is a multiple of both Full- and
+/// High-Speed bulk packet sizes — a partial-packet read length would error the
+/// moment the device sends a full packet.
+const USB_READ_SIZE = 4096
 
 function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
   const c = new Uint8Array(a.length + b.length)
@@ -24,7 +36,9 @@ abstract class BufferedLink {
 
   protected push(bytes: Uint8Array) {
     if (!bytes.length) return
-    this.rx = concat(this.rx, bytes)
+    // Each chunk arrives in its own transfer/event buffer, so adopting it
+    // outright is safe — the copy is only needed when a backlog exists.
+    this.rx = this.rx.length === 0 ? bytes : concat(this.rx, bytes)
     this.signal()
   }
 
@@ -48,44 +62,101 @@ abstract class BufferedLink {
   }
 }
 
-export class WebByteLink extends BufferedLink {
-  private reader: ReadableStreamDefaultReader<Uint8Array>
-  private writer: WritableStreamDefaultWriter<Uint8Array>
+/// Best-effort teardown that never wedges the caller: a close can queue
+/// behind a transfer the device never accepted, and teardown is what the
+/// connect screen waits on. The session is already over when this runs — the
+/// OS handle gets a moment, then we move on.
+async function boundedClose(work: Promise<unknown>): Promise<void> {
+  await Promise.race([
+    work.catch(() => {}),
+    new Promise<void>(resolve => setTimeout(resolve, 1_000)),
+  ])
+}
 
-  constructor(private port: SerialPort, readonly label: string) {
+interface VendorInterface {
+  interfaceNumber: number
+  epIn: number
+  epOut: number
+}
+
+/// The Rynk vendor interface on a device, or null when it carries none —
+/// readable from cached descriptors without opening the device, so this both
+/// filters `getDevices()` and locates the endpoints to claim.
+function vendorInterface(device: USBDevice): VendorInterface | null {
+  for (const configuration of device.configurations) {
+    for (const iface of configuration.interfaces) {
+      for (const alt of iface.alternates) {
+        if (
+          alt.interfaceClass !== RYNK_USB_CLASS
+          || alt.interfaceSubclass !== RYNK_USB_SUBCLASS
+          || alt.interfaceProtocol !== RYNK_USB_PROTOCOL
+        ) {
+          continue
+        }
+        const epIn = alt.endpoints.find(e => e.direction === 'in' && e.type === 'bulk')
+        const epOut = alt.endpoints.find(e => e.direction === 'out' && e.type === 'bulk')
+        if (epIn && epOut) {
+          return {
+            interfaceNumber: iface.interfaceNumber,
+            epIn: epIn.endpointNumber,
+            epOut: epOut.endpointNumber,
+          }
+        }
+      }
+    }
+  }
+  return null
+}
+
+export class WebUsbLink extends BufferedLink {
+  /// The pump starts here, before the caller's first send: bulk has no DTR, so
+  /// the firmware never learns the previous session's host vanished and may be
+  /// parked on a topic write no one read — only a pending IN transfer drains
+  /// it. The version probe skips those stale frames.
+  constructor(
+    private device: USBDevice,
+    private iface: VendorInterface,
+    readonly label: string,
+  ) {
     super()
-    this.reader = port.readable!.getReader()
-    this.writer = port.writable!.getWriter()
     void this.pump()
   }
 
   private async pump() {
-    for (;;) {
-      const { value, done } = await this.reader.read()
-      if (done) break
-      if (value) this.push(value)
+    try {
+      while (!this.closed) {
+        const result = await this.device.transferIn(this.iface.epIn, USB_READ_SIZE)
+        if (result.status === 'stall') {
+          await this.device.clearHalt('in', this.iface.epIn)
+          continue
+        }
+        if (result.data) {
+          this.push(new Uint8Array(result.data.buffer, result.data.byteOffset, result.data.byteLength))
+        }
+      }
+    }
+    catch {
+      // Unplugged, or close() aborted the pending transfer.
     }
     this.end()
   }
 
   async send(frame: Uint8Array): Promise<void> {
-    await this.writer.write(frame)
+    // A fresh buffer, not the caller's view: transferOut wants plain
+    // ArrayBuffer backing, which a view over shared memory cannot promise.
+    const buf = new Uint8Array(frame.length)
+    buf.set(frame)
+    await this.device.transferOut(this.iface.epOut, buf)
   }
 
   async close(): Promise<void> {
-    await this.reader.cancel()
-    this.reader.releaseLock()
-    await this.writer.abort()
-    this.writer.releaseLock()
     this.end()
-    // The link owns the port for the session: leaving it open would make the
-    // next connect to the same port fail with InvalidStateError.
-    try {
-      await this.port.close()
-    }
-    catch {
-      // Already closed, or the device was unplugged.
-    }
+    // close() also aborts the pump's pending transferIn.
+    await boundedClose(
+      this.device.releaseInterface(this.iface.interfaceNumber)
+        .catch(() => {})
+        .then(() => this.device.close()),
+    )
   }
 }
 
@@ -117,67 +188,75 @@ export class WebHidLink extends BufferedLink {
   async close(): Promise<void> {
     this.device.removeEventListener('inputreport', this.listener)
     this.end()
-    try {
-      await this.device.close()
-    }
-    catch {
-      // Already gone; the session is over either way.
-    }
+    await boundedClose(this.device.close())
   }
 }
 
-export function hidLabel(device: HIDDevice): string {
-  if (device.productName) return device.productName
+/// Descriptor product string, or the numeric ids when it carried none. The
+/// name comes with the grant — no handshake needed, so even a keyboard that
+/// never connects has one.
+function deviceLabel(
+  prefix: string,
+  d: { productName?: string | null, vendorId: number, productId: number },
+): string {
+  if (d.productName) return d.productName
   const id = (n: number) => n.toString(16).padStart(4, '0')
-  return `HID ${id(device.vendorId)}:${id(device.productId)}`
+  return `${prefix} ${id(d.vendorId)}:${id(d.productId)}`
+}
+
+export function hidLabel(device: HIDDevice): string {
+  return deviceLabel('HID', device)
+}
+
+export function usbLabel(device: USBDevice): string {
+  return deviceLabel('USB', device)
+}
+
+function canUse(api: 'usb' | 'hid'): boolean {
+  return typeof navigator !== 'undefined' && api in navigator
 }
 
 export function canUseWebHid(): boolean {
-  return typeof navigator !== 'undefined' && 'hid' in navigator
+  return canUse('hid')
 }
 
-export function canUseWebSerial(): boolean {
-  return typeof navigator !== 'undefined' && 'serial' in navigator
+export function canUseWebUsb(): boolean {
+  return canUse('usb')
 }
 
-/// Web Serial reports only the USB ids, never the product string or the `rynk:`
-/// serial marker the native transport recognises a keyboard by — so this is as
-/// specific as a browser-side label can be.
-export function serialLabel(port: SerialPort): string {
-  const { usbVendorId, usbProductId } = port.getInfo()
-  if (usbVendorId === undefined || usbProductId === undefined) return 'Serial port'
-  const id = (n: number) => n.toString(16).padStart(4, '0')
-  return `USB ${id(usbVendorId)}:${id(usbProductId)}`
+export async function openUsb(device: USBDevice): Promise<ConnectedDevice> {
+  const iface = vendorInterface(device)
+  if (!iface) throw new Error('no Rynk vendor interface on this device')
+  if (!device.opened) await device.open()
+  if (device.configuration === null) {
+    await device.selectConfiguration(device.configurations[0]!.configurationValue)
+  }
+  await device.claimInterface(iface.interfaceNumber)
+  const label = usbLabel(device)
+  return { link: new WebUsbLink(device, iface, label), label }
 }
 
-async function openSerial(port: SerialPort): Promise<ConnectedDevice> {
-  // `readable` is null until the port is open; a port kept from an earlier
-  // session in this page is already open and must not be opened twice.
-  if (!port.readable) await port.open({ baudRate: 115200 })
-  const label = serialLabel(port)
-  return { link: new WebByteLink(port, label), label }
+/// Must run inside a click: the browser's own device picker needs the gesture.
+export async function requestUsbDevice(): Promise<USBDevice> {
+  return navigator.usb.requestDevice({
+    filters: [{
+      classCode: RYNK_USB_CLASS,
+      subclassCode: RYNK_USB_SUBCLASS,
+      protocolCode: RYNK_USB_PROTOCOL,
+    }],
+  })
 }
 
-/// Must run inside a click: the browser's own port picker needs the gesture.
-/// Returns the handle rather than a session, so the caller can connect through
-/// the same list every already-granted device uses.
-export async function requestSerialPort(): Promise<SerialPort> {
-  return navigator.serial.requestPort()
+/// Keyboards the user has already granted this origin. Like the WebHID list
+/// these need no gesture, so a granted keyboard shows up in the app's own list
+/// and can be reconnected on launch.
+export async function grantedUsbDevices(): Promise<USBDevice[]> {
+  if (!canUseWebUsb()) return []
+  const devices = await navigator.usb.getDevices().catch(() => [])
+  return devices.filter(d => vendorInterface(d) !== null)
 }
 
-/// Ports the user has already granted this origin. Like the WebHID list these
-/// need no gesture, so a granted keyboard shows up in the picker and can be
-/// reconnected on launch.
-export async function grantedSerialPorts(): Promise<SerialPort[]> {
-  if (!canUseWebSerial()) return []
-  return navigator.serial.getPorts().catch(() => [])
-}
-
-export async function connectGrantedSerial(port: SerialPort): Promise<ConnectedDevice> {
-  return openSerial(port)
-}
-
-async function openHid(device: HIDDevice): Promise<ConnectedDevice> {
+export async function openHid(device: HIDDevice): Promise<ConnectedDevice> {
   if (!device.opened) await device.open()
   const label = hidLabel(device)
   return { link: new WebHidLink(device, label), label }
@@ -201,8 +280,4 @@ export async function grantedHidDevices(): Promise<HIDDevice[]> {
   return devices.filter(d =>
     d.collections.some(c => c.usagePage === RYNK_HID_USAGE_PAGE && c.usage === RYNK_HID_USAGE),
   )
-}
-
-export async function connectGrantedHid(device: HIDDevice): Promise<ConnectedDevice> {
-  return openHid(device)
 }

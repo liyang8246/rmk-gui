@@ -7,14 +7,14 @@ use std::collections::HashMap;
 
 use tauri::Builder;
 use tokio::sync::Mutex;
-use transport::{Session, ble, serial, tcp};
+use transport::{Session, ble, tcp, usb};
 
 fn main() {
     Builder::default()
         .manage(Mutex::new(HashMap::<String, Session>::new()))
         .invoke_handler(tauri::generate_handler![
-            serial::rynk_discover_serial, ble::rynk_discover_ble, tcp::rynk_discover_tcp,
-            serial::rynk_connect_serial, ble::rynk_connect_ble, tcp::rynk_connect_tcp,
+            usb::rynk_discover_usb, ble::rynk_discover_ble, tcp::rynk_discover_tcp,
+            usb::rynk_connect_usb, ble::rynk_connect_ble, tcp::rynk_connect_tcp,
             transport::rynk_send, transport::rynk_recv, transport::rynk_close,
             transport::rynk_close_all,
         ])

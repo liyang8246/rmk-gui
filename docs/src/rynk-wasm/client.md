@@ -15,7 +15,7 @@ pub struct RynkClient(Client<WasmTransport>);
 
 `RynkClient` wraps `Client<WasmTransport>`. Each method borrows the client for
 one `await` — JS must await one call before issuing the next. This is the same
-single-borrow rule the native serial/BLE transports get from the compiler: the
+single-borrow rule the native USB/BLE transports get from the compiler: the
 `&mut self` on every method serializes requests with no background task or
 shared state.
 
@@ -33,7 +33,7 @@ pub async fn connect(link: JsByteLink, label: Option<String>) -> Result<RynkClie
 `connect()` performs the Rynk handshake over the already-open JS byte link and
 returns a live `RynkClient`. It routes through `WebDevice` — the web transport's
 `RynkDevice` — so the browser path uses the same connect lifecycle as the native
-serial/BLE transports:
+USB/BLE transports:
 
 ```rust
 let client = WebDevice::new(link, label).connect().await?;

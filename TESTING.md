@@ -249,9 +249,9 @@ wasm 预初始化：`mod.default({ module_or_path: await readFile(...) })`。此
 
 新增一个 Linux-only job，与现有 6-OS 构建矩阵并行（不进入关键路径，墙钟时间不变）：安装 `qemu-system-misc`、`riscv32imac-unknown-none-elf` target、`wasm-pack`，执行 `pnpm build:wasm` 与 `pnpm build:web` 后 `pnpm test`。
 
-**须一并处理的依赖一致性问题**：`.cargo/config.toml` 为 gitignore 的本地文件，因此 CI 中固件从 `git+rmk.git?branch=main` 解析，而 `scripts/build-rynk-wasm.py` 会**另外**再 clone 一次 `main`。两次独立拉取同一移动分支，若 `main` 在其间前进，固件与 wasm 客户端将来自不同的协议 commit，测试会以难以定位的线路错误失败。
+**须一并处理的依赖一致性问题**：`.cargo/config.toml` 为 gitignore 的本地文件，因此 CI 中固件由 cargo 从 `git+rmk.git` 解析，而 `scripts/build-rynk-wasm.py` 会**另外**再拉一次源码。两次独立拉取若落在不同 commit（拉移动分支时必然如此），固件与 wasm 客户端将来自不同的协议 commit，测试会以难以定位的线路错误失败。
 
-处理方式：CI 中只 clone 一次并以 `RMK_REPO` 指向它，同时打印其 `rev-parse HEAD` 便于定位。`qemu/run.mjs` 采用与 `build-rynk-wasm.py` 相同的解析顺序（`RMK_REPO` → 同级 `../rmk`），解析到则通过 `cargo --config` 把 `[patch]` 指向该 checkout。本地开发同样受益：有同级 `../rmk` 时固件与 wasm 客户端自动同源。
+处理方式：`qemu/Cargo.toml` 与 `scripts/build-rynk-wasm.py` 都按同一个 rmk commit 固定（rev pin，而非 `branch = "main"`），两次独立拉取因此必然同源，CI 不需要共享 checkout，也不设 `RMK_REPO`；升级时三处 pin（含 `src-tauri/Cargo.toml`）一起改。`qemu/run.mjs` 采用与 `build-rynk-wasm.py` 相同的解析顺序（`RMK_REPO` → 同级 `../rmk`），解析到则通过 `cargo --config` 把 `[patch]` 指向该 checkout。本地开发同样受益：有同级 `../rmk` 时固件与 wasm 客户端自动同源。
 
 顺带纳入（各一行，成本可忽略）：现有 `ci` job 的 ubuntu 分支增加 `pnpm check`（svelte-check 当前为 105 files / 0 errors）；`eslint.config.mjs` 的 `'qemu/**'` 忽略项收窄为 `'qemu/src/**'` + `'qemu/target/**'`，使 `qemu/run.mjs` 与新增 harness 脚本纳入 lint。
 

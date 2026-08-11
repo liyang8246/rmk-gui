@@ -449,6 +449,6 @@ Source: `rmk-types/src/protocol/rynk/mod.rs:36-45`
 | `RYNK_SERVICE_UUID`     | `0x10900067537f4f0a9b55929e271f61ab` | Rynk GATT service UUID.                                  |
 | `RYNK_INPUT_CHAR_UUID`  | `0x80f9319b0c7443a59738c59d6dda3db9` | Rynk `input_data` characteristic UUID.                   |
 | `RYNK_OUTPUT_CHAR_UUID` | `0x198025246f90434693c263dbc509ab55` | Rynk `output_data` characteristic UUID.                  |
-| `RYNK_SERIAL_MAGIC`     | `"rynk:"`                          | Immutable marker prepended to USB serial number so a host can pick RMK keyboards out of all serial ports without probing every device. |
+| `RYNK_MAGIC`            | `"rynk:"`                          | Informational marker prepended to the USB serial number (`lsusb`/system reports can identify RMK devices); discovery matches the vendor interface class triple instead. |
 
 Source: `rmk-types/src/protocol/rynk/mod.rs:64-80`

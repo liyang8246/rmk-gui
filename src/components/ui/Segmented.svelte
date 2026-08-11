@@ -45,7 +45,12 @@
           disabled:cursor-not-allowed
         `,
         fill && 'flex-1',
-        on ? 'bg-card text-brand-darker shadow-xs dark:text-brand-fill' : 'text-muted-foreground',
+        on
+          ? `
+            bg-card text-brand-darker shadow-xs
+            dark:text-brand-fill
+          `
+          : `text-muted-foreground`,
       ]}
       style='height: {height}px'
       value={item.value}

@@ -17,8 +17,9 @@ import type { KeyboardError } from './errors'
 import type { ConnectionState, KeyboardConfig, KeyboardDevice, KeyboardStatus } from './types'
 import { err, errAsync, ResultAsync } from 'neverthrow'
 import { match, P } from 'ts-pattern'
+import { toast } from '../../lib/toast.svelte'
 import { connectClient } from '../../rynk'
-import { toKeyboardError } from './errors'
+import { explainKeyboardError, toKeyboardError } from './errors'
 
 const session = {
   client: null as RynkClient | null,
@@ -218,6 +219,11 @@ class KeyboardStoreClass {
   /// skips awaiting it — awaiting your own promise deadlocks.
   private async handleDeath(client: RynkClient, cause: KeyboardError, fromTopicLoop: boolean): Promise<void> {
     if (session.client !== client) return
+    // The one death the connect screen cannot report: the session was up and
+    // ended on its own, so the user lands back there with no attempt of their
+    // own to blame the failure on.
+    const help = explainKeyboardError(cause)
+    toast.error(help.title, help.hint)
     await this.teardown({ phase: 'error', label: this.#connection?.label ?? '', cause }, fromTopicLoop)
   }
 
@@ -267,10 +273,10 @@ class KeyboardStoreClass {
         version,
         layout,
       }
-      // Prefer the name the keyboard reports over the transport label: Web
-      // Serial only ever offers the constant 'WebSerial', since getInfo()
-      // exposes no string descriptors. Earlier phases keep the transport label —
-      // there is no device info before the handshake.
+      // Prefer the name the keyboard reports over the transport label: the
+      // label is a descriptor string a transport may have fallen back past
+      // (bare ids when the descriptor carried no product). Earlier phases keep
+      // the transport label — there is no device info before the handshake.
       this.#connection = { phase: 'connected', label: info.product_name.trim() || connected.label }
       this.#device = newDevice
       this.#config = newConfig

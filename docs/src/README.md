@@ -25,8 +25,8 @@ The protocol is:
   about a message's shape.
 - **Versioned** — a `GetVersion` handshake establishes compatibility; major
   mismatches are hard-rejected, same-major minors connect with a warning.
-- **Transport-agnostic** — the same `Client<T>` drives USB serial, BLE GATT,
-  and browser (Web Serial / WebHID) transports through a common
+- **Transport-agnostic** — the same `Client<T>` drives raw USB, BLE GATT,
+  and browser (WebUSB / WebHID) transports through a common
   `embedded-io-async` byte-link interface.
 
 ## Crate Map
@@ -35,7 +35,7 @@ The protocol is:
 |-------|------|--------|
 | `rynk` | Core protocol client: framing, handshake, typed API | `no_std`-compatible |
 | `rynk-wasm` | Browser-facing WASM client (wasm-pack) | `wasm32-unknown-unknown` |
-| `rynk-serial` | USB CDC-ACM serial transport | native (tokio) |
+| `rynk-usb` | Raw-USB vendor bulk transport (nusb) | native (tokio) |
 | `rynk-ble` | BLE GATT transport | native (bluest) |
 | `rynk-kle` | KLE/Vial JSON ↔ RMK layout conversion | native + WASM |
 

@@ -6,7 +6,7 @@ Source: `rynk/rynk-wasm/README.md`, `rynk/rynk-wasm/index.html`
 
 rmk-gui integrates `rynk-wasm` as its core communication layer with RMK
 keyboards. The split is deliberate: the browser/Tauri page owns the transport
-(Web Serial or WebHID), and `rynk-wasm` owns the protocol state machine.
+(WebUSB or WebHID), and `rynk-wasm` owns the protocol state machine.
 Browser permissions, chooser UI, stream locks, and hot-plug events stay in JS;
 request/response typing, topic handling, and protocol validation stay in Rust.
 
@@ -18,7 +18,7 @@ canonical example before building rmk-gui's integration layer.
 ```text
 rmk-gui (Tauri/SolidJS)
   │
-  ├── User gesture → navigator.serial.requestPort() / navigator.hid.requestDevice()
+  ├── User gesture → navigator.usb.requestDevice() / navigator.hid.requestDevice()
   ├── JsByteLink { send, recv, close } — owns browser transport
   ├── rynk-wasm pkg (wasm-pack output)
   │   ├── connect(link, label?) → RynkClient
@@ -49,7 +49,7 @@ The object passed to `connect(link)` only needs this shape:
 The connect flow must begin inside a user gesture (button click) because Web
 Serial and WebHID both require one for `requestPort()` / `requestDevice()`.
 
-1. **User clicks connect button** (user gesture required for Web Serial/WebHID).
+1. **User clicks connect button** (user gesture required for WebUSB/WebHID).
 2. **Open browser transport, create `JsByteLink`.**
 3. **(Optional) Probe version:** `link.probeVersion()` returns `{ major, minor }`.
 4. **Load version-matched wasm:** `loadCore(major)` dynamically imports
@@ -145,7 +145,7 @@ async function teardown() {
 
 ### Auto-reconnect
 
-Use `navigator.serial.getPorts()` and `navigator.hid.getDevices()` to find
+Use `navigator.usb.getDevices()` and `navigator.hid.getDevices()` to find
 previously granted devices. Listen to the `connect` / `disconnect` events on
 both APIs:
 
@@ -155,9 +155,9 @@ both APIs:
   while connected; tear down the active session.
 
 ```js
-navigator.serial?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
+navigator.usb?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
 navigator.hid?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
-navigator.serial?.addEventListener?.('disconnect', () => { if (connected) teardown() })
+navigator.usb?.addEventListener?.('disconnect', () => { if (connected) teardown() })
 navigator.hid?.addEventListener?.('disconnect', () => { if (connected) teardown() })
 ```
 
@@ -232,5 +232,5 @@ end-of-data — parse the macro encoding itself for termination, and iterate
 - Capability-based show/hide of features
 
 Study it before building rmk-gui's integration layer. The `index.html` file
-contains complete Web Serial and WebHID `JsByteLink` implementations that can
+contains complete WebUSB and WebHID `JsByteLink` implementations that can
 serve as a starting point for the transport layer.

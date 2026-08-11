@@ -21,16 +21,17 @@ hands it a `JsByteLink`. The backend's only job is to produce that link.
 │  └──────────────┬──────────────────┘                        │
 │                 │ JsByteLink { send, recv, close }           │
 │  ┌──────────────┴──────────────────┐                        │
-│  │ TauriByteLink / WebByteLink     │                        │
+│  │ TauriByteLink / WebUsbLink /    │                        │
+│  │ WebHidLink                      │                        │
 │  └──────────────┬──────────────────┘                        │
 └─────────────────┼───────────────────────────────────────────┘
                   │
     ┌─────────────┴──────────────┐
     │  Tauri backend (Rust)       │     │  Web (browser)
-    │  invoke('rynk_send/recv')   │     │  navigator.serial
-    │  ┌─ serial (tokio-serial)   │     │  ┌─ WebByteLink
-    │  ├─ tcp    (tokio TcpStream)│     │  └─ WebHID (planned)
-    │  └─ ble    (btleplug)       │
+    │  invoke('rynk_send/recv')   │     │  navigator.usb / navigator.hid
+    │  ┌─ usb (rynk-usb / nusb)   │     │  ┌─ WebUsbLink (vendor bulk)
+    │  ├─ tcp (tokio TcpStream)   │     │  └─ WebHidLink (BLE-bonded)
+    │  └─ ble (btleplug)          │
     └─────────────────────────────┘
 ```
 
@@ -40,15 +41,15 @@ hands it a `JsByteLink`. The backend's only job is to produce that link.
 src-tauri/src/
 ├── main.rs                 — fn main() + tauri::Builder + generate_handler
 └── transport/
-    ├── mod.rs              — Session model, spawn_tokio_io, rynk_send/recv/close
-    ├── serial.rs           — SerialDeviceInfo, rynk_discover_serial, rynk_connect_serial
+    ├── mod.rs              — Session model, spawn_tokio_io, rynk_pump, rynk_send/recv/close
+    ├── usb.rs              — UsbDeviceInfo, rynk_discover_usb, rynk_connect_usb
     ├── tcp.rs              — TcpDeviceInfo, rynk_discover_tcp, rynk_connect_tcp
     └── ble.rs              — BleDeviceInfo, rynk_discover_ble, rynk_connect_ble
 
 src/rynk/
 ├── index.ts               — Unified discover() + connect API, isTauri() detection
 ├── tauri.ts               — TauriByteLink + discover/connect helpers (invoke)
-└── web.ts                 — WebByteLink (WebSerial)
+└── web.ts                 — WebUsbLink (WebUSB) + WebHidLink (WebHID)
 ```
 
 ## Tauri Commands
@@ -58,10 +59,10 @@ Nine commands, all returning `Result<T, String>` except `rynk_discover_tcp`
 
 | Command | Module | Purpose |
 |---------|--------|---------|
-| `rynk_discover_serial` | `serial.rs` | List USB CDC ports with `rynk:` marker |
+| `rynk_discover_usb` | `usb.rs` | List devices carrying the Rynk vendor interface triple |
 | `rynk_discover_ble` | `ble.rs` | Scan for BLE devices advertising Rynk service UUID |
 | `rynk_discover_tcp` | `tcp.rs` | Probe `127.0.0.1:7965` (dev-only, 300ms timeout) |
-| `rynk_connect_serial` | `serial.rs` | Open serial port, clear input buffer |
+| `rynk_connect_usb` | `usb.rs` | Open device, claim the vendor interface |
 | `rynk_connect_ble` | `ble.rs` | Connect + discover GATT + subscribe + spawn task |
 | `rynk_connect_tcp` | `tcp.rs` | Connect TCP, split read/write |
 | `rynk_send` | `mod.rs` | Write bytes to session (waits for write ack) |
@@ -70,7 +71,7 @@ Nine commands, all returning `Result<T, String>` except `rynk_discover_tcp`
 
 ## Session Model
 
-Every connection — serial, TCP, or BLE — produces the same `Session` struct:
+Every connection — USB, TCP, or BLE — produces the same `Session` struct:
 
 ```rust
 struct Session {
@@ -103,9 +104,11 @@ write MUST commit the bytes").
 Each transport spawns a `tokio::spawn` task that owns the transport and runs
 a `tokio::select!` loop:
 
-- **Serial/TCP** (`spawn_tokio_io`): uses `tokio::io::split` to get separate
+- **TCP** (`spawn_tokio_io`): uses `tokio::io::split` to get separate
   `AsyncRead` + `AsyncWrite` halves. The select loop reads from the read half
   and writes from the command channel.
+- **USB** (`rynk_pump`): the same loop shape over the `embedded-io-async`
+  halves `rynk-usb` hands out.
 - **BLE** (`rynk_connect_ble`): uses btleplug's `notifications()` stream for
   reads and `peripheral.write()` for writes. Same select loop shape, different
   read source.
@@ -120,21 +123,21 @@ When the transport reads `Ok(0)` or an error, the task sends `Vec::new()`
 The frontend's `TauriByteLink.recv()` returns `new Uint8Array(0)`, which
 `WasmTransport` interprets as EOF → `RynkHostError::Disconnected`.
 
-## Serial Transport
+## USB Transport
 
 ### Discovery
 
-`rynk_discover_serial` calls `tokio_serial::available_ports()`, filters by
-the `RYNK_SERIAL_MAGIC` (`"rynk:"`) marker in the USB serial number, and
-dedupes macOS `cu.*` / `tty.*` pairs. Discovery never opens a port — opening
-a CDC port toggles DTR, which resets some MCUs.
+`rynk_discover_usb` calls `rynk_usb::UsbDevice::discover()`, which matches the
+vendor interface class triple (`0xFF/0x52/0x52`) against every USB device —
+VID/PID never enter into it. Enumeration reads cached descriptors and opens
+nothing; the returned `id` is the `nusb::DeviceId` formatted as a string, and
+the label is the descriptor's product string.
 
 ### Connect
 
-`rynk_connect_serial` opens the port at 115200 baud (ignored by USB CDC),
-clears the input buffer (`ClearBuffer::Input`) to discard stale bytes from a
-prior session, then `tokio::io::split` the stream into read/write halves fed
-to `spawn_tokio_io`.
+`rynk_connect_usb` re-discovers and matches the id back to a device (the role
+the serial transport's port path used to play), opens it, claims the vendor
+interface, and feeds the bulk halves to `rynk_pump`.
 
 ## TCP Transport
 
@@ -229,27 +232,32 @@ class TauriByteLink {
 }
 ```
 
-### WebByteLink (`src/rynk/web.ts`)
+### WebUsbLink (`src/rynk/web.ts`)
 
-Wraps `navigator.serial` into the same `JsByteLink` shape. One reader task
-drains `port.readable` into an internal buffer; `recv()` returns buffered
-chunks or waits; `close()` cancels reader/writer and releases locks.
+Wraps `navigator.usb` into the same `JsByteLink` shape. The device is matched
+and claimed by the vendor interface triple; a pump keeps a `transferIn`
+pending from the moment the link exists (bulk has no DTR, so a previous
+session's unread topic push is drained by the next session's first reads);
+`transferOut` writes frames whole. `WebHidLink` is the same shape over the
+vendor HID collection an OS-bonded Bluetooth keyboard exposes.
 
 ### Unified API (`src/rynk/index.ts`)
 
 `discover()` detects Tauri vs Web at runtime and returns `TransportInfo[]`:
 
 ```typescript
-const isTauri = ... // from @tauri-apps/api/core
-
 async function discover(): Promise<TransportInfo[]> {
-  if (!isTauri) return []           // Web: no enumeration
-  const [serials, bles, tcps] = await Promise.all([
-    discoverSerial().catch(() => []),
+  if (!isTauri()) {
+    // Web: everything the user has already granted, no gesture needed.
+    const [usbs, hids] = await Promise.all([grantedUsbDevices(), grantedHidDevices()])
+    // Map each into { kind, id, label, connect, handle }
+  }
+  const [usbs, bles, tcps] = await Promise.all([
+    discoverUsb().catch(() => []),
     discoverBle().catch(() => []),
     discoverTcp().catch(() => []),
   ])
-  // Map each into { kind, label, connect: () => Promise<ByteLink> }
+  // Map each into { kind, id, label, connect: () => Promise<ConnectedDevice> }
 }
 ```
 
@@ -257,6 +265,6 @@ Each `TransportInfo` carries a `connect()` closure that returns a `ByteLink`.
 The caller passes this to `rynk-wasm`'s `core.connect(link, label)` — the
 protocol layer takes over from there.
 
-Web mode has no enumeration (`navigator.serial.requestPort()` requires a user
-gesture and opens a picker), so `connectWebSerialPort()` is a separate entry
-point called from a click handler.
+Granting a new device needs the browser's picker, which must run inside a user
+gesture — `requestUsbDevice()` / `requestHidDevice()` are the click-handler
+entry points; the grant then joins the same `discover()` list.

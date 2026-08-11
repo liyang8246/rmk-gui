@@ -216,8 +216,8 @@ describe('connect', () => {
   })
 
   it('labels the session with the reported product name', async () => {
-    // Web Serial can only offer the constant 'WebSerial' as a transport label,
-    // so the name the device reports is what the UI has to show.
+    // A transport label can be a bare-id fallback when the descriptor carried
+    // no product string, so the name the device reports is what the UI shows.
     await connected()
     expect(keyboardStore.connection).toEqual({ phase: 'connected', label: 'Fake60' })
   })

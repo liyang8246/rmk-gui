@@ -5,13 +5,13 @@
 JavaScript. This crate is the core of `rmk-gui` — every configuration and status
 call the application makes flows through it.
 
-The browser page owns browser transports such as Web Serial and WebHID. The wasm
+The browser page owns browser transports such as WebUSB and WebHID. The wasm
 package owns the Rynk protocol state machine.
 
 ## Architecture
 
 ```text
-Web Serial / WebHID / another browser transport
+WebUSB / WebHID / another browser transport
         -> JsByteLink { send, recv, close }
         -> transport::WasmTransport
         -> rynk::Client
@@ -25,7 +25,7 @@ byte-stream interface (`JsByteLink`) that any browser transport can implement.
 
 ## Prerequisites
 
-- A Chromium browser such as Chrome or Edge. Web Serial and WebHID are not
+- A Chromium browser such as Chrome or Edge. WebUSB and WebHID are not
   available in Firefox or Safari.
 - Wasm target: `rustup target add wasm32-unknown-unknown`
 - Packager: `cargo install wasm-pack`
@@ -35,11 +35,11 @@ byte-stream interface (`JsByteLink`) that any browser transport can implement.
 ```bash
 cd rynk/rynk-wasm
 wasm-pack build --target web        # emits ./pkg/ with generated JS and .d.ts files
-python3 -m http.server 8000         # localhost is a secure context for Web Serial / WebHID
+python3 -m http.server 8000         # localhost is a secure context for WebUSB / WebHID
 ```
 
 Open Chrome or Edge at `http://localhost:8000` and use `index.html` as the
-reference shell. `localhost` is a secure context, which Web Serial and WebHID
+reference shell. `localhost` is a secure context, which WebUSB and WebHID
 require — an IP address will not work.
 
 CI runs the same package build so binding generation is checked without
@@ -68,7 +68,7 @@ import init, { connect } from './pkg/rynk_wasm.js'
 
 await init()
 
-const link = await openSerialByteLink()
+const link = await openUsbByteLink()
 const client = await connect(link)
 
 console.log('protocol', await client.get_version())
@@ -105,7 +105,7 @@ interface):
 
 A topic pump loop drives `next_event()` in a `for (;;)` loop until the
 await rejects with `Disconnected`. This mirrors the native
-`Client::next_event()` pull used by `rynk-serial` and `rynk-ble`:
+`Client::next_event()` pull used by `rynk-usb` and `rynk-ble`:
 
 ```js
 async function pumpTopics(client) {
@@ -151,5 +151,5 @@ Dependencies (from `Cargo.toml`): `rynk` (with the `wasm` feature),
 - [WasmTransport](./transport.md) — how `JsByteLink` becomes `Read`/`Write`
 - [Lifecycle & Dead States](./lifecycle.md) — connect flow, cancelled reads,
   topic overflow, reconnect
-- [JS Byte Link Implementations](./js-byte-link.md) — Web Serial and WebHID
+- [JS Byte Link Implementations](./js-byte-link.md) — WebUSB and WebHID
   reference code

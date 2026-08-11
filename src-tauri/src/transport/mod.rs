@@ -1,6 +1,6 @@
 pub mod ble;
-pub mod serial;
 pub mod tcp;
+pub mod usb;
 
 use std::collections::HashMap;
 use std::sync::Arc;
