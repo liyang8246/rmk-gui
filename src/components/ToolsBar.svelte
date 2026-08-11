@@ -1,5 +1,4 @@
 <script lang='ts'>
-import type { PageEntry } from '../lib/nav.svelte'
 import Icon from '@iconify/svelte'
 import { nav } from '../lib/nav.svelte'
 import Combos from '../pages/Combos.svelte'
@@ -10,13 +9,13 @@ import Settings from '../pages/Settings.svelte'
 import Wireless from '../pages/Wireless.svelte'
 
 const tools = [
-  { name: 'Layers', icon: 'lucide:layers', page: { title: 'Layers', component: Layers } satisfies PageEntry },
-  { name: 'Macros', icon: 'lucide:zap', page: { title: 'Macros', component: Macros } satisfies PageEntry },
-  { name: 'Combos', icon: 'lucide:combine', page: { title: 'Combos', component: Combos } satisfies PageEntry },
-  { name: 'Wireless', icon: 'lucide:bluetooth', page: { title: 'Wireless', component: Wireless } satisfies PageEntry },
-  { name: 'Firmware', icon: 'lucide:cpu', page: { title: 'Firmware', component: Firmware } satisfies PageEntry },
-  { name: 'Settings', icon: 'lucide:settings', page: { title: 'Settings', component: Settings } satisfies PageEntry },
-] as const
+  { name: 'Layers', icon: 'lucide:layers', page: { title: 'Layers', component: Layers } },
+  { name: 'Macros', icon: 'lucide:zap', page: { title: 'Macros', component: Macros } },
+  { name: 'Combos', icon: 'lucide:combine', page: { title: 'Combos', component: Combos } },
+  { name: 'Wireless', icon: 'lucide:bluetooth', page: { title: 'Wireless', component: Wireless } },
+  { name: 'Firmware', icon: 'lucide:cpu', page: { title: 'Firmware', component: Firmware } },
+  { name: 'Settings', icon: 'lucide:settings', page: { title: 'Settings', component: Settings } },
+]
 </script>
 
 <div
