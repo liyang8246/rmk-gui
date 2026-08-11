@@ -1,11 +1,11 @@
 {
   "version": 1,
   "skills": {
-    "arkui": {
+    "bits-ui": {
       "source": "liyang8246/skills",
       "sourceType": "github",
-      "skillPath": "skills/arkui/SKILL.md",
-      "computedHash": "4f81140fb84d52daa7754f6d1ff64a0058181d46c5b800c92ffdb7cf3435921f"
+      "skillPath": "skills/bits-ui/SKILL.md",
+      "computedHash": "48f4cb070077c18589226a506ab612145978e42abda3ac6b710f9c7ebf5dfcc1"
     },
     "neverthrow": {
       "source": "liyang8246/skills",
