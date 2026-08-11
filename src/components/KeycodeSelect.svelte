@@ -167,7 +167,12 @@
       {#if catalog.hid.length === 0}
         <p class='p-2 text-[13px] text-muted-foreground'>Loading keycodes…</p>
       {:else if holdTap}
-        <HoldTapBuilder taps={basic} layerCount={caps?.num_layers ?? 1} {onpick} />
+        <HoldTapBuilder
+          taps={basic}
+          layerCount={caps?.num_layers ?? 1}
+          morseCount={caps?.max_morse ?? 0}
+          {onpick}
+        />
       {:else if group === 'Basic' && !query}
         <KeyboardBasic
           extras={offBoard}

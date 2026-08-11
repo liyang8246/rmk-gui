@@ -6,10 +6,14 @@
   interface Props {
     count: number
     layer: number
+    /// The layer the keyboard falls back to; marked with a star.
+    defaultLayer?: number
     onselect: (layer: number) => void
+    /// When set, the active tab offers "make this the default layer".
+    onsetdefault?: (layer: number) => void
   }
 
-  const { count, layer, onselect }: Props = $props()
+  const { count, layer, defaultLayer, onselect, onsetdefault }: Props = $props()
 </script>
 
 <div class='flex items-center gap-[5px]'>
@@ -44,9 +48,28 @@
       >
         <span class='size-2 rounded-full' style:background={layerColor(i)}></span>
         {i}
+        {#if i === defaultLayer}
+          <Icon icon='lucide:star' width={10} height={10} />
+        {/if}
       </RadioGroup.Item>
     {/each}
   </RadioGroup.Root>
+  {#if onsetdefault && defaultLayer !== undefined && layer !== defaultLayer}
+    <button
+      class={`
+        inline-flex h-6.5 flex-none cursor-pointer items-center gap-1
+        rounded-full border border-dashed border-border px-[9px] text-xs
+        font-bold text-muted-foreground
+        hover:border-brand hover:text-brand-darker
+      `}
+      type='button'
+      title='Make layer {layer} the default layer'
+      onclick={() => onsetdefault(layer)}
+    >
+      <Icon icon='lucide:star' width={11} height={11} />
+      Set default
+    </button>
+  {/if}
   <!-- The layer count is fixed at build time by the firmware's keyboard.toml. -->
   <button
     class={`

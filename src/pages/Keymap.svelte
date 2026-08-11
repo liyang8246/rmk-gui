@@ -1,9 +1,11 @@
 <script lang='ts'>
   import type { KeyAction, Variant } from '../rynk'
   import Board from '../components/Board.svelte'
+  import EncoderOverlay from '../components/EncoderOverlay.svelte'
   import KeycodeSelect from '../components/KeycodeSelect.svelte'
   import LayerTabs from '../components/LayerTabs.svelte'
   import IconBtn from '../components/ui/IconBtn.svelte'
+  import Select from '../components/ui/Select.svelte'
   import { drag } from '../lib/drag.svelte'
   import { History } from '../lib/history.svelte'
   import { renderVariants } from '../lib/layout'
@@ -19,15 +21,27 @@
 
   let selected = $state<{ row: number, col: number } | null>(null)
   let autoAdvance = $state(false)
+  /// null until the user switches away from the firmware's default variant.
+  let pickedVariant = $state<number | null>(null)
+  let editingEncoder = $state<number | null>(null)
 
   const history = new History()
 
   const caps = $derived(keyboardStore.device?.capabilities)
   const variants = $derived(renderVariants(keyboardStore.device?.layout, caps))
-  const variant = $derived<Variant | undefined>(
-    variants[keyboardStore.device?.layout.default_variant ?? 0] ?? variants[0],
+  const variantIdx = $derived(
+    pickedVariant ?? keyboardStore.device?.layout.default_variant ?? 0,
   )
+  const variant = $derived<Variant | undefined>(variants[variantIdx] ?? variants[0])
   const actions = $derived(keyboardStore.config?.keymap[layer] ?? [])
+  const hasEncoders = $derived((keyboardStore.config?.encoders.length ?? 0) > 0)
+
+  function setDefaultLayer(next: number) {
+    void keyboardStore.setDefaultLayer(next).match(
+      () => toast.success(`Layer ${next} is now the default`),
+      e => toast.error(describeKeyboardError(e)),
+    )
+  }
 
   function switchLayer(next: number) {
     onlayer(next)
@@ -92,11 +106,22 @@
 
 <div class='flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] p-[14px] pb-4'>
   <div class='flex flex-none items-center'>
-    <div class='flex-1'></div>
+    <div class='flex flex-1 items-center'>
+      {#if variants.length > 1}
+        <Select
+          items={variants.map((v, i) => ({ value: String(i), label: v.name || `Variant ${i}` }))}
+          value={String(variantIdx)}
+          label='Layout variant'
+          onchange={v => (pickedVariant = Number(v))}
+        />
+      {/if}
+    </div>
     <LayerTabs
       count={caps?.num_layers ?? 1}
       {layer}
+      defaultLayer={keyboardStore.config?.defaultLayer}
       onselect={switchLayer}
+      onsetdefault={setDefaultLayer}
     />
     <div class='flex flex-1 justify-end gap-0.5'>
       <IconBtn
@@ -125,6 +150,7 @@
       {selected}
       onselect={(row, col) => { selected = { row, col } }}
       onassign={dropOn}
+      onencoder={hasEncoders ? id => (editingEncoder = id) : undefined}
     />
   {/if}
 
@@ -156,3 +182,11 @@
     </div>
   </div>
 </div>
+
+{#if editingEncoder !== null}
+  <EncoderOverlay
+    encoder={editingEncoder}
+    {layer}
+    onclose={() => (editingEncoder = null)}
+  />
+{/if}

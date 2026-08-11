@@ -151,6 +151,14 @@ export function actionCatalog(
           { length: (caps?.macro_space_size ?? 0) > 0 ? MACRO_SLOTS : 0 },
           (_, i) => act(`Macro ${i}`, { TriggerMacro: i }),
         ),
+        // Morse is the one KeyAction that is not `Single`-wrapped: the slot
+        // reference is the whole action.
+        ...Array.from({ length: caps?.max_morse ?? 0 }, (_, i): CatalogEntry => ({
+          id: `Morse ${i}`,
+          label: `Morse ${i}`,
+          action: { Morse: i },
+          title: `Morse key ${i} — tap/hold patterns from the Morse screen`,
+        })),
       ],
     },
   ]

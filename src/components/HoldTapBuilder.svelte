@@ -6,15 +6,18 @@
   import { actionLabel, NO_MODIFIERS } from '../lib/keycode'
   import MiniKey from './MiniKey.svelte'
   import Segmented from './ui/Segmented.svelte'
+  import Select from './ui/Select.svelte'
 
   interface Props {
     /// Every plain key the firmware offers; the tap half is picked from these.
     taps: CatalogEntry[]
     layerCount: number
+    /// Morse slots on the firmware; their profiles carry per-key timing.
+    morseCount: number
     onpick: (action: KeyAction) => void
   }
 
-  const { taps, layerCount, onpick }: Props = $props()
+  const { taps, layerCount, morseCount, onpick }: Props = $props()
 
   const MODS = [
     { value: 'left_ctrl', label: 'Ctrl' },
@@ -56,11 +59,21 @@
   })
 
   /// The trailing index selects a morse profile; `0xFF` has no table entry, so
-  /// the firmware falls back to its default timings — what the picker wants.
+  /// the firmware falls back to its default timings.
   const DEFAULT_PROFILE = 0xFF
 
+  let profile = $state(DEFAULT_PROFILE)
+
+  const profiles = $derived([
+    { value: String(DEFAULT_PROFILE), label: 'default' },
+    ...Array.from({ length: morseCount }, (_, i) => ({
+      value: String(i),
+      label: `Morse ${i}`,
+    })),
+  ])
+
   function build(entry: CatalogEntry): KeyAction {
-    return { TapHold: [asAction(entry.action)!, hold, DEFAULT_PROFILE] }
+    return { TapHold: [asAction(entry.action)!, hold, profile] }
   }
 </script>
 
@@ -98,6 +111,19 @@
         value={holdMod}
         height={28}
         onchange={v => (holdMod = v)}
+      />
+    {/if}
+    {#if morseCount > 0}
+      <span class='
+        ml-2 text-xs font-bold tracking-wider text-muted-foreground uppercase
+      '>
+        Timing
+      </span>
+      <Select
+        items={profiles}
+        value={String(profile)}
+        label='Timing profile'
+        onchange={v => (profile = Number(v))}
       />
     {/if}
     <div class='relative ml-auto w-50'>

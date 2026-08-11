@@ -1,9 +1,11 @@
 <script lang='ts'>
+  import type { KeyboardConfig } from '../stores'
   import Icon from '@iconify/svelte'
   import { isTauri } from '@tauri-apps/api/core'
   import logo from '../assets/img/logo.svg'
   import Button from '../components/ui/Button.svelte'
   import Card from '../components/ui/Card.svelte'
+  import ConfirmOverlay from '../components/ui/ConfirmOverlay.svelte'
   import Pill from '../components/ui/Pill.svelte'
   import Row from '../components/ui/Row.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
@@ -11,7 +13,11 @@
   import Unsupported from '../components/ui/Unsupported.svelte'
   import { theme } from '../lib/theme.svelte'
   import { toast } from '../lib/toast.svelte'
-  import { keyboardStore } from '../stores'
+  import { describeKeyboardError, keyboardStore } from '../stores'
+
+  let fileInput = $state<HTMLInputElement | null>(null)
+  /// Parsed and waiting for the user to confirm the overwrite.
+  let pending = $state<KeyboardConfig | null>(null)
 
   function exportConfig() {
     const device = keyboardStore.device
@@ -30,6 +36,44 @@
     a.click()
     URL.revokeObjectURL(url)
     toast.success(`Exported ${a.download}`)
+  }
+
+  /// Only the presence of the tables is checked here; the store validates
+  /// every dimension against the live capabilities before writing.
+  function isConfigShaped(v: unknown): v is KeyboardConfig {
+    if (typeof v !== 'object' || v === null) return false
+    const c = v as Record<string, unknown>
+    return Array.isArray(c.keymap) && Array.isArray(c.combos)
+      && Array.isArray(c.macros) && Array.isArray(c.morses)
+      && Array.isArray(c.forks) && Array.isArray(c.encoders)
+      && typeof c.defaultLayer === 'number'
+      && typeof c.behavior === 'object' && c.behavior !== null
+  }
+
+  async function readBackup(file: File) {
+    try {
+      const parsed: unknown = JSON.parse(await file.text())
+      const config = (parsed as { config?: unknown }).config ?? parsed
+      if (!isConfigShaped(config)) {
+        toast.error('Not a backup this app exported', 'The file is missing the configuration tables.')
+        return
+      }
+      pending = config
+    }
+    catch {
+      toast.error('Could not read the backup', 'The file is not valid JSON.')
+    }
+  }
+
+  function applyImport() {
+    const config = pending
+    pending = null
+    if (!config) return
+    toast.info('Restoring backup…')
+    void keyboardStore.importConfig(config).match(
+      () => toast.success('Backup restored'),
+      e => toast.error('Restore failed', describeKeyboardError(e)),
+    )
   }
 </script>
 
@@ -86,17 +130,36 @@
       <div>
         <div class='text-[13.5px] font-semibold text-foreground'>Backup keymap</div>
         <div class='text-xs text-muted-foreground'>
-          Export the keyboard's current configuration as a .json file.
+          Export the keyboard's configuration, or restore an exported backup.
         </div>
       </div>
-      <Button
-        class='ml-auto'
-        disabled={!keyboardStore.config}
-        onclick={exportConfig}
-      >
-        <Icon icon='lucide:save' width={15} height={15} />
-        Export
-      </Button>
+      <div class='ml-auto flex gap-2'>
+        <input
+          class='hidden'
+          type='file'
+          accept='.json,application/json'
+          bind:this={fileInput}
+          onchange={(e) => {
+            const file = e.currentTarget.files?.[0]
+            e.currentTarget.value = ''
+            if (file) void readBackup(file)
+          }}
+        />
+        <Button
+          disabled={!keyboardStore.config}
+          onclick={() => fileInput?.click()}
+        >
+          <Icon icon='lucide:folder-open' width={15} height={15} />
+          Import
+        </Button>
+        <Button
+          disabled={!keyboardStore.config}
+          onclick={exportConfig}
+        >
+          <Icon icon='lucide:save' width={15} height={15} />
+          Export
+        </Button>
+      </div>
     </Row>
   </Card>
 
@@ -119,3 +182,16 @@
     </div>
   </Card>
 </ScreenScroll>
+
+{#if pending}
+  <ConfirmOverlay
+    title='Restore this backup?'
+    confirmLabel='Overwrite keyboard'
+    onconfirm={applyImport}
+    onclose={() => (pending = null)}
+  >
+    Everything on the keyboard — keymap, combos, macros, morse keys, and
+    timing — is replaced with the backup's contents. A backup from a
+    different keyboard model is refused before anything is written.
+  </ConfirmOverlay>
+{/if}

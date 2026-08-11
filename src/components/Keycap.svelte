@@ -21,6 +21,8 @@
     /// Marks a key that overrides the layer beneath it.
     overridden?: boolean
     dragOver?: boolean
+    /// Physically held right now — the tester's live highlight.
+    pressed?: boolean
     onclick?: () => void
     ondropaction?: () => void
     ondragstate?: (over: boolean) => void
@@ -38,6 +40,7 @@
     selected = false,
     overridden = false,
     dragOver = false,
+    pressed = false,
     onclick,
     ondropaction,
     ondragstate,
@@ -84,9 +87,11 @@
           `,
           dragOver
             ? 'border-kc-amber-border bg-kc-amber-top'
+            : pressed
+            ? 'border-brand bg-brand-tint-strong text-brand-darker'
             : TINTS[legend.tint],
           selected && 'border-2 border-brand shadow-[0_0_0_3px_var(--kc-ring)]',
-          transparent && !selected && 'opacity-55',
+          transparent && !selected && !pressed && 'opacity-55',
         ]}
         style:border-radius='{radius}px'
         type='button'
