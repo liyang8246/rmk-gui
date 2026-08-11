@@ -100,6 +100,19 @@ describe('actionCatalog', () => {
     const groups = actionCatalog(CAPS, ['No', 'ErrorRollover', 'PostFail', 'ErrorUndefined'])
     expect(groups.find(g => g.name === 'Other')).toBeUndefined()
   })
+
+  it('offers the wireless keys as `User` actions on a BLE board', () => {
+    // Binding these is the only way to reach a dongle: the protocol refuses the
+    // dongle bond slot, so the keyboard's own key has to drive the pairing.
+    const wireless = actionCatalog({ ...CAPS, ble_enabled: true, num_ble_profiles: 3 }, HID)
+      .find(g => g.name === 'Wireless')!
+    expect(wireless.entries.find(e => e.label === 'Dongle')?.action).toEqual({ Single: { User: 8 } })
+    expect(wireless.entries.map(e => e.id)).toContain('User 0')
+  })
+
+  it('leaves the wireless group out without BLE', () => {
+    expect(actionCatalog(CAPS, HID).map(g => g.name)).not.toContain('Wireless')
+  })
 })
 
 describe('asAction', () => {

@@ -75,6 +75,12 @@ const OPEN_FAILED_RE = /\bbusy\b|in use|access denied|permission|exclusive acces
 
 export function explainKeyboardError(e: KeyboardError): KeyboardErrorHelp {
   return match(e)
+    // Not a rejection: the request was fine and the device may take it later —
+    // a flash write in flight, or a relay whose keyboard is out of range.
+    .with({ type: 'rynk', code: 'NotReady' }, () => ({
+      title: 'The keyboard isn’t ready',
+      hint: 'It may be busy or out of range — try again in a moment.',
+    }))
     .with({ type: 'rynk' }, x => ({
       title: 'The keyboard rejected the request',
       hint: `Error code: ${x.code}.`,

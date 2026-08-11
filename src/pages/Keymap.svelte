@@ -119,6 +119,7 @@
   {#if variant}
     <Board
       {variant}
+      {caps}
       layer={actions}
       layerIndex={layer}
       {selected}

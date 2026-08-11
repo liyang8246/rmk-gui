@@ -1,6 +1,7 @@
-import type { Action, KeyAction } from '../rynk'
+import type { Action, DeviceCapabilities, KeyAction } from '../rynk'
 import { match, P } from 'ts-pattern'
 import { actionLabel, hidLabel, hidLegend, humanize, modifierLabel } from './keycode'
+import { wirelessKey } from './wireless-keys'
 
 /// Which of the design's keycap tints a binding wears. `base` is a plain key.
 export type Tint = 'base' | 'mod' | 'layer' | 'macro' | 'wireless' | 'trns'
@@ -26,7 +27,10 @@ function layerLegend(op: string, layer: number): CapLegend {
 /// Only the families that carry a second line or a tint are named here; anything
 /// else — including a variant the firmware gains later — falls through to
 /// `actionLabel` as a plain, single-line cap, which is the right default.
-function actionLegend(action: Action): CapLegend {
+///
+/// `caps` only names `User` keys: what each id does depends on the device's
+/// `num_ble_profiles`, so without it they stay bare ids rather than guess.
+function actionLegend(action: Action, caps?: DeviceCapabilities): CapLegend {
   return match(action)
     .with({ LayerOn: P.select() }, l => layerLegend('MO', l))
     .with({ LayerOnWithModifier: P.select() }, ([l]) => layerLegend('MO', l))
@@ -62,20 +66,28 @@ function actionLegend(action: Action): CapLegend {
       main: humanize(c),
       tint: (TRANSPORT_CONTROL.test(c) ? 'wireless' : 'base') as Tint,
     }))
+    // Profile, output and dongle keys: the same blue as the other keys that
+    // change how the board reaches a host, named when `caps` says what they do.
+    // The picker carries the `hold 5s` note; on a 1u cap the name is all that fits.
+    .with({ User: P.select() }, id => ({
+      main: wirelessKey(id, caps)?.label ?? `User ${id}`,
+      tint: 'wireless' as const,
+    }))
     .otherwise(a => ({ main: humanize(actionLabel(a)), tint: 'base' as const }))
 }
 
-export function capLegend(action: KeyAction): CapLegend {
+export function capLegend(action: KeyAction, caps?: DeviceCapabilities): CapLegend {
+  const legend = (a: Action) => actionLegend(a, caps)
   return match(action)
     .with('No', () => ({ main: '✕', tint: 'trns' as const }))
     .with('Transparent', () => ({ main: '▽', tint: 'trns' as const }))
-    .with({ Single: P.select() }, actionLegend)
-    .with({ Tap: P.select() }, a => ({ ...actionLegend(a), tag: 'tap' }))
+    .with({ Single: P.select() }, legend)
+    .with({ Tap: P.select() }, a => ({ ...legend(a), tag: 'tap' }))
     // A hold-tap reads as its tap key, with the hold target underneath — the
     // shape the design gives LT(n, key) and MT(mod, key).
     .with({ TapHold: P.select() }, ([tap, hold]) => {
-      const held = actionLegend(hold)
-      return { main: actionLegend(tap).main, tag: held.tag ? `${held.main}${held.tag}` : held.main, tint: held.tint }
+      const held = legend(hold)
+      return { main: legend(tap).main, tag: held.tag ? `${held.main}${held.tag}` : held.main, tint: held.tint }
     })
     .with({ Morse: P.select() }, m => ({ main: 'Morse', tag: String(m), tint: 'macro' as const }))
     .exhaustive()

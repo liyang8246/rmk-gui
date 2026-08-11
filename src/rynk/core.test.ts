@@ -114,4 +114,21 @@ describe('probeVersion', () => {
     // toKeyboardError() keys off the name; anything else lands in `unknown`.
     await expect(probeVersion(fakeLink([]))).rejects.toMatchObject({ name: 'TransportError' })
   })
+
+  it('reports a dongle with no keyboard instead of waiting out the watchdog', async () => {
+    // What a dongle answers every frame it cannot relay. Payload bytes are
+    // rmk-types' frozen wire encoding of `Err(RynkError::NotReady)`: the
+    // `Result` tag 0x01, then the variant index 0x01.
+    const notReady = cobsEncode(new Uint8Array([0x01, 0x00, 1, 0x01, 0x01]))
+    // A 10ms window: a probe that fell through to the watchdog would time out
+    // rather than surface the reply the dongle already sent.
+    await expect(probeVersion(fakeLink([notReady]), 10)).rejects.toThrow('NotReady')
+  })
+
+  it('names an unrecognised handshake rejection rather than guessing at it', async () => {
+    const rejected = cobsEncode(new Uint8Array([0x01, 0x00, 1, 0x01, 0x07]))
+    await expect(probeVersion(fakeLink([rejected]), 10)).rejects.toThrow(
+      'device rejected the version handshake (error 7)',
+    )
+  })
 })

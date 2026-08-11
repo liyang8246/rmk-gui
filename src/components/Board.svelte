@@ -1,10 +1,12 @@
 <script lang='ts'>
-  import type { KeyAction, Variant } from '../rynk'
+  import type { DeviceCapabilities, KeyAction, Variant } from '../rynk'
   import { variantBounds } from '../lib/layout'
   import Keycap from './Keycap.svelte'
 
   interface Props {
     variant: Variant
+    /// Only for naming `User` keys, whose meaning shifts with `num_ble_profiles`.
+    caps?: DeviceCapabilities
     /// The active layer's actions, indexed `[row][col]`.
     layer: KeyAction[][]
     /// Layer 0 has nothing beneath it, so nothing on it is an override.
@@ -14,7 +16,7 @@
     onassign: (row: number, col: number) => void
   }
 
-  const { variant, layer, layerIndex, selected, onselect, onassign }: Props = $props()
+  const { variant, caps, layer, layerIndex, selected, onselect, onassign }: Props = $props()
 
   /// The design's key unit; the board is then scaled to whatever space it gets.
   const UNIT = 60
@@ -57,6 +59,7 @@
         {@const action = layer[key.row]?.[key.col] ?? 'Transparent'}
         <Keycap
           {action}
+          {caps}
           rect={key.rect}
           rect2={key.rect2}
           rotation={key.r}

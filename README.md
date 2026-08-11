@@ -22,6 +22,7 @@ and macOS 10.15+ (intel/apple).
 - Based on Rust and Tauri2 frameworks.
 - Concise and modern user interface, built with Svelte 5 and Tailwind CSS 4.
 - Talks the rynk protocol over raw USB (WebUSB in the browser), BLE, and WebHID.
+- Reaches a keyboard through an RMK BLE dongle, and binds the keys that pair the two.
 - Support for Windows, macOS, and Linux.
 
 ## Development
