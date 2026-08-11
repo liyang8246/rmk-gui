@@ -23,6 +23,7 @@ export default antfu(
     rules: {
       'antfu/if-newline': 'off',
       'style/brace-style': 'off',
+      'svelte/indent': ['error', { indent: 2, indentScript: false }],
     },
   },
 )

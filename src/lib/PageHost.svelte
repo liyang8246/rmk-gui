@@ -1,7 +1,7 @@
 <script lang='ts'>
-  import Icon from '@iconify/svelte'
-  import { Dialog } from 'bits-ui'
-  import { nav } from './nav.svelte'
+import Icon from '@iconify/svelte'
+import { Dialog } from 'bits-ui'
+import { nav } from './nav.svelte'
 </script>
 
 {#each nav.stack as page, i (i)}

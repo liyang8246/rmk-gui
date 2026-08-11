@@ -1,8 +1,8 @@
 <script lang='ts'>
-  import { nav } from '../lib/nav.svelte'
-  import Firmware from './Firmware.svelte'
-  import Layers from './Layers.svelte'
-  import Settings from './Settings.svelte'
+import { nav } from '../lib/nav.svelte'
+import Firmware from './Firmware.svelte'
+import Layers from './Layers.svelte'
+import Settings from './Settings.svelte'
 </script>
 
 <div class='space-y-4'>

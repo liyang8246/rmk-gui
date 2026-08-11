@@ -1,8 +1,8 @@
 <script lang='ts'>
-  import { nav } from '../lib/nav.svelte'
-  import Layers from './Layers.svelte'
-  import Macros from './Macros.svelte'
-  import Settings from './Settings.svelte'
+import { nav } from '../lib/nav.svelte'
+import Layers from './Layers.svelte'
+import Macros from './Macros.svelte'
+import Settings from './Settings.svelte'
 </script>
 
 <div class='space-y-4'>
