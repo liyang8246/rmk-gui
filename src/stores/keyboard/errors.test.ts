@@ -38,7 +38,12 @@ describe('toKeyboardError', () => {
 
 describe('describeKeyboardError', () => {
   it('names the rejection code', () => {
-    expect(describeKeyboardError({ type: 'rynk', code: 'Locked' })).toBe('device rejected Locked')
+    expect(describeKeyboardError({ type: 'rynk', code: 'Busy' })).toBe('device rejected Busy')
+  })
+
+  it('points a locked rejection at the unlock flow', () => {
+    expect(describeKeyboardError({ type: 'rynk', code: 'Locked' }))
+      .toBe('keyboard is locked — unlock it from the top bar')
   })
 
   it('describes the non-rynk variants', () => {

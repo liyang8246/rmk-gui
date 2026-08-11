@@ -51,6 +51,7 @@ export function toKeyboardError(e: unknown): KeyboardError {
 /// Short, user-facing reason — for the status bar and the connect button.
 export function describeKeyboardError(e: KeyboardError): string {
   return match(e)
+    .with({ type: 'rynk', code: 'Locked' }, () => 'keyboard is locked — unlock it from the top bar')
     .with({ type: 'rynk' }, x => `device rejected ${x.code}`)
     .with({ type: 'transport' }, () => 'link lost')
     .with({ type: 'invalid' }, x => x.cause)
