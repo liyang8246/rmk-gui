@@ -7,11 +7,8 @@
     "dev:tauri": "tauri dev",
     "build:web": "vite build",
     "build:tauri": "tauri build",
-    "build:icons": "node scripts/build-icons.ts",
     "build:wasm": "python3 scripts/build-rynk-wasm.py",
-    "qemu": "node qemu/run.mjs",
-    "test": "vitest run",
-    "test:qemu": "vitest run --config vitest.qemu.config.ts",
+    "qemu": "uv run qemu/run.py",
     "lint": "run-s lint:ts lint:rs",
     "lint:ts": "eslint .",
     "lint:rs": "cd src-tauri && cargo clippy --all-targets -- -D warnings",
@@ -29,7 +26,6 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.2.0",
-    "@iconify-json/lucide": "^1.2.119",
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/cli": "^2.11.4",
@@ -45,7 +41,6 @@
     "svelte-check": "^4.3.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.1.5",
-    "vitest": "^4.1.10"
+    "vite": "^8.1.5"
   }
 }

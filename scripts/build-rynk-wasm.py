@@ -29,5 +29,11 @@ print(f"building rynk-wasm from {repo}")
 subprocess.run(["wasm-pack", "build", "--target", "web", "--release", str(repo / "rynk" / "rynk-wasm")], check=True)
 shutil.rmtree(WASM_OUT, ignore_errors=True)
 shutil.copytree(repo / "rynk" / "rynk-wasm" / "pkg", WASM_OUT)
+# wasm-pack never cleans pkg/, so stray files there (e.g. an old builders.ts
+# dropped in by hand) would ride along into this repo on every build.
+keep = {"package.json", "README.md", ".gitignore"}
+for f in WASM_OUT.iterdir():
+    if f.name not in keep and not f.name.startswith("rynk_wasm"):
+        f.unlink()
 if temporary:
     shutil.rmtree(repo, ignore_errors=True)

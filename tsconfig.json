@@ -18,5 +18,5 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts", "src/**/*.svelte", "src/**/*.js"],
-  "exclude": ["node_modules", "dist", "src-tauri", "qemu"]
+  "exclude": ["node_modules", "dist", "src-tauri"]
 }

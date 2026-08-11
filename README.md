@@ -58,27 +58,17 @@ Make sure you have Rust, NodeJS and Python installed on your system.
    pnpm build:tauri  # runs build:web itself
    ```
 
-### Testing
+No keyboard at hand? `pnpm qemu` runs a riscv fixture firmware in QEMU and
+serves its rynk protocol over TCP port 7965, so the app has a virtual keyboard
+to connect to. It needs `qemu-system-riscv32` and the
+`riscv32imac-unknown-none-elf` rust target.
+
+### Checking
 
 ```bash
-pnpm test        # unit tests — no device and no wasm build needed
-pnpm test:qemu   # end-to-end against the riscv fixture firmware
 pnpm check       # svelte-check
 CI=true pnpm lint
 ```
-
-`pnpm test:qemu` builds and runs `qemu/` itself, so there is nothing to start by
-hand. It needs `qemu-system-riscv32` (`brew install qemu`, or
-`apt install qemu-system-misc` on Debian/Ubuntu), the
-`riscv32imac-unknown-none-elf` target, and step 3 to have run. It picks a free
-TCP port per run; a manual `pnpm qemu` defaults to 7965 and takes
-`RMK_QEMU_PORT`. Don't point both at one port — the fixture's serial port serves
-one client at a time.
-
-The fixture firmware resolves `rmk` the same way step 3 does (`RMK_REPO`, then a
-sibling `../rmk`), so the firmware and the wasm client stay on one revision.
-With neither, cargo falls back to the `main` branch and the two can drift onto
-different protocol commits.
 
 `CI=true` matters for linting: the eslint config detects editors and relaxes
 some rules, so a bare `pnpm lint` is more permissive than CI.
