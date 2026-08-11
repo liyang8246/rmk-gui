@@ -48,6 +48,9 @@ export function toKeyboardError(e: unknown): KeyboardError {
 /// Short, user-facing reason — for the status bar and the connect button.
 export function describeKeyboardError(e: KeyboardError): string {
   return match(e)
+    // Not a rejection: the request was fine and the device may take it later —
+    // a flash write in flight, or a relay whose keyboard is out of range.
+    .with({ type: 'rynk', code: 'NotReady' }, () => 'keyboard not ready — try again in a moment')
     .with({ type: 'rynk' }, x => `device rejected ${x.code}`)
     .with({ type: 'transport' }, () => 'link lost')
     .with({ type: 'invalid' }, x => x.cause)

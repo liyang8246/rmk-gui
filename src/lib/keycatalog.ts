@@ -1,5 +1,6 @@
 import type { Action, DeviceCapabilities, HidKeyCode, KeyAction, KeyboardAction, LightAction, ModifierCombination } from '../rynk'
 import { hidLegend, humanize, NO_MODIFIERS } from './keycode'
+import { wirelessKeys } from './wireless-keys'
 
 export interface CatalogEntry {
   /// Keys the picker grid. Labels collide — `Backslash` and `NonusBackslash`
@@ -157,6 +158,23 @@ export function actionCatalog(
       ],
     },
   ]
+
+  // Profile switching, output routing and dongle pairing are all driven from
+  // the keyboard — the protocol either has no command for them or, for the
+  // dongle slot, refuses one — so binding these keys is the only way in.
+  const wireless = wirelessKeys(caps)
+  if (wireless.length > 0) {
+    groups.push({
+      name: 'Wireless',
+      entries: wireless.map(w => ({
+        id: `User ${w.id}`,
+        label: w.label,
+        sub: w.sub,
+        action: { Single: { User: w.id } },
+        title: w.title,
+      })),
+    })
+  }
 
   // Placeholder until the lighting editor lands: the actions bind, nothing in
   // the app configures the effects behind them yet.

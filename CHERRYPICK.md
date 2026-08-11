@@ -56,3 +56,33 @@ npx svelte-check --tsconfig ./tsconfig.json   # 0 errors, 0 warnings
 npx eslint .                                    # 0 errors
 npx vitest run                                  # 94 passed
 ```
+
+---
+
+# Cherry-pick log: PR #88 (dongle NotReady)
+
+从 `liyang8246/rmk-gui` PR #88（Support dongle NotReady response，commit `a6751c3`，
+base `main`）提取纯逻辑，丢弃全部 UI。当前分支 `next` 无 vitest 基础设施，
+故本次不搬测试。
+
+## 搬运明细
+
+| 文件 | 方式 | 内容 |
+|------|------|------|
+| `src/lib/wireless-keys.ts` | 新增 | 无线键位映射：`wirelessKeys`/`wirelessKey`/`dongleSlot` |
+| `src/lib/keycatalog.ts` | 修改 | BLE 板开启 `Wireless` 组（无线 User 键） |
+| `src/rynk/core.ts` | 修改 | `probeVersion` 识别握手拒绝，`NotReady` 立即报错 |
+| `src/stores/keyboard/errors.ts` | 修改 | `describeKeyboardError` 对 `NotReady` 给出专用文案（`next` 用 `describeKeyboardError`，非 main 的 `explainKeyboardError`） |
+
+## 丢弃内容
+
+- 全部 UI 组件/页面：Board, Keycap, KeycodeSelect, Device, Keymap, Combos 改动
+- `src/lib/legend.ts`（含 `capLegend` 无线命名）、`src/lib/icons.json`、README
+- 全部测试文件（`next` 无 vitest）
+
+## 验证
+
+```bash
+npx svelte-check --tsconfig ./tsconfig.json   # 0 errors, 0 warnings
+npx eslint .                                    # 0 errors
+```
