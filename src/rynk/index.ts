@@ -1,7 +1,6 @@
 import type { TauriByteLink } from './tauri'
 import type { WebByteLink, WebHidLink } from './web'
 import { isTauri } from '@tauri-apps/api/core'
-import { rememberedDeviceName } from '../lib/device-names'
 import { closeAllSessions, connectBle, connectSerial, connectTcp, discoverBle, discoverSerial, discoverTcp } from './tauri'
 import { connectGrantedHid, connectGrantedSerial, grantedHidDevices, grantedSerialPorts, hidLabel, serialLabel } from './web'
 
@@ -31,15 +30,11 @@ export interface TransportInfo {
 export async function discover(): Promise<TransportInfo[]> {
   if (!isTauri()) {
     const [ports, devices] = await Promise.all([grantedSerialPorts(), grantedHidDevices()])
-    /// Web Serial withholds the product string, so the name comes from the
-    /// keyboard: what it reported over the protocol on a previous connection,
-    /// which is the same name the app shows once connected. Only until then
-    /// does the USB descriptor string of a granted HID sibling stand in — one
-    /// keyboard exposes both interfaces under the same ids.
+    /// Web Serial withholds the product string, so the name comes from a
+    /// granted HID sibling — one keyboard exposes both interfaces under the
+    /// same ids. Only until the keyboard reports its own name once connected.
     const nameOf = (vendorId?: number, productId?: number): string | undefined => {
       if (vendorId === undefined || productId === undefined) return undefined
-      const remembered = rememberedDeviceName(vendorId, productId)
-      if (remembered) return remembered
       return devices.find(d => d.vendorId === vendorId && d.productId === productId)?.productName
     }
     return [

@@ -1,6 +1,5 @@
 import type { TransportInfo } from '../rynk'
 import { isTauri } from '@tauri-apps/api/core'
-import { rememberDeviceName } from '../lib/device-names'
 import { canUseWebHid, canUseWebSerial, closeAllSessions, discover, requestHidDevice, requestSerialPort } from '../rynk'
 import { describeKeyboardError, keyboardStore } from './keyboard'
 
@@ -93,12 +92,6 @@ class DeviceStoreClass {
       }
       this.#connectedId = info.id
       this.#connectedKind = info.kind
-      // The keyboard is the only source of its own name in a browser, so learn
-      // it here — Web Serial will not report it on the next launch.
-      const identity = keyboardStore.device?.info
-      if (identity) {
-        rememberDeviceName(identity.vendor_id, identity.product_id, identity.product_name)
-      }
     }
     catch (e) {
       this.#error = describe(e)
