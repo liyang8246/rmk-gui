@@ -97,4 +97,12 @@ describe('explainKeyboardError', () => {
     const help = explainKeyboardError({ type: 'rynk', code: 'Locked' })
     expect(help.hint).toContain('Locked')
   })
+
+  it('reads NotReady as a device that is not ready, not a rejection', () => {
+    // The request was valid and may be taken later, so `rejected NotReady` would
+    // send the user looking for something wrong with what the app asked for.
+    const help = explainKeyboardError(toKeyboardError(named('Rejected', 'device rejected NotReady')))
+    expect(help.title).toBe('The keyboard isn’t ready')
+    expect(help.hint).not.toContain('NotReady')
+  })
 })

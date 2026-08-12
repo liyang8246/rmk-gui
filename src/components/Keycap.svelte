@@ -1,11 +1,13 @@
 <script lang='ts'>
   import type { Tint } from '../lib/legend'
-  import type { KeyAction, Rect } from '../rynk'
+  import type { DeviceCapabilities, KeyAction, Rect } from '../rynk'
   import { keyActionText } from '../lib/keycode'
   import { capFontSize, capLegend } from '../lib/legend'
 
   interface Props {
     action: KeyAction
+    /// Only for naming `User` keys, whose meaning shifts with `num_ble_profiles`.
+    caps?: DeviceCapabilities
     /// Key-unit geometry in the layout's own frame; `rect2` draws the second
     /// face of an ISO-style key, which rotates with the first.
     rect: Rect
@@ -26,6 +28,7 @@
 
   const {
     action,
+    caps,
     rect,
     rect2,
     rotation,
@@ -49,7 +52,7 @@
     trns: 'bg-kc-trns-top border-kc-border text-muted-foreground',
   }
 
-  const legend = $derived(capLegend(action))
+  const legend = $derived(capLegend(action, caps))
   const transparent = $derived(action === 'Transparent' || action === 'No')
   // The design's flat cap: gap scales with the unit, corners at a fifth of it.
   const pad = $derived(Math.max(2.5, unit * 0.05))

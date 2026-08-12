@@ -36,6 +36,7 @@
     Control: 'lucide:cpu',
     Mouse: 'lucide:mouse',
     Advanced: 'lucide:sparkles',
+    Wireless: 'lucide:bluetooth',
     Light: 'lucide:lightbulb',
     Other: 'lucide:layout-grid',
     [HOLD_TAP]: 'lucide:command',

@@ -91,7 +91,7 @@
     type='button'
     onclick={onclick}
   >
-    {capLegend(action).main}
+    {capLegend(action, caps).main}
   </button>
 {/snippet}
 

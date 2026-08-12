@@ -9,6 +9,7 @@
   import Unsupported from '../components/ui/Unsupported.svelte'
   import { activeOutput, batteryCells, firmwareVersion, formFactor, outputLabel } from '../lib/device'
   import { toast } from '../lib/toast.svelte'
+  import { dongleSlot } from '../lib/wireless-keys'
   import { describeKeyboardError, keyboardStore } from '../stores'
 
   const device = $derived(keyboardStore.device)
@@ -19,6 +20,10 @@
   const connected = $derived(keyboardStore.connection?.phase === 'connected')
   const profiles = $derived(caps?.ble_enabled ? (caps.num_ble_profiles ?? 0) : 0)
   const activeProfile = $derived(status?.bleStatus?.profile ?? -1)
+  /// Only shown once the keyboard reports standing on it: no capability says
+  /// whether the firmware carries the dongle slot at all, and every build
+  /// without it would otherwise gain a row that can never become active.
+  const onDongle = $derived(activeProfile === dongleSlot(caps))
 
   function bootloader() {
     void keyboardStore.bootloaderJump().match(
@@ -220,6 +225,26 @@
         </div>
       </Row>
     {/each}
+
+    {#if onDongle}
+      <Row class='border-t border-border'>
+        <span
+          class={`
+            inline-flex size-[30px] flex-none items-center justify-center
+            rounded-lg bg-kc-blue-top text-kc-blue-fg
+          `}
+        >
+          <Icon icon='lucide:radio' width={15} height={15} />
+        </span>
+        <span class='text-[13.5px] font-semibold text-foreground'>Dongle</span>
+        <Pill tone='ok'>{status?.bleStatus?.state.toLowerCase() ?? 'active'}</Pill>
+        <!-- The firmware bounds both profile commands on `num_ble_profiles`, so
+             it answers `Invalid` for this slot however the host asks. -->
+        <span class='ml-auto text-xs text-muted-foreground'>
+          Managed from the keyboard's dongle key
+        </span>
+      </Row>
+    {/if}
 
     {#if profiles > 0}
       <Row class='border-t border-border'>

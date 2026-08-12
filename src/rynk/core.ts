@@ -7,6 +7,15 @@ export interface JsByteLink {
 
 const GET_VERSION = 0x0001
 
+/// cmd (LE u16) + seq, ahead of every reply payload.
+const RYNK_HEADER_SIZE = 3
+/// postcard tags a `Result` with 0 for `Ok`; anything else is an `Err` followed
+/// by the `RynkError` variant index. Index 1 is `NotReady` — the enum's
+/// declaration order in rmk-types, frozen there by a wire snapshot, so a
+/// renumber is a protocol version bump.
+const RESULT_OK = 0
+const RYNK_ERROR_NOT_READY = 1
+
 /// A device can open the port and then never answer. Without a watchdog the
 /// probe parks forever and leaves the store stuck in `connecting`. This is
 /// idle time, not a cap on the whole probe: every answer rearms the clock, so
@@ -84,6 +93,14 @@ export async function withDeadline<T>(promise: Promise<T>, ms: number, message: 
   }
 }
 
+/// A rejected handshake, not a silent one: a keyboard's own `GetVersion` handler
+/// cannot fail, so this is a dongle answering for a keyboard it cannot reach.
+/// The bare name is what `toKeyboardError` turns back into a Rynk error code.
+function versionRejected(code: number | undefined): Error {
+  if (code === RYNK_ERROR_NOT_READY) return new Error('NotReady')
+  return new Error(`device rejected the version handshake (error ${code})`)
+}
+
 /// Frame: cmd=0x0001 LE, seq=1, empty payload; reply payload is [status, major, minor].
 export async function probeVersion(link: JsByteLink, timeoutMs = PROBE_TIMEOUT_MS) {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -121,8 +138,12 @@ export async function probeVersion(link: JsByteLink, timeoutMs = PROBE_TIMEOUT_M
       const frame = cobsDecode(rx.subarray(0, delim))
       rx = rx.subarray(delim + 1)
       // Topic pushes can interleave; keep reading until the GetVersion reply lands.
-      if (frame.length >= 6 && frame[0] === (GET_VERSION & 0xFF) && frame[1] === GET_VERSION >> 8)
-        return { major: frame[4]!, minor: frame[5]! }
+      if (frame.length > RYNK_HEADER_SIZE && frame[0] === (GET_VERSION & 0xFF) && frame[1] === GET_VERSION >> 8) {
+        // Waiting out the watchdog on a reply that already said no would report
+        // a silent device — the one thing this reply proves it is not.
+        if (frame[RYNK_HEADER_SIZE] !== RESULT_OK) throw versionRejected(frame[RYNK_HEADER_SIZE + 1])
+        if (frame.length >= 6) return { major: frame[4]!, minor: frame[5]! }
+      }
     }
   }
   finally {
