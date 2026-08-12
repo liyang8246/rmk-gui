@@ -119,8 +119,17 @@ async function fetchEncoders(client: RynkClient, caps: DeviceCapabilities): Prom
 
 async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise<Fork[]> {
   const forks: Fork[] = []
+  // max_forks is the table's build-time capacity; the live table can be
+  // shorter, and the firmware answers a past-the-end read with Invalid.
   for (let i = 0; i < caps.max_forks; i++) {
-    forks.push(await client.get_fork(i))
+    try {
+      forks.push(await client.get_fork(i))
+    }
+    catch (e) {
+      const err = toKeyboardError(e)
+      if (err.type === 'rynk' && err.code === 'Invalid') break
+      throw e
+    }
   }
   return forks
 }
@@ -186,7 +195,7 @@ function invalid(cause: string): ResultAsync<void, KeyboardError> {
 
 /// A backup from another keyboard must not be half-written into this one, so
 /// every table is checked against the live capabilities before the first write.
-function validateConfigShape(config: KeyboardConfig, caps: DeviceCapabilities): string | null {
+function validateConfigShape(config: KeyboardConfig, caps: DeviceCapabilities, current: KeyboardConfig): string | null {
   if (config.keymap.length !== caps.num_layers)
     return `keymap: ${config.keymap.length} layers, expected ${caps.num_layers}`
   for (const [l, rows] of config.keymap.entries()) {
@@ -197,12 +206,15 @@ function validateConfigShape(config: KeyboardConfig, caps: DeviceCapabilities): 
         return `keymap layer ${l} row ${r}: ${row.length} cols, expected ${caps.num_cols}`
     }
   }
-  if (config.combos.length !== caps.max_combos)
-    return `combos: ${config.combos.length} slots, expected ${caps.max_combos}`
-  if (config.morses.length !== caps.max_morse)
-    return `morses: ${config.morses.length} slots, expected ${caps.max_morse}`
-  if (config.forks.length !== caps.max_forks)
-    return `forks: ${config.forks.length} slots, expected ${caps.max_forks}`
+  // Combo/morse/fork tables are sized by the live table, not by the caps
+  // maxima: those report build-time capacity, and the firmware rejects a
+  // write past the actual length.
+  if (config.combos.length !== current.combos.length)
+    return `combos: ${config.combos.length} slots, expected ${current.combos.length}`
+  if (config.morses.length !== current.morses.length)
+    return `morses: ${config.morses.length} slots, expected ${current.morses.length}`
+  if (config.forks.length !== current.forks.length)
+    return `forks: ${config.forks.length} slots, expected ${current.forks.length}`
   if (config.encoders.length !== caps.num_encoders)
     return `encoders: ${config.encoders.length}, expected ${caps.num_encoders}`
   if (config.encoders.some(layers => layers.length !== caps.num_layers))
@@ -548,7 +560,7 @@ class KeyboardStoreClass {
   importConfig(config: KeyboardConfig): ResultAsync<void, KeyboardError> {
     const caps = this.#device?.capabilities
     if (!this.#config || !caps) return invalid('not connected')
-    const shape = validateConfigShape(config, caps)
+    const shape = validateConfigShape(config, caps, this.#config)
     if (shape) return invalid(shape)
 
     return runCommand(async (c) => {

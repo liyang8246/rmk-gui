@@ -133,7 +133,15 @@ class FakeClient {
   read_all_keymap() { return this.log('read_all_keymap', [...this.keymap]) }
   read_all_combos() { return this.log('read_all_combos', []) }
   read_all_morses() { return this.log('read_all_morses', this.morses.map(m => structuredClone(m))) }
-  get_fork(i: number) { return this.log(`get_fork:${i}`, structuredClone(this.forks[i]!)) }
+  get_fork(i: number) {
+    // Mirrors the firmware: the fork table answers past-the-end with Invalid.
+    if (i >= this.forks.length) {
+      this.calls.push(`get_fork:${i}`)
+      return Promise.reject(rejection('Rejected', 'device rejected Invalid'))
+    }
+    return this.log(`get_fork:${i}`, structuredClone(this.forks[i]!))
+  }
+
   get_encoder(e: number, l: number) { return this.log(`get_encoder:${e},${l}`, structuredClone(this.encoders[e]!)) }
   get_lock_status() {
     return this.log('get_lock_status', {
@@ -442,6 +450,18 @@ async function fullConnected(): Promise<FakeClient> {
 }
 
 describe('morse / fork / encoder / default layer', () => {
+  it('connects when the fork table is shorter than its capacity', async () => {
+    // max_forks reports build-time capacity; the firmware answers reads past
+    // the live table with Invalid, which ends the scan instead of the connect.
+    const client = new FakeClient()
+    client.caps = { ...FULL_CAPS, max_forks: 4 }
+    client.morses = [emptyMorse(), emptyMorse()]
+    client.forks = [emptyFork()]
+    client.encoders = [{ clockwise: 'No', counter_clockwise: 'No' }]
+    await connected(client)
+    expect(keyboardStore.config?.forks).toHaveLength(1)
+  })
+
   it('writes a morse slot optimistically', async () => {
     await fullConnected()
     const morse: Morse = { ...emptyMorse(), actions: [[0b10, 'No']] }

@@ -164,7 +164,7 @@
     </Button>
   {/snippet}
 
-  {#if (caps?.max_forks ?? 0) === 0}
+  {#if forks.length === 0}
     <Card>
       <p class='py-3 text-center text-[13px] text-muted-foreground'>
         This firmware was built without key overrides.

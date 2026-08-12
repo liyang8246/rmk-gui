@@ -84,6 +84,9 @@ const NOT_BINDABLE: readonly HidKeyCode[] = ['No', 'ErrorRollover', 'PostFail', 
 export function actionCatalog(
   caps: DeviceCapabilities | undefined,
   hid: readonly HidKeyCode[] = [],
+  /// Live morse-table length — `caps.max_morse` is only the build-time
+  /// capacity, and the firmware rejects references past the actual table.
+  morseSlots = 0,
 ): CatalogGroup[] {
   // Every group is a view over the firmware's table, so without it there is
   // nothing honest to offer — the picker waits the one tick it takes to arrive.
@@ -153,7 +156,7 @@ export function actionCatalog(
         ),
         // Morse is the one KeyAction that is not `Single`-wrapped: the slot
         // reference is the whole action.
-        ...Array.from({ length: caps?.max_morse ?? 0 }, (_, i): CatalogEntry => ({
+        ...Array.from({ length: morseSlots }, (_, i): CatalogEntry => ({
           id: `Morse ${i}`,
           label: `Morse ${i}`,
           action: { Morse: i },

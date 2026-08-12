@@ -8,6 +8,7 @@
   import { actionCatalog } from '../lib/keycatalog'
   import { capLegend } from '../lib/legend'
   import { BOARD_CODES } from '../lib/picker-layout'
+  import { keyboardStore } from '../stores'
   import HoldTapBuilder from './HoldTapBuilder.svelte'
   import KeyboardBasic from './KeyboardBasic.svelte'
   import MiniKey from './MiniKey.svelte'
@@ -49,8 +50,12 @@
   let group = $state('Basic')
   let query = $state('')
 
+  /// The live table length, not `caps.max_morse`: that is only capacity, and
+  /// the firmware rejects a `Morse n` past the actual table.
+  const morseSlots = $derived(keyboardStore.config?.morses.length ?? 0)
+
   const groups = $derived.by(() => {
-    const all = actionCatalog(caps, catalog.hid)
+    const all = actionCatalog(caps, catalog.hid, morseSlots)
     if (!hidOnly) return all
     return all
       .map(g => ({ ...g, entries: g.entries.filter(e => e.hid !== undefined) }))
@@ -170,7 +175,7 @@
         <HoldTapBuilder
           taps={basic}
           layerCount={caps?.num_layers ?? 1}
-          morseCount={caps?.max_morse ?? 0}
+          morseCount={morseSlots}
           {onpick}
         />
       {:else if group === 'Basic' && !query}

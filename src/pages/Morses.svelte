@@ -163,7 +163,7 @@
     </Button>
   {/snippet}
 
-  {#if (caps?.max_morse ?? 0) === 0}
+  {#if morses.length === 0}
     <Card>
       <p class='py-3 text-center text-[13px] text-muted-foreground'>
         This firmware was built without morse keys.
