@@ -181,30 +181,43 @@
               </button>
             {/each}
 
-            {#if deviceStore.scanning && list.length === 0}
-              <p
-                class={`
-                  flex flex-1 items-center justify-center gap-2.5 px-2 py-3
-                  text-center text-[13px] text-muted-foreground
-                `}
-              >
-                <span
-                  class={`
-                    inline-block size-[15px] flex-none animate-spin rounded-full
-                    border-2 border-muted border-t-brand
-                  `}
-                ></span>
-                Looking for {m.label} keyboards…
-              </p>
-            {:else if list.length === 0}
-              <p
-                class={`
-                  flex flex-1 items-center justify-center px-2 py-3 text-center
-                  text-[13px] text-muted-foreground
-                `}
-              >
-                <span>No {m.label} keyboards yet. {HINTS[m.value]}</span>
-              </p>
+            {#if list.length === 0}
+              <!-- Spinner and hint stack like the lists above, the idle one
+                   invisible: they trade places on every scan, and when the
+                   multi-line hint is what holds the card open, letting it
+                   unmount would bounce the whole column for the scan's
+                   duration. -->
+              <div class='grid flex-1'>
+                <p
+                  class={[
+                    `
+                      col-start-1 row-start-1 flex items-center justify-center
+                      gap-2.5 px-2 py-3 text-center text-[13px]
+                      text-muted-foreground
+                    `,
+                    !deviceStore.scanning && 'invisible',
+                  ]}
+                >
+                  <span
+                    class={`
+                      inline-block size-[15px] flex-none animate-spin
+                      rounded-full border-2 border-muted border-t-brand
+                    `}
+                  ></span>
+                  Looking for {m.label} keyboards…
+                </p>
+                <p
+                  class={[
+                    `
+                      col-start-1 row-start-1 flex items-center justify-center
+                      px-2 py-3 text-center text-[13px] text-muted-foreground
+                    `,
+                    deviceStore.scanning && 'invisible',
+                  ]}
+                >
+                  <span>No {m.label} keyboards yet. {HINTS[m.value]}</span>
+                </p>
+              </div>
             {/if}
           </div>
         {/each}
