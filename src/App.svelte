@@ -1,4 +1,5 @@
 <script lang='ts'>
+import { Toaster } from 'svelte-sonner'
 import Keyboard from './components/Keyboard.svelte'
 import StateBar from './components/StateBar.svelte'
 import ToolsBar from './components/ToolsBar.svelte'
@@ -26,3 +27,4 @@ $effect(() => {
 </div>
 
 <PageHost />
+<Toaster />

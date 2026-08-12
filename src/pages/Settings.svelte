@@ -1,8 +1,8 @@
 <script lang='ts'>
+import { toast } from 'svelte-sonner'
 import { nav } from '../lib/nav.svelte'
 import Layers from './Layers.svelte'
 import Macros from './Macros.svelte'
-import Wireless from './Wireless.svelte'
 </script>
 
 <div class='space-y-4'>
@@ -20,6 +20,6 @@ import Wireless from './Wireless.svelte'
     <button class='
       cursor-pointer rounded-lg bg-primary px-4 py-2 text-primary-content
       hover:bg-primary/80
-    ' onclick={() => nav.push({ title: 'Wireless', component: Wireless })}>Wireless</button>
+    ' onclick={() => toast.info('你好')}>Wireless</button>
   </div>
 </div>
