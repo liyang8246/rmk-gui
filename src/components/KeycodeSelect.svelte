@@ -1,6 +1,6 @@
 <script lang='ts'>
   import type { Snippet } from 'svelte'
-  import type { CatalogEntry } from '../lib/keycatalog'
+  import type { CatalogEntry, CatalogGroup } from '../lib/keycatalog'
   import type { DeviceCapabilities, KeyAction } from '../rynk'
   import Icon from '@iconify/svelte'
   import { RadioGroup } from 'bits-ui'
@@ -19,10 +19,10 @@
     /// Restricts the picker to plain HID keys, for callers like the macro
     /// editor whose wire format cannot hold anything richer.
     hidOnly?: boolean
-    /// Draws the key area on its own panel. The keymap editor needs it to lift
+    /// Draws the picker as its own panel. The keymap editor needs it to lift
     /// the keys off the ruled canvas; inside a dialog it would just box a box.
     panel?: boolean
-    /// Per-key controls the keymap editor hangs off the end of the rail.
+    /// Per-key controls the keymap editor hangs off the end of the header.
     rightSlot?: Snippet
   }
 
@@ -63,21 +63,34 @@
   })
   const tabs = $derived(hidOnly ? groups.map(g => g.name) : [...groups.map(g => g.name), HOLD_TAP])
   const basic = $derived(groups.find(g => g.name === 'Basic')?.entries ?? [])
-  const holdTap = $derived(group === HOLD_TAP && !query)
+
+  const needle = $derived(query.trim().toLowerCase())
+  /// Hold-Tap builds an action rather than listing one, so it keeps the header's
+  /// search box for its own tap keys and stays the current tab while typing.
+  const holdTap = $derived(group === HOLD_TAP)
+  const searching = $derived(needle !== '' && !holdTap)
 
   /// Basic's chip grid stands down while the board is drawn, but the entries the
   /// board has no place for still need somewhere to live.
   const offBoard = $derived(basic.filter(e => !e.hid || !BOARD_CODES.has(e.hid)))
 
-  const results = $derived.by<CatalogEntry[]>(() => {
-    const q = query.trim().toLowerCase()
-    if (q) {
-      return groups
-        .flatMap(g => g.entries)
-        .filter(e => e.label.toLowerCase().includes(q) || (e.title ?? '').toLowerCase().includes(q))
+  /// A search spans every group, so its hits stay grouped: a flat wall of chips
+  /// says nothing about whether a hit is a plain key, a layer op or a macro.
+  const shown = $derived.by<CatalogGroup[]>(() => {
+    if (!searching) {
+      const current = groups.find(g => g.name === group)
+      return current ? [current] : []
     }
-    return groups.find(g => g.name === group)?.entries ?? []
+    return groups
+      .map(g => ({ name: g.name, entries: g.entries.filter(e => matches(e, needle)) }))
+      .filter(g => g.entries.length > 0)
   })
+  const found = $derived(shown.reduce((n, g) => n + g.entries.length, 0))
+
+  function matches(entry: CatalogEntry, text: string): boolean {
+    return entry.label.toLowerCase().includes(text)
+      || (entry.title ?? '').toLowerCase().includes(text)
+  }
 
   function selectGroup(name: string) {
     group = name
@@ -89,27 +102,34 @@
   }
 </script>
 
-<div class='flex min-h-0 w-full flex-col overflow-hidden'>
+<!-- One surface: the categories sit inside the panel above a hairline, rather
+     than on a separate floating bar the keys hang off. -->
+<div
+  class={[
+    'flex min-h-0 w-full flex-col overflow-hidden',
+    panel && `rounded-[14px] border border-base-300 bg-base-100 shadow-bar`,
+  ]}
+>
   <div
-    class={`
-      relative z-10 flex flex-none items-center gap-1.5 rounded-[14px] border
-      border-base-300 bg-base-100 px-1.5 py-[5px] shadow-bar
-    `}
+    class={[
+      'flex flex-none items-center gap-2 border-b border-border',
+      panel ? 'px-3 py-2' : 'pb-2.5',
+    ]}
   >
-    <!-- While a search runs no group is current, so the bound value walks off
-         every radio rather than pinning the rail to a stale tab. -->
+    <!-- While a catalog search runs no group is current, so the bound value
+         walks off every radio rather than pinning a stale tab on. -->
     <RadioGroup.Root
       class='noscroll flex min-w-0 flex-1 gap-0.5 overflow-x-auto'
       orientation='horizontal'
-      bind:value={() => (query ? '' : group), selectGroup}
+      bind:value={() => (searching ? '' : group), selectGroup}
     >
       {#each tabs as name (name)}
-        {@const on = name === group && !query}
+        {@const on = name === group && !searching}
         <RadioGroup.Item
           class={[
             `
-              inline-flex h-[34px] flex-none cursor-pointer items-center gap-1.5
-              rounded-[10px] px-[13px] text-[13px] whitespace-nowrap
+              inline-flex h-8 flex-none cursor-pointer items-center gap-1.5
+              rounded-lg px-2.5 text-[12.5px] whitespace-nowrap
               transition-colors
             `,
             on
@@ -127,25 +147,40 @@
       {/each}
     </RadioGroup.Root>
 
-    {#if !holdTap}
-      <div class='relative flex-none basis-44'>
-        <Icon
-          class='absolute top-[9px] left-2.5 text-muted-foreground'
-          icon='lucide:search'
-          width={14}
-          height={14}
-        />
-        <input
+    <div class='relative flex-none basis-48'>
+      <Icon
+        class='absolute top-[9px] left-2.5 text-muted-foreground'
+        icon='lucide:search'
+        width={14}
+        height={14}
+      />
+      <input
+        class={`
+          h-8 w-full rounded-lg border border-input bg-background pr-7 pl-8
+          text-[12.5px] text-foreground transition-colors outline-none
+          focus:border-brand
+        `}
+        placeholder={holdTap ? 'Find tap key…' : 'Search keycodes…'}
+        aria-label={holdTap ? 'Search tap keys' : 'Search keycodes'}
+        bind:value={query}
+      />
+      {#if needle}
+        <button
           class={`
-            h-8 w-full rounded-md border border-input bg-background pr-2.5 pl-8
-            text-[13px] text-foreground outline-none
+            absolute top-1.5 right-1.5 inline-flex size-5 cursor-pointer
+            items-center justify-center rounded-md text-muted-foreground
+            transition-colors
+            hover:bg-base-200 hover:text-foreground
           `}
-          placeholder='Search…'
-          aria-label='Search keycodes'
-          bind:value={query}
-        />
-      </div>
-    {/if}
+          type='button'
+          aria-label='Clear search'
+          title='Clear search'
+          onclick={() => (query = '')}
+        >
+          <Icon icon='lucide:x' width={12} height={12} />
+        </button>
+      {/if}
+    </div>
 
     {#if rightSlot}
       <span class='h-[22px] w-px bg-border'></span>
@@ -153,58 +188,69 @@
     {/if}
   </div>
 
-  <!-- Hangs off the rail like an open menu: pulled up by the rail's corner
-       radius so its square top disappears behind it, leaving one surface. The
-       negative margin swallows 14px of the top padding, so `pt-8` leaves the
-       keys the same clearance under the rail that `pb-4` leaves below them. -->
   <div
     class={[
-      'flex min-h-0 flex-1 flex-col',
-      panel
-        ? `
-          mx-6 -mt-3.5 rounded-b-[14px] border border-t-0 border-base-300
-          bg-base-100 px-3 pt-7 pb-3 shadow-bar
-        `
-        : 'mt-2.5 px-2 pt-0.5 pb-1',
+      'noscroll min-h-0 flex-1 overflow-y-auto',
+      panel ? 'px-3 pt-2.5 pb-3' : 'pt-2.5',
     ]}
   >
-    <div class='noscroll min-h-0 flex-1 overflow-y-auto'>
-      {#if catalog.hid.length === 0}
-        <p class='p-2 text-[13px] text-muted-foreground'>Loading keycodes…</p>
-      {:else if holdTap}
-        <HoldTapBuilder
-          taps={basic}
-          layerCount={caps?.num_layers ?? 1}
-          morseCount={morseSlots}
-          {onpick}
-        />
-      {:else if group === 'Basic' && !query}
-        <KeyboardBasic
-          extras={offBoard}
-          onpick={pickHid}
-          onpickentry={entry => onpick(entry.action)}
-        />
-      {:else}
-        <div class='flex flex-wrap content-start gap-1'>
-          {#each results as entry (entry.id)}
-            <MiniKey
-              label={entry.label}
-              sub={entry.sub}
-              w={CHIP_UNITS}
-              tint={capLegend(entry.action).tint}
-              title={entry.title ?? entry.label}
-              action={entry.action}
-              onpick={() => onpick(entry.action)}
-            />
-          {/each}
-          {#if results.length === 0}
-            <span class='p-2 text-[13px] text-muted-foreground'>
-              No keycodes match “{query}”.
-            </span>
-          {/if}
-        </div>
-      {/if}
-    </div>
-
+    {#if catalog.hid.length === 0}
+      <p class='p-2 text-[13px] text-muted-foreground'>Loading keycodes…</p>
+    {:else if holdTap}
+      <HoldTapBuilder
+        taps={basic}
+        layerCount={caps?.num_layers ?? 1}
+        morseCount={morseSlots}
+        query={needle}
+        {onpick}
+      />
+    {:else if group === 'Basic' && !searching}
+      <KeyboardBasic
+        extras={offBoard}
+        onpick={pickHid}
+        onpickentry={entry => onpick(entry.action)}
+      />
+    {:else if found === 0}
+      <p class='p-2 text-[13px] text-muted-foreground'>
+        {searching ? `No keycodes match “${query.trim()}”.` : 'This group is empty.'}
+      </p>
+    {:else}
+      <div class='flex flex-col gap-3.5'>
+        {#each shown as section (section.name)}
+          <div class='flex flex-col gap-1.5'>
+            {#if searching}
+              <div class='flex items-center gap-1.5 text-muted-foreground'>
+                <Icon
+                  icon={GROUP_ICONS[section.name] ?? 'lucide:layout-grid'}
+                  width={12}
+                  height={12}
+                />
+                <span class='text-[10px] font-bold tracking-[0.06em] uppercase'>
+                  {section.name}
+                </span>
+                <span class='text-[10px] font-semibold opacity-70'>
+                  {section.entries.length}
+                </span>
+                <span class='h-px flex-1 bg-border'></span>
+              </div>
+            {/if}
+            <div class='flex flex-wrap content-start gap-1'>
+              {#each section.entries as entry (entry.id)}
+                <MiniKey
+                  label={entry.label}
+                  sub={entry.sub}
+                  w={CHIP_UNITS}
+                  tint={capLegend(entry.action).tint}
+                  title={entry.title ?? entry.label}
+                  action={entry.action}
+                  highlight={searching ? needle : undefined}
+                  onpick={() => onpick(entry.action)}
+                />
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
   </div>
 </div>

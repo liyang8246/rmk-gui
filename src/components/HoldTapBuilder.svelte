@@ -1,7 +1,6 @@
 <script lang='ts'>
   import type { CatalogEntry } from '../lib/keycatalog'
   import type { Action, KeyAction, ModifierCombination } from '../rynk'
-  import Icon from '@iconify/svelte'
   import { asAction } from '../lib/keycatalog'
   import { actionLabel, NO_MODIFIERS } from '../lib/keycode'
   import MiniKey from './MiniKey.svelte'
@@ -14,10 +13,13 @@
     layerCount: number
     /// Morse slots on the firmware; their profiles carry per-key timing.
     morseCount: number
+    /// Lowercased text from the picker's own search box, which filters the tap
+    /// keys while this tab is up rather than leaving the tab for the catalog.
+    query: string
     onpick: (action: KeyAction) => void
   }
 
-  const { taps, layerCount, morseCount, onpick }: Props = $props()
+  const { taps, layerCount, morseCount, query, onpick }: Props = $props()
 
   const MODS = [
     { value: 'left_ctrl', label: 'Ctrl' },
@@ -31,7 +33,6 @@
   let kind = $state<'LT' | 'MT'>('LT')
   let holdLayer = $state(1)
   let holdMod = $state<keyof ModifierCombination>('left_shift')
-  let query = $state('')
 
   const layers = $derived(
     Array.from({ length: Math.max(1, layerCount - 1) }, (_, i) => ({
@@ -51,10 +52,9 @@
   const candidates = $derived(taps.filter(entry => asAction(entry.action) !== null))
 
   const results = $derived.by(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return candidates.slice(0, LIMIT)
+    if (!query) return candidates.slice(0, LIMIT)
     return candidates
-      .filter(e => e.label.toLowerCase().includes(q) || (e.title ?? '').toLowerCase().includes(q))
+      .filter(e => e.label.toLowerCase().includes(query) || (e.title ?? '').toLowerCase().includes(query))
       .slice(0, LIMIT)
   })
 
@@ -126,22 +126,6 @@
         onchange={v => (profile = Number(v))}
       />
     {/if}
-    <div class='relative ml-auto w-50'>
-      <Icon
-        class='absolute top-[9px] left-2.5 text-muted-foreground'
-        icon='lucide:search'
-        width={14}
-        height={14}
-      />
-      <input
-        class={`
-          h-8 w-full rounded-md border border-input bg-background pr-2.5 pl-8
-          text-[12.5px] text-foreground outline-none
-        `}
-        placeholder='Find tap key…'
-        bind:value={query}
-      />
-    </div>
   </div>
 
   <div class='text-[11.5px] text-muted-foreground'>
@@ -157,6 +141,7 @@
           sub={entry.sub}
           w={1.25}
           title={entry.title ?? entry.label}
+          highlight={query || undefined}
           onpick={() => onpick(build(entry))}
         />
       {/each}
