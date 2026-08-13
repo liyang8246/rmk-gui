@@ -172,6 +172,28 @@ export async function connectClient(link: JsByteLink, wasm?: BufferSource, timeo
   return { client, major, minor }
 }
 
+/// Vial connects take the definition download with them, so the window is per
+/// whole handshake, not per exchange like the rynk probe's idle watchdog.
+const VIAL_CONNECT_TIMEOUT_MS = 15_000
+
+/// Vial path: no version probe — the transport already identified the protocol
+/// by the interface it found the device on. `connect_vial` handshakes and
+/// pulls the keyboard definition; a device that stops answering trips the
+/// deadline, and the caller's teardown closes the link, which unwinds the
+/// parked wasm task.
+export async function connectVial(link: JsByteLink, wasm?: BufferSource, timeoutMs = VIAL_CONNECT_TIMEOUT_MS) {
+  const core = await loadCore(0)
+  await core.default(wasm ? { module_or_path: wasm } : undefined)
+  const client = await withDeadline(core.connect_vial(link), timeoutMs, 'vial handshake timed out')
+  return { client }
+}
+
+/// The method surface the keyboard store drives — both wasm clients carry it
+/// with identical signatures, so the store stays protocol-blind.
+export type KeyboardClient
+  = | import('./wasm/rynk_wasm.js').RynkClient
+    | import('./wasm/rynk_wasm.js').VialClient
+
 /// The keycode tables the firmware understands, straight out of `rmk-types`.
 /// A host that keeps its own copy stops offering whatever the firmware gains
 /// next; a TS union cannot be iterated, so the wasm hands over the values.

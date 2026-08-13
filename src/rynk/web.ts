@@ -10,6 +10,13 @@ const RYNK_HID_USAGE = 0x61
 /// The firmware's collection is the only one on the report; report id 0.
 const RYNK_HID_REPORT_ID = 0
 
+/// The classic Via/Vial vendor usage — what a Vial keyboard (or an RMK build
+/// with the default `vial` feature) exposes. Same 32-byte report id 0 framing.
+const VIAL_HID_USAGE_PAGE = 0xFF60
+const VIAL_HID_USAGE = 0x61
+
+export type HidProtocol = 'rynk' | 'vial'
+
 /// The RMK vendor bulk interface — the class triple the firmware advertises
 /// (`RYNK_USB_INTERFACE_*` in rmk-types), matched instead of any VID/PID.
 const RYNK_USB_CLASS = 0xFF
@@ -233,7 +240,7 @@ export async function openUsb(device: USBDevice): Promise<ConnectedDevice> {
   }
   await device.claimInterface(iface.interfaceNumber)
   const label = usbLabel(device)
-  return { link: new WebUsbLink(device, iface, label), label }
+  return { link: new WebUsbLink(device, iface, label), label, protocol: 'rynk' }
 }
 
 /// Must run inside a click: the browser's own device picker needs the gesture.
@@ -256,16 +263,31 @@ export async function grantedUsbDevices(): Promise<USBDevice[]> {
   return devices.filter(d => vendorInterface(d) !== null)
 }
 
+/// Which protocol a granted HID device speaks, read off its collections.
+/// A device carrying both pages (a transitional firmware) counts as rynk.
+export function hidProtocol(device: HIDDevice): HidProtocol | null {
+  let vial = false
+  for (const c of device.collections) {
+    if (c.usagePage === RYNK_HID_USAGE_PAGE && c.usage === RYNK_HID_USAGE) return 'rynk'
+    if (c.usagePage === VIAL_HID_USAGE_PAGE && c.usage === VIAL_HID_USAGE) vial = true
+  }
+  return vial ? 'vial' : null
+}
+
 export async function openHid(device: HIDDevice): Promise<ConnectedDevice> {
   if (!device.opened) await device.open()
   const label = hidLabel(device)
-  return { link: new WebHidLink(device, label), label }
+  return { link: new WebHidLink(device, label), label, protocol: hidProtocol(device) ?? 'rynk' }
 }
 
 /// Must run inside a click: the browser's own device picker needs the gesture.
+/// Lists both rynk-HID and Vial keyboards; the grant's collections say which.
 export async function requestHidDevice(): Promise<HIDDevice> {
   const devices = await navigator.hid.requestDevice({
-    filters: [{ usagePage: RYNK_HID_USAGE_PAGE, usage: RYNK_HID_USAGE }],
+    filters: [
+      { usagePage: RYNK_HID_USAGE_PAGE, usage: RYNK_HID_USAGE },
+      { usagePage: VIAL_HID_USAGE_PAGE, usage: VIAL_HID_USAGE },
+    ],
   })
   const device = devices[0]
   if (!device) throw new Error('no keyboard chosen')
@@ -277,7 +299,5 @@ export async function requestHidDevice(): Promise<HIDDevice> {
 export async function grantedHidDevices(): Promise<HIDDevice[]> {
   if (!canUseWebHid()) return []
   const devices = await navigator.hid.getDevices().catch(() => [])
-  return devices.filter(d =>
-    d.collections.some(c => c.usagePage === RYNK_HID_USAGE_PAGE && c.usage === RYNK_HID_USAGE),
-  )
+  return devices.filter(d => hidProtocol(d) !== null)
 }

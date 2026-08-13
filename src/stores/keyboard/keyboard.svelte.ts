@@ -8,11 +8,11 @@ import type {
   EncoderAction,
   Fork,
   KeyAction,
+  KeyboardClient,
   LockStatus,
   MatrixState,
   Morse,
   PeripheralStatus,
-  RynkClient,
   StorageResetMode,
 } from '../../rynk'
 import type { KeyboardError } from './errors'
@@ -20,11 +20,11 @@ import type { ConnectionState, KeyboardConfig, KeyboardDevice, KeyboardStatus } 
 import { err, errAsync, ResultAsync } from 'neverthrow'
 import { match, P } from 'ts-pattern'
 import { toast } from '../../lib/toast.svelte'
-import { connectClient } from '../../rynk'
+import { connectClient, connectVial } from '../../rynk'
 import { explainKeyboardError, toKeyboardError } from './errors'
 
 const session = {
-  client: null as RynkClient | null,
+  client: null as KeyboardClient | null,
   connected: null as ConnectedDevice | null,
   chain: Promise.resolve() as Promise<void>,
   topicsReady: false,
@@ -61,7 +61,7 @@ function enqueue<T>(
 }
 
 /// Commands and reads that need no optimistic update or rollback.
-function runCommand<T>(call: (c: RynkClient) => Promise<T>): ResultAsync<T, KeyboardError> {
+function runCommand<T>(call: (c: KeyboardClient) => Promise<T>): ResultAsync<T, KeyboardError> {
   return enqueue(() => {
     const client = session.client
     // Checked inside the chain, not at enqueue time: the link can die while queued.
@@ -72,7 +72,7 @@ function runCommand<T>(call: (c: RynkClient) => Promise<T>): ResultAsync<T, Keyb
 
 interface Mutation<T> {
   push: () => T
-  call: (c: RynkClient) => Promise<void>
+  call: (c: KeyboardClient) => Promise<void>
   undo: (snapshot: T) => void
 }
 
@@ -86,7 +86,7 @@ function runMutation<T>(m: Mutation<T>): ResultAsync<void, KeyboardError> {
   })
 }
 
-async function fetchKeymap(client: RynkClient, caps: DeviceCapabilities): Promise<KeyAction[][][]> {
+async function fetchKeymap(client: KeyboardClient, caps: DeviceCapabilities): Promise<KeyAction[][][]> {
   const keymap: KeyAction[][][] = []
   // read_all_keymap pages the whole thing; a single get_keymap_bulk caps at
   // max_bulk_keys and silently drops the tail of a larger layer.
@@ -105,7 +105,7 @@ async function fetchKeymap(client: RynkClient, caps: DeviceCapabilities): Promis
   return keymap
 }
 
-async function fetchEncoders(client: RynkClient, caps: DeviceCapabilities): Promise<EncoderAction[][]> {
+async function fetchEncoders(client: KeyboardClient, caps: DeviceCapabilities): Promise<EncoderAction[][]> {
   const encoders: EncoderAction[][] = []
   for (let e = 0; e < caps.num_encoders; e++) {
     const layers: EncoderAction[] = []
@@ -117,7 +117,7 @@ async function fetchEncoders(client: RynkClient, caps: DeviceCapabilities): Prom
   return encoders
 }
 
-async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise<Fork[]> {
+async function fetchForks(client: KeyboardClient, caps: DeviceCapabilities): Promise<Fork[]> {
   const forks: Fork[] = []
   // max_forks is the table's build-time capacity; the live table can be
   // shorter, and the firmware answers a past-the-end read with Invalid.
@@ -134,7 +134,7 @@ async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise
   return forks
 }
 
-async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promise<number[]> {
+async function fetchMacros(client: KeyboardClient, caps: DeviceCapabilities): Promise<number[]> {
   // No upstream pager for macros: each chunk is exactly macro_chunk_size bytes,
   // zero-filled past the end, so walk the whole space by chunk.
   const out: number[] = []
@@ -146,7 +146,7 @@ async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promis
   return out.slice(0, caps.macro_space_size)
 }
 
-async function fetchConfig(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardConfig> {
+async function fetchConfig(client: KeyboardClient, caps: DeviceCapabilities): Promise<KeyboardConfig> {
   const behavior = await client.get_behavior()
   const defaultLayer = await client.get_default_layer()
   const keymap = await fetchKeymap(client, caps)
@@ -158,7 +158,7 @@ async function fetchConfig(client: RynkClient, caps: DeviceCapabilities): Promis
   return { behavior, combos, defaultLayer, encoders, forks, keymap, macros, morses }
 }
 
-async function fetchStatus(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardStatus> {
+async function fetchStatus(client: KeyboardClient, caps: DeviceCapabilities): Promise<KeyboardStatus> {
   const lockStatus = await client.get_lock_status()
   const batteryStatus = caps.ble_enabled ? await client.get_battery_status() : 'Unavailable'
   const bleStatus = caps.ble_enabled ? await client.get_ble_status() : null
@@ -237,7 +237,7 @@ class KeyboardStoreClass {
   get config() { return this.#config }
   get status() { return this.#status }
 
-  private async startTopicLoop(client: RynkClient): Promise<void> {
+  private async startTopicLoop(client: KeyboardClient): Promise<void> {
     try {
       while (session.client === client) {
         const event = await client.next_topic()
@@ -261,7 +261,7 @@ class KeyboardStoreClass {
 
   /// `fromTopicLoop` marks the caller as the topic loop itself, so teardown
   /// skips awaiting it — awaiting your own promise deadlocks.
-  private async handleDeath(client: RynkClient, cause: KeyboardError, fromTopicLoop: boolean): Promise<void> {
+  private async handleDeath(client: KeyboardClient, cause: KeyboardError, fromTopicLoop: boolean): Promise<void> {
     if (session.client !== client) return
     // The one death the connect screen cannot report: the session was up and
     // ended on its own, so the user lands back there with no attempt of their
@@ -297,7 +297,10 @@ class KeyboardStoreClass {
     try {
       this.#connection = { phase: 'connecting', label: connected.label }
 
-      const { client } = await connectClient(connected.link)
+      // The transport already identified the protocol; no probe races here.
+      const { client } = connected.protocol === 'vial'
+        ? await connectVial(connected.link)
+        : await connectClient(connected.link)
       session.client = client
       session.onDeath = (cause) => {
         void this.handleDeath(client, cause, false)
@@ -316,6 +319,7 @@ class KeyboardStoreClass {
         info,
         version,
         layout,
+        protocol: connected.protocol,
       }
       // Prefer the name the keyboard reports over the transport label: the
       // label is a descriptor string a transport may have fallen back past
@@ -597,7 +601,7 @@ class KeyboardStoreClass {
 
   private bleProfileCmd(
     slot: number,
-    call: (c: RynkClient, slot: number) => Promise<void>,
+    call: (c: KeyboardClient, slot: number) => Promise<void>,
   ): ResultAsync<void, KeyboardError> {
     const caps = this.#device?.capabilities
     if (!caps) return notConnected<void>()
@@ -632,7 +636,7 @@ class KeyboardStoreClass {
   /// before it can reply, so the ack may never land. The session is gone either
   /// way, so the teardown runs on both outcomes and is awaited before we settle:
   /// a caller that reconnects immediately must not race a half-closed link.
-  private endSession(call: (c: RynkClient) => Promise<void>): ResultAsync<void, KeyboardError> {
+  private endSession(call: (c: KeyboardClient) => Promise<void>): ResultAsync<void, KeyboardError> {
     const label = this.#connection?.label ?? ''
     // Never rejects: a close() fault must not mask the command's own outcome.
     const close = () => ResultAsync.fromSafePromise(

@@ -3,7 +3,8 @@ import type { KeyboardConfig } from './types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const connectClient = vi.hoisted(() => vi.fn())
-vi.mock('../../rynk', () => ({ connectClient }))
+const connectVial = vi.hoisted(() => vi.fn())
+vi.mock('../../rynk', () => ({ connectClient, connectVial }))
 
 const { keyboardStore } = await import('./keyboard.svelte')
 
@@ -281,19 +282,21 @@ class FakeClient {
   free() { this.freed = true }
 }
 
-function connect(client: FakeClient): ConnectedDevice {
+function connect(client: FakeClient, protocol: 'rynk' | 'vial' = 'rynk'): ConnectedDevice {
   const link = {
     label: 'fake',
     send: async () => {},
     recv: async () => new Uint8Array(0),
     close: async () => { client.die() },
   }
+  // Arm both routes; the protocol tag decides which one the store takes.
   connectClient.mockResolvedValue({ client: client as unknown as RynkClient, major: 1, minor: 0 })
-  return { link, label: 'fake' } as unknown as ConnectedDevice
+  connectVial.mockResolvedValue({ client: client as unknown as RynkClient })
+  return { link, label: 'fake', protocol } as unknown as ConnectedDevice
 }
 
-async function connected(client = new FakeClient()): Promise<FakeClient> {
-  const result = await keyboardStore.initStore(connect(client))
+async function connected(client = new FakeClient(), protocol: 'rynk' | 'vial' = 'rynk'): Promise<FakeClient> {
+  const result = await keyboardStore.initStore(connect(client, protocol))
   expect(result.isOk()).toBe(true)
   return client
 }
@@ -301,6 +304,7 @@ async function connected(client = new FakeClient()): Promise<FakeClient> {
 beforeEach(async () => {
   await keyboardStore.resetStore()
   connectClient.mockReset()
+  connectVial.mockReset()
 })
 
 describe('connect', () => {
@@ -700,5 +704,40 @@ describe('disconnect', () => {
     await connected()
     await keyboardStore.resetStore()
     expect(keyboardStore.connection).toBeNull()
+  })
+})
+
+describe('vial protocol', () => {
+  /// The wasm VialClient rejects what the wire cannot express; this fake only
+  /// mirrors those rejections — everything else is protocol-blind.
+  class FakeVialClient extends FakeClient {
+    override async set_default_layer(l: number) {
+      this.calls.push(`set_default_layer:${l}`)
+      if (l !== 0) throw rejection('Rejected', 'device rejected Unimplemented')
+    }
+  }
+
+  it('routes the connect through connectVial and tags the device', async () => {
+    await connected(new FakeVialClient(), 'vial')
+    expect(connectVial).toHaveBeenCalledOnce()
+    expect(connectClient).not.toHaveBeenCalled()
+    expect(keyboardStore.device?.protocol).toBe('vial')
+    expect(keyboardStore.config?.keymap).toEqual([[['No', 'No']]])
+  })
+
+  it('rolls back the default layer when the client rejects it', async () => {
+    await connected(new FakeVialClient(), 'vial')
+    const result = await keyboardStore.setDefaultLayer(0)
+    expect(result.isOk()).toBe(true)
+    // num_layers is 1, so exercise the rejection through the client directly:
+    // a multi-layer board would pass validation and hit the same rejection.
+    const client = new FakeVialClient()
+    client.caps = { ...CAPS, num_layers: 2, num_rows: 1, num_cols: 2 }
+    client.keymap = ['No', 'No', 'No', 'No']
+    await keyboardStore.resetStore()
+    await connected(client, 'vial')
+    const rejected = await keyboardStore.setDefaultLayer(1)
+    expect(rejected.isErr()).toBe(true)
+    expect(keyboardStore.config?.defaultLayer).toBe(0)
   })
 })

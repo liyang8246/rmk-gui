@@ -1625,6 +1625,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hidapi"
+version = "2.6.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c78dadfc12f865bc3fcac3897e64533b930737ceb9ef245c8277de98d0b010e9"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "libc",
+ "pkg-config",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "html5ever"
 version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3063,7 +3076,7 @@ dependencies = [
 [[package]]
 name = "rmk-config"
 version = "0.6.1"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=0fd8785d669d2139d0a0b75f2441a4d4b463b01a#0fd8785d669d2139d0a0b75f2441a4d4b463b01a"
 dependencies = [
  "config",
  "miniz_oxide 0.9.1",
@@ -3081,6 +3094,7 @@ dependencies = [
 name = "rmk-gui"
 version = "0.1.0"
 dependencies = [
+ "hidapi",
  "rynk",
  "rynk-ble",
  "rynk-usb",
@@ -3095,7 +3109,7 @@ dependencies = [
 [[package]]
 name = "rmk-types"
 version = "0.2.2"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=0fd8785d669d2139d0a0b75f2441a4d4b463b01a#0fd8785d669d2139d0a0b75f2441a4d4b463b01a"
 dependencies = [
  "bitfield-struct",
  "cobs",
@@ -3168,7 +3182,7 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 [[package]]
 name = "rynk"
 version = "0.1.0"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=0fd8785d669d2139d0a0b75f2441a4d4b463b01a#0fd8785d669d2139d0a0b75f2441a4d4b463b01a"
 dependencies = [
  "critical-section",
  "embassy-futures",
@@ -3186,7 +3200,7 @@ dependencies = [
 [[package]]
 name = "rynk-ble"
 version = "0.1.0"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=0fd8785d669d2139d0a0b75f2441a4d4b463b01a#0fd8785d669d2139d0a0b75f2441a4d4b463b01a"
 dependencies = [
  "async-stream",
  "bluest",
@@ -3199,7 +3213,7 @@ dependencies = [
 [[package]]
 name = "rynk-usb"
 version = "0.1.0"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=0fd8785d669d2139d0a0b75f2441a4d4b463b01a#0fd8785d669d2139d0a0b75f2441a4d4b463b01a"
 dependencies = [
  "embedded-io-adapters",
  "nusb",

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use tauri::Builder;
 use tokio::sync::Mutex;
-use transport::{Session, ble, tcp, usb};
+use transport::{Session, ble, hid, tcp, usb};
 
 fn main() {
     Builder::default()
@@ -15,6 +15,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             usb::rynk_discover_usb, ble::rynk_discover_ble, tcp::rynk_discover_tcp,
             usb::rynk_connect_usb, ble::rynk_connect_ble, tcp::rynk_connect_tcp,
+            hid::vial_discover_hid, hid::vial_connect_hid,
             transport::rynk_send, transport::rynk_recv, transport::rynk_close,
             transport::rynk_close_all,
         ])

@@ -52,7 +52,9 @@
     usb: 'Plug the keyboard in over USB.',
     ble: native
       ? 'Turn the keyboard on and bring it in range.'
-      : 'Pair the keyboard with this computer first — the browser can only reach a keyboard the system has already bonded.',
+      // The WebHID picker behind this tab is also the only browser route to a
+      // Vial keyboard, USB ones included — say so or nobody finds it.
+      : 'Pair the keyboard with this computer first — the browser can only reach a keyboard the system has already bonded. Vial keyboards, USB ones too, are picked from this tab.',
   }
   const available = $derived(deviceStore.browserTransports)
   const canPick = $derived(!native && available.includes(PICKS[method]))

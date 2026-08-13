@@ -16,6 +16,7 @@
   const device = $derived(keyboardStore.device)
   const status = $derived(keyboardStore.status)
   const caps = $derived(device?.capabilities)
+  const vial = $derived(device?.protocol === 'vial')
   const cells = $derived(batteryCells(status))
   const output = $derived(outputLabel(activeOutput(status)))
   const connected = $derived(keyboardStore.connection?.phase === 'connected')
@@ -88,6 +89,9 @@
             {formFactor(device)}{device?.info.manufacturer ? ` · ${device.info.manufacturer}` : ''}
           </div>
         </div>
+        {#if vial}
+          <Pill tone='blue'>Vial</Pill>
+        {/if}
         {#if connected}
           <Pill tone='ok' dot>Connected</Pill>
         {:else}
@@ -171,10 +175,18 @@
         <Icon icon='lucide:cpu' width={24} height={24} />
       </div>
       <div class='flex-1'>
-        <div class='text-[15px] font-semibold text-foreground'>RMK firmware</div>
+        <div class='text-[15px] font-semibold text-foreground'>
+          {vial ? 'Firmware' : 'RMK firmware'}
+        </div>
         <div class='text-xs text-muted-foreground'>
-          Installed {firmwareVersion(device)} · Rynk protocol
-          {device?.version.major}.{device?.version.minor}
+          <!-- Vial carries no firmware version on the wire, so only the
+               protocol generation is real. -->
+          {#if vial}
+            Vial protocol {device?.version.minor}
+          {:else}
+            Installed {firmwareVersion(device)} · Rynk protocol
+            {device?.version.major}.{device?.version.minor}
+          {/if}
         </div>
       </div>
       <!-- There is no firmware-transfer endpoint in the protocol. -->
@@ -193,15 +205,20 @@
       <Button class='ml-auto' onclick={bootloader}>Enter bootloader</Button>
     </div>
 
-    <div class='mt-3.5 flex items-center gap-3.5 border-t border-border pt-3.5'>
-      <div>
-        <div class='text-[13.5px] font-semibold text-foreground'>Restart keyboard</div>
-        <div class='text-xs text-muted-foreground'>
-          Reboot the firmware. This ends the session.
+    <!-- Vial has no reboot command; only DFU entry. -->
+    {#if !vial}
+      <div class='
+        mt-3.5 flex items-center gap-3.5 border-t border-border pt-3.5
+      '>
+        <div>
+          <div class='text-[13.5px] font-semibold text-foreground'>Restart keyboard</div>
+          <div class='text-xs text-muted-foreground'>
+            Reboot the firmware. This ends the session.
+          </div>
         </div>
+        <Button class='ml-auto' onclick={reboot}>Restart</Button>
       </div>
-      <Button class='ml-auto' onclick={reboot}>Restart</Button>
-    </div>
+    {/if}
 
     {#if caps?.storage_enabled}
       <div class='

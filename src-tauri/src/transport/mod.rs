@@ -1,4 +1,5 @@
 pub mod ble;
+pub mod hid;
 pub mod tcp;
 pub mod usb;
 

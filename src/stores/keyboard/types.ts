@@ -16,6 +16,7 @@ import type {
   MatrixState,
   Morse,
   PeripheralStatus,
+  Protocol,
   ProtocolVersion,
 } from '../../rynk'
 import type { KeyboardError } from './errors'
@@ -34,6 +35,9 @@ export interface KeyboardDevice {
   info: DeviceInfo
   version: ProtocolVersion
   layout: LayoutInfo
+  /// Which wire protocol the session speaks; drives the few UI affordances
+  /// Vial cannot express (default layer, reboot, live status).
+  protocol: Protocol
 }
 
 export interface KeyboardConfig {

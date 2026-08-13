@@ -25,9 +25,12 @@ tokio = { version = "1.53.1", features = [
 # peers. Neither is reimplemented here — discovery rules belong with the
 # protocol. Pinned by rev: the firmware fixture and the wasm client must speak
 # the same protocol commit, so all three rmk pins move together.
-rynk = { git = "https://github.com/rmk-rs/rmk.git", rev = "2ca24ad65bd15ee73073df84d47f4a3a17f91fbb" }
-rynk-usb = { git = "https://github.com/rmk-rs/rmk.git", rev = "2ca24ad65bd15ee73073df84d47f4a3a17f91fbb" }
-rynk-ble = { git = "https://github.com/rmk-rs/rmk.git", rev = "2ca24ad65bd15ee73073df84d47f4a3a17f91fbb" }
+rynk = { git = "https://github.com/rmk-rs/rmk.git", rev = "0fd8785d669d2139d0a0b75f2441a4d4b463b01a" }
+rynk-usb = { git = "https://github.com/rmk-rs/rmk.git", rev = "0fd8785d669d2139d0a0b75f2441a4d4b463b01a" }
+rynk-ble = { git = "https://github.com/rmk-rs/rmk.git", rev = "0fd8785d669d2139d0a0b75f2441a4d4b463b01a" }
+# Vial keyboards live on a raw-HID vendor page, which nusb cannot claim on
+# Windows — hidapi is the portable route to them (USB and OS-bonded BLE).
+hidapi = "2.6"
 uuid = { version = "1.24.0", features = [ "v4" ] }
 
 [lints.clippy]

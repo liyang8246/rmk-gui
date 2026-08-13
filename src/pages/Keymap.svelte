@@ -28,6 +28,8 @@
   const history = new History()
 
   const caps = $derived(keyboardStore.device?.capabilities)
+  /// Vial has no default-layer command, so the setter affordance goes away.
+  const vial = $derived(keyboardStore.device?.protocol === 'vial')
   const variants = $derived(renderVariants(keyboardStore.device?.layout, caps))
   const variantIdx = $derived(
     pickedVariant ?? keyboardStore.device?.layout.default_variant ?? 0,
@@ -121,7 +123,7 @@
       {layer}
       defaultLayer={keyboardStore.config?.defaultLayer}
       onselect={switchLayer}
-      onsetdefault={setDefaultLayer}
+      onsetdefault={vial ? undefined : setDefaultLayer}
     />
     <div class='flex flex-1 justify-end gap-0.5'>
       <IconBtn
