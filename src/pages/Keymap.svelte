@@ -154,11 +154,8 @@
     />
   {/if}
 
-  <!-- Wider than the design's 1000px: the firmware's catalog has eight groups
-       where the mock had five, and the category row would clip its last tab. The
-       height is fixed so switching tabs never reflows the board above it —
-       measured against Basic, the tallest tab, so it is snug rather than
-       arbitrary. Shorter tabs leave slack; taller content scrolls. -->
+  <!-- Fixed height, sized to Basic — the tallest tab — so switching tabs never
+       reflows the board above it. -->
   <div class='flex h-[380px] min-h-0 justify-center'>
     <div class='flex min-h-0 w-full max-w-[1200px]'>
       <KeycodeSelect {caps} panel onpick={assign}>

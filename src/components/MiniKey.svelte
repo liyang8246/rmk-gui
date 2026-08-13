@@ -16,8 +16,7 @@
     title?: string
     /// Set to make the key a drag source for the board.
     action?: KeyAction
-    /// Lowercased search text; the run of the label it matches is picked out, so
-    /// a hit found by title alone is visibly different from one on the legend.
+    /// Search text, already lowercased; the label run it matches is picked out.
     highlight?: string
     onpick: () => void
   }

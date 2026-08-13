@@ -65,8 +65,8 @@
   const basic = $derived(groups.find(g => g.name === 'Basic')?.entries ?? [])
 
   const needle = $derived(query.trim().toLowerCase())
-  /// Hold-Tap builds an action rather than listing one, so it keeps the header's
-  /// search box for its own tap keys and stays the current tab while typing.
+  /// Hold-Tap has no list to search: the box filters its tap keys instead, so
+  /// typing must not unpin the tab.
   const holdTap = $derived(group === HOLD_TAP)
   const searching = $derived(needle !== '' && !holdTap)
 
@@ -102,8 +102,6 @@
   }
 </script>
 
-<!-- One surface: the categories sit inside the panel above a hairline, rather
-     than on a separate floating bar the keys hang off. -->
 <div
   class={[
     'flex min-h-0 w-full flex-col overflow-hidden',
@@ -117,7 +115,7 @@
     ]}
   >
     <!-- While a catalog search runs no group is current, so the bound value
-         walks off every radio rather than pinning a stale tab on. -->
+         walks off every radio rather than pinning a stale tab. -->
     <RadioGroup.Root
       class='noscroll flex min-w-0 flex-1 gap-0.5 overflow-x-auto'
       orientation='horizontal'

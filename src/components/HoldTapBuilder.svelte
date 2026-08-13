@@ -13,8 +13,7 @@
     layerCount: number
     /// Morse slots on the firmware; their profiles carry per-key timing.
     morseCount: number
-    /// Lowercased text from the picker's own search box, which filters the tap
-    /// keys while this tab is up rather than leaving the tab for the catalog.
+    /// Lowercased text from the picker's own search box — this tab has none of its own.
     query: string
     onpick: (action: KeyAction) => void
   }
