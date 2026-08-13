@@ -1,6 +1,7 @@
 <script lang='ts'>
 import type { Variant } from '../rynk'
 import { keyboardStore } from '../stores'
+import KeyCap from './KeyCap.svelte'
 
 const KEY_UNIT = 64
 
@@ -64,20 +65,20 @@ const bounds = $derived.by(() => {
   return { minX, minY, w: (maxX - minX) * KEY_UNIT, h: (maxY - minY) * KEY_UNIT }
 })
 
-function keyStyle(key: Variant['keys'][number]): string {
+function keyGeo(key: Variant['keys'][number]) {
   const r = key.rect
   const b = bounds
-  const left = (r.x - r.w / 2 - b.minX) * KEY_UNIT
-  const top = (r.y - r.h / 2 - b.minY) * KEY_UNIT
-  return [
-    `width:${r.w * KEY_UNIT}px`,
-    `height:${r.h * KEY_UNIT}px`,
-    `left:${left}px`,
-    `top:${top}px`,
-    `transform:rotate(${key.r}deg)`,
-    'transform-origin:center',
-  ].join(';')
+  const unit = KEY_UNIT
+  return {
+    left: (r.x - r.w / 2 - b.minX) * unit,
+    top: (r.y - r.h / 2 - b.minY) * unit,
+    width: r.w * unit,
+    height: r.h * unit,
+    rotation: key.r,
+  }
 }
+
+const geos = $derived((variant?.keys ?? []).map(k => ({ key: k, geo: keyGeo(k) })))
 </script>
 
 <div
@@ -86,20 +87,19 @@ function keyStyle(key: Variant['keys'][number]): string {
   style={`width:${bounds.w}px;height:${bounds.h}px`}
   onpointerdown={() => { selected = null }}
 >
-  {#each variant?.keys ?? [] as key (keyId(key.row, key.col))}
+  {#each geos as { key, geo } (keyId(key.row, key.col))}
     <div
-      class='
-        absolute cursor-pointer rounded-lg
-        {selected === keyId(key.row, key.col)
-          ? `bg-primary`
-          : `bg-base-300`}'
-      role='button'
-      tabindex='0'
-      style={keyStyle(key)}
-      onpointerdown={(e) => {
-        e.stopPropagation()
-        selected = keyId(key.row, key.col)
-      }}
-    ></div>
+      class='absolute'
+      style={`left:${geo.left}px;top:${geo.top}px;width:${geo.width}px;height:${geo.height}px;transform:rotate(${geo.rotation}deg);transform-origin:center`}
+    >
+      <KeyCap
+        {key}
+        selected={selected === keyId(key.row, key.col)}
+        onpointerdown={(e) => {
+          e.stopPropagation()
+          selected = keyId(key.row, key.col)
+        }}
+      />
+    </div>
   {/each}
 </div>
