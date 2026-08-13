@@ -45,17 +45,19 @@
 
   <span class='h-[26px] w-px flex-none bg-base-300'></span>
 
+  <!-- Safe centering: when the window is too narrow the row aligns to its
+       start and scrolls, instead of clipping both ends unreachably. -->
   <nav class='
-    noscroll flex min-w-0 flex-1 justify-center gap-0.5 overflow-x-auto
+    noscroll flex min-w-0 flex-1 justify-center-safe gap-0.5 overflow-x-auto
   '>
     {#each SCREENS as screen (screen.id)}
       {@const on = screens.current === screen.id}
       <button
         class={[
           `
-            inline-flex h-[38px] flex-none cursor-pointer items-center gap-1.5
-            rounded-[10px] px-[13px] text-[12.5px] whitespace-nowrap
-            transition-colors
+            inline-flex h-[46px] flex-none cursor-pointer flex-col items-center
+            justify-center gap-[3px] rounded-[10px] px-2 text-[10.5px]
+            whitespace-nowrap transition-colors
           `,
           on
             ? 'bg-brand-tint-strong font-bold text-brand-darker'
@@ -68,7 +70,7 @@
         title={screen.label}
         onclick={() => screens.go(screen.id)}
       >
-        <Icon icon={screen.icon} width={15} height={15} />
+        <Icon icon={screen.icon} width={16} height={16} />
         {screen.label}
       </button>
     {/each}
