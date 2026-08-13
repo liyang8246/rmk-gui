@@ -64,12 +64,20 @@ impl Write for Uart {
     }
 }
 
-const COL: usize = 12;
+const COL: usize = 10;
 const ROW: usize = 4;
-const NUM_LAYER: usize = 2;
+const NUM_LAYER: usize = 4;
 const NUM_ENCODER: usize = 2;
 
 const DEFAULT_ENCODER_MAP: [[EncoderAction; NUM_ENCODER]; NUM_LAYER] = [
+    [
+        EncoderAction::new(k!(AudioVolUp), k!(AudioVolDown)),
+        EncoderAction::new(k!(PageUp), k!(PageDown)),
+    ],
+    [
+        EncoderAction::new(k!(KpPlus), k!(KpMinus)),
+        EncoderAction::new(k!(Home), k!(End)),
+    ],
     [
         EncoderAction::new(k!(AudioVolUp), k!(AudioVolDown)),
         EncoderAction::new(k!(PageUp), k!(PageDown)),
@@ -90,7 +98,7 @@ const LOCK_CONFIG: LockConfig = LockConfig {
 };
 #[cfg(feature = "locked")]
 const LOCK_CONFIG: LockConfig = LockConfig {
-    unlock_keys: &[(0, 0), (0, 11)],
+    unlock_keys: &[(0, 0), (0, 9)],
     insecure: false,
     write_requires_unlock: false,
 };
@@ -99,16 +107,28 @@ const LOCK_CONFIG: LockConfig = LockConfig {
 const fn get_default_keymap() -> [[[KeyAction; COL]; ROW]; NUM_LAYER] {
     [
         layer!([
-            [k!(Q), k!(W), k!(E), k!(R), k!(T), a!(No), a!(No), k!(Y), k!(U), k!(I), k!(O), k!(P)],
-            [k!(A), k!(S), k!(D), k!(F), k!(G), a!(No), a!(No), k!(H), k!(J), k!(K), k!(L), k!(Semicolon)],
-            [k!(Z), k!(X), k!(C), k!(V), k!(B), k!(LCtrl), k!(LAlt), k!(N), k!(M), k!(Comma), k!(Dot), k!(Slash)],
-            [k!(Escape), k!(Tab), k!(LGui), k!(LShift), k!(Backspace), a!(No), a!(No), k!(Space), mo!(1), k!(Minus), k!(Quote), k!(Enter)]
+            [k!(Q), k!(W), k!(E), k!(R), k!(T), k!(Y), k!(U), k!(I), k!(O), k!(P)],
+            [k!(A), k!(S), k!(D), k!(F), k!(G), k!(H), k!(J), k!(K), k!(L), k!(Semicolon)],
+            [k!(Z), k!(X), k!(C), k!(V), k!(B), k!(LCtrl), k!(N), k!(M), k!(Comma), k!(Dot)],
+            [k!(Escape), k!(Tab), k!(LGui), k!(LShift), k!(Backspace), k!(Space), mo!(1), k!(Minus), k!(Quote), k!(Enter)]
         ]),
         layer!([
-            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
-            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
-            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
-            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)]
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)]
+        ]),
+        layer!([
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)]
+        ]),
+        layer!([
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)],
+            [a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent), a!(Transparent)]
         ]),
     ]
 }
