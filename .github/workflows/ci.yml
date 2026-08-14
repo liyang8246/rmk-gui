@@ -34,9 +34,10 @@ jobs:
 
       - name: Install Linux deps
         if: startsWith(matrix.os, 'ubuntu')
+        # libudev-dev: hidapi's hidraw backend (the Vial transport) links libudev.
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libudev-dev
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:wasm

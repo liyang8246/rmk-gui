@@ -26,7 +26,9 @@ and macOS 10.15+ (intel/apple).
   feature — and vial-qmk boards — configure over raw HID (USB, or a Bluetooth
   link the OS has already bonded). Vial cannot express everything rynk can:
   key overrides, default layer, reboot, BLE profiles, and live status stay
-  rynk-only, and the UI hides them on a Vial session.
+  rynk-only, and the UI hides them on a Vial session. On Linux, raw-HID access
+  needs the same [udev rule Vial documents](https://get.vial.today/manual/linux-udev.html);
+  building from source additionally needs `libudev-dev`.
 - Reaches a keyboard through an RMK BLE dongle, and binds the keys that pair the two.
 - Support for Windows, macOS, and Linux.
 
