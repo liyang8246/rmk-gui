@@ -14,9 +14,15 @@
     selected: { row: number, col: number } | null
     onselect: (row: number, col: number) => void
     onassign: (row: number, col: number) => void
+    /// When set, encoders become clickable and open their editor.
+    onencoder?: (id: number) => void
+    /// Matrix cells to draw as physically held (the tester's live bitmap).
+    pressed?: ReadonlySet<string>
+    /// Cells to dot-mark — the tester's "seen pressed at least once".
+    marked?: ReadonlySet<string>
   }
 
-  const { variant, caps, layer, layerIndex, selected, onselect, onassign }: Props = $props()
+  const { variant, caps, layer, layerIndex, selected, onselect, onassign, onencoder, pressed, marked }: Props = $props()
 
   /// The design's key unit; the board is then scaled to whatever space it gets.
   const UNIT = 60
@@ -67,31 +73,40 @@
           {originY}
           unit={UNIT}
           selected={selected?.row === key.row && selected?.col === key.col}
-          overridden={layerIndex > 0 && action !== 'Transparent'}
+          overridden={(layerIndex > 0 && action !== 'Transparent')
+            || (marked?.has(cell(key.row, key.col)) ?? false)}
           dragOver={dragOver === cell(key.row, key.col)}
+          pressed={pressed?.has(cell(key.row, key.col)) ?? false}
           onclick={() => onselect(key.row, key.col)}
           ondropaction={() => onassign(key.row, key.col)}
           ondragstate={(over) => { dragOver = over ? cell(key.row, key.col) : null }}
         />
       {/each}
 
-      <!-- Encoders are part of the physical layout, so the board shows where
-           they sit; the design has no editor for their actions. -->
       {#each variant.encoders as encoder (encoder.id)}
-        <div
-          class={`
-            absolute flex items-center justify-center rounded-full border
-            border-dashed border-kc-border bg-kc-mod-top text-[10px]
-            font-semibold text-muted-foreground
-          `}
+        <button
+          class={[
+            `
+              absolute flex items-center justify-center rounded-full border
+              border-dashed border-kc-border bg-kc-mod-top text-[10px]
+              font-semibold text-muted-foreground
+            `,
+            onencoder && `
+              cursor-pointer
+              hover:border-brand hover:text-brand-darker
+            `,
+          ]}
           style:left='{(encoder.x - originX - 0.5) * UNIT + 4}px'
           style:top='{(encoder.y - originY - 0.5) * UNIT + 4}px'
           style:width='{UNIT - 8}px'
           style:height='{UNIT - 8}px'
-          title='Encoder {encoder.id}'
+          type='button'
+          disabled={!onencoder}
+          title={onencoder ? `Edit encoder ${encoder.id}` : `Encoder ${encoder.id}`}
+          onclick={() => onencoder?.(encoder.id)}
         >
           E{encoder.id}
-        </div>
+        </button>
       {/each}
     </div>
   </div>

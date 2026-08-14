@@ -9,6 +9,8 @@ import type {
   Fork,
   KeyAction,
   LockStatus,
+  MatrixState,
+  Morse,
   PeripheralStatus,
   RynkClient,
   StorageResetMode,
@@ -117,8 +119,17 @@ async function fetchEncoders(client: RynkClient, caps: DeviceCapabilities): Prom
 
 async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise<Fork[]> {
   const forks: Fork[] = []
+  // max_forks is the table's build-time capacity; the live table can be
+  // shorter, and the firmware answers a past-the-end read with Invalid.
   for (let i = 0; i < caps.max_forks; i++) {
-    forks.push(await client.get_fork(i))
+    try {
+      forks.push(await client.get_fork(i))
+    }
+    catch (e) {
+      const err = toKeyboardError(e)
+      if (err.type === 'rynk' && err.code === 'Invalid') break
+      throw e
+    }
   }
   return forks
 }
@@ -180,6 +191,39 @@ async function fetchStatus(client: RynkClient, caps: DeviceCapabilities): Promis
 
 function invalid(cause: string): ResultAsync<void, KeyboardError> {
   return errAsync<void, KeyboardError>({ type: 'invalid', cause })
+}
+
+/// A backup from another keyboard must not be half-written into this one, so
+/// every table is checked against the live capabilities before the first write.
+function validateConfigShape(config: KeyboardConfig, caps: DeviceCapabilities, current: KeyboardConfig): string | null {
+  if (config.keymap.length !== caps.num_layers)
+    return `keymap: ${config.keymap.length} layers, expected ${caps.num_layers}`
+  for (const [l, rows] of config.keymap.entries()) {
+    if (rows.length !== caps.num_rows)
+      return `keymap layer ${l}: ${rows.length} rows, expected ${caps.num_rows}`
+    for (const [r, row] of rows.entries()) {
+      if (row.length !== caps.num_cols)
+        return `keymap layer ${l} row ${r}: ${row.length} cols, expected ${caps.num_cols}`
+    }
+  }
+  // Combo/morse/fork tables are sized by the live table, not by the caps
+  // maxima: those report build-time capacity, and the firmware rejects a
+  // write past the actual length.
+  if (config.combos.length !== current.combos.length)
+    return `combos: ${config.combos.length} slots, expected ${current.combos.length}`
+  if (config.morses.length !== current.morses.length)
+    return `morses: ${config.morses.length} slots, expected ${current.morses.length}`
+  if (config.forks.length !== current.forks.length)
+    return `forks: ${config.forks.length} slots, expected ${current.forks.length}`
+  if (config.encoders.length !== caps.num_encoders)
+    return `encoders: ${config.encoders.length}, expected ${caps.num_encoders}`
+  if (config.encoders.some(layers => layers.length !== caps.num_layers))
+    return `encoders: every encoder needs ${caps.num_layers} layers`
+  if (config.macros.length !== caps.macro_space_size)
+    return `macros: ${config.macros.length} bytes, expected ${caps.macro_space_size}`
+  if (config.defaultLayer < 0 || config.defaultLayer >= caps.num_layers)
+    return `default layer ${config.defaultLayer} out of range`
+  return null
 }
 
 class KeyboardStoreClass {
@@ -373,6 +417,69 @@ class KeyboardStoreClass {
     })
   }
 
+  setMorse(index: number, morse: Morse): ResultAsync<void, KeyboardError> {
+    if (!this.#config) return invalid('not connected')
+    if (index < 0 || index >= this.#config.morses.length) return invalid(`morse ${index} out of range`)
+
+    return runMutation({
+      push: () => {
+        const snapshot = this.#config!.morses[index]!
+        this.#config!.morses[index] = morse
+        return snapshot
+      },
+      call: c => c.set_morse(index, morse),
+      undo: (snapshot) => { if (this.#config) this.#config.morses[index] = snapshot },
+    })
+  }
+
+  setFork(index: number, fork: Fork): ResultAsync<void, KeyboardError> {
+    if (!this.#config) return invalid('not connected')
+    if (index < 0 || index >= this.#config.forks.length) return invalid(`fork ${index} out of range`)
+
+    return runMutation({
+      push: () => {
+        const snapshot = this.#config!.forks[index]!
+        this.#config!.forks[index] = fork
+        return snapshot
+      },
+      call: c => c.set_fork(index, fork),
+      undo: (snapshot) => { if (this.#config) this.#config.forks[index] = snapshot },
+    })
+  }
+
+  setEncoder(encoder: number, layer: number, action: EncoderAction): ResultAsync<void, KeyboardError> {
+    if (!this.#config) return invalid('not connected')
+    const layers = this.#config.encoders[encoder]
+    if (!layers) return invalid(`encoder ${encoder} out of range`)
+    if (layer < 0 || layer >= layers.length) return invalid(`layer ${layer} out of range`)
+
+    return runMutation({
+      push: () => {
+        const snapshot = this.#config!.encoders[encoder]![layer]!
+        this.#config!.encoders[encoder]![layer] = action
+        return snapshot
+      },
+      call: c => c.set_encoder(encoder, layer, action),
+      undo: (snapshot) => { if (this.#config) this.#config.encoders[encoder]![layer] = snapshot },
+    })
+  }
+
+  setDefaultLayer(layer: number): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!this.#config || !caps) return invalid('not connected')
+    if (layer < 0 || layer >= caps.num_layers) return invalid(`layer ${layer} out of range`)
+
+    return runMutation({
+      push: () => {
+        const snapshot = this.#config!.defaultLayer
+        this.#config!.defaultLayer = layer
+        return snapshot
+      },
+      call: c => c.set_default_layer(layer),
+      undo: (snapshot) => { if (this.#config) this.#config.defaultLayer = snapshot },
+    })
+  }
+
   /// Replace the whole macro region. Macros are one packed byte run with no
   /// per-slot addressing, so editing any of them rewrites all of them; the
   /// chunked writes share a chain slot to keep that atomic from the UI's side.
@@ -434,6 +541,43 @@ class KeyboardStoreClass {
           this.#status.matrixState = await c.get_matrix_state()
       }
       return status
+    })
+  }
+
+  /// Matrix state has no topic: the tester polls this while visible. Gated on
+  /// the cached lock status so a locked device is never asked (it would reject).
+  refreshMatrixState(): ResultAsync<MatrixState | null, KeyboardError> {
+    return runCommand(async (c) => {
+      if (!this.#status || this.#status.lockStatus.locked) return null
+      const state = await c.get_matrix_state()
+      this.#status.matrixState = state
+      return state
+    })
+  }
+
+  /// Restore a backup: write every table the config carries, then re-read the
+  /// device's view in the same chain slot so the store never shows the draft.
+  importConfig(config: KeyboardConfig): ResultAsync<void, KeyboardError> {
+    const caps = this.#device?.capabilities
+    if (!this.#config || !caps) return invalid('not connected')
+    const shape = validateConfigShape(config, caps, this.#config)
+    if (shape) return invalid(shape)
+
+    return runCommand(async (c) => {
+      await c.set_behavior(config.behavior)
+      await c.set_default_layer(config.defaultLayer)
+      await c.write_all_keymap(config.keymap.flat().flat())
+      await c.write_all_combos(config.combos)
+      await c.write_all_morses(config.morses)
+      for (const [i, fork] of config.forks.entries()) await c.set_fork(i, fork)
+      for (const [e, layers] of config.encoders.entries()) {
+        for (const [l, action] of layers.entries()) await c.set_encoder(e, l, action)
+      }
+      const chunk = Math.max(1, caps.macro_chunk_size)
+      for (let offset = 0; offset < config.macros.length; offset += chunk) {
+        await c.set_macro(offset, { data: config.macros.slice(offset, offset + chunk) })
+      }
+      this.#config = await fetchConfig(c, caps)
     })
   }
 

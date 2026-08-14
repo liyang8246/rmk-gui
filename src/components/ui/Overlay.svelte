@@ -6,11 +6,13 @@
   interface Props {
     title: string
     subtitle?: string
+    /// Compact dialog for confirmations; the default fits the keycode picker.
+    slim?: boolean
     onclose: () => void
     children: Snippet
   }
 
-  const { title, subtitle, onclose, children }: Props = $props()
+  const { title, subtitle, slim = false, onclose, children }: Props = $props()
 </script>
 
 <!-- The parent mounts this only while open, so the dialog is always open and
@@ -25,11 +27,16 @@
       `}
     />
     <Dialog.Content
-      class={`
-        fixed top-1/2 left-1/2 z-90 flex h-[min(560px,86%)] w-[min(900px,92%)]
-        -translate-1/2 flex-col overflow-hidden rounded-lg border border-border
-        bg-background shadow-lg
-      `}
+      class={[
+        `
+          fixed top-1/2 left-1/2 z-90 flex -translate-1/2 flex-col
+          overflow-hidden rounded-lg border border-border bg-background
+          shadow-lg
+        `,
+        slim
+          ? 'max-h-[86%] w-[min(440px,92%)]'
+          : 'h-[min(560px,86%)] w-[min(900px,92%)]',
+      ]}
     >
       <div class='
         flex items-center gap-3 border-b border-border px-[18px] py-3.5

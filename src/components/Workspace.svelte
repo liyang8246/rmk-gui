@@ -3,9 +3,12 @@
   import Behavior from '../pages/Behavior.svelte'
   import Combos from '../pages/Combos.svelte'
   import Device from '../pages/Device.svelte'
+  import Forks from '../pages/Forks.svelte'
   import Keymap from '../pages/Keymap.svelte'
   import Macros from '../pages/Macros.svelte'
+  import Morses from '../pages/Morses.svelte'
   import Settings from '../pages/Settings.svelte'
+  import Tester from '../pages/Tester.svelte'
   import TopBar from './TopBar.svelte'
 
   /// Which layer the keymap editor is showing.
@@ -23,6 +26,12 @@
     <Macros />
   {:else if screens.current === 'combos'}
     <Combos />
+  {:else if screens.current === 'morse'}
+    <Morses />
+  {:else if screens.current === 'forks'}
+    <Forks />
+  {:else if screens.current === 'tester'}
+    <Tester />
   {:else if screens.current === 'device'}
     <Device />
   {:else if screens.current === 'behavior'}

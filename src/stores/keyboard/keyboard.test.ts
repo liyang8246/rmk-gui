@@ -1,4 +1,5 @@
-import type { ConnectedDevice, DeviceCapabilities, KeyAction, RynkClient, StorageResetMode, TopicEvent } from '../../rynk'
+import type { ConnectedDevice, DeviceCapabilities, EncoderAction, Fork, KeyAction, Morse, RynkClient, StorageResetMode, TopicEvent } from '../../rynk'
+import type { KeyboardConfig } from './types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const connectClient = vi.hoisted(() => vi.fn())
@@ -32,6 +33,50 @@ const CAPS: DeviceCapabilities = {
 
 const BLE_CAPS: DeviceCapabilities = { ...CAPS, ble_enabled: true, num_ble_profiles: 3 }
 
+/// Every optional table present, for the morse/fork/encoder mutations.
+const FULL_CAPS: DeviceCapabilities = { ...CAPS, max_morse: 2, max_forks: 1, num_encoders: 1 }
+
+function emptyMorse(): Morse {
+  return {
+    profile: {
+      unilateral_tap: undefined,
+      enable_flow_tap: undefined,
+      mode: undefined,
+      hold_timeout_ms: undefined,
+      gap_timeout_ms: undefined,
+      quick_tap_timeout_ms: undefined,
+    },
+    actions: [],
+  }
+}
+
+function emptyFork(): Fork {
+  const mods = () => ({
+    left_ctrl: false,
+    left_shift: false,
+    left_alt: false,
+    left_gui: false,
+    right_ctrl: false,
+    right_shift: false,
+    right_alt: false,
+    right_gui: false,
+  })
+  const state = () => ({
+    modifiers: mods(),
+    leds: { num_lock: false, caps_lock: false, scroll_lock: false, compose: false, kana: false },
+    mouse: { button1: false, button2: false, button3: false, button4: false, button5: false, button6: false, button7: false, button8: false },
+  })
+  return {
+    trigger: 'No',
+    negative_output: 'No',
+    positive_output: 'No',
+    match_any: state(),
+    match_none: state(),
+    kept_modifiers: mods(),
+    bindable: false,
+  }
+}
+
 function rejection(name: string, message: string): Error {
   const e = new Error(message)
   e.name = name
@@ -52,6 +97,12 @@ class FakeClient {
   calls: string[] = []
   /// Queued failure for the next set_key, so tests can force a rollback.
   failSetKey: Error | null = null
+  /// Same, for set_morse.
+  failSetMorse: Error | null = null
+  morses: Morse[] = []
+  forks: Fork[] = []
+  encoders: EncoderAction[] = []
+  defaultLayer = 0
   matrixReads = 0
   bleProfile = 0
   /// Queued failure for the next session-ending command (reboot et al).
@@ -78,10 +129,20 @@ class FakeClient {
   get_capabilities() { return this.log('get_capabilities', this.caps) }
   get_layout() { return this.log('get_layout', { default_variant: 0, variants: [] }) }
   get_behavior() { return this.log('get_behavior', {}) }
-  get_default_layer() { return this.log('get_default_layer', 0) }
+  get_default_layer() { return this.log('get_default_layer', this.defaultLayer) }
   read_all_keymap() { return this.log('read_all_keymap', [...this.keymap]) }
   read_all_combos() { return this.log('read_all_combos', []) }
-  read_all_morses() { return this.log('read_all_morses', []) }
+  read_all_morses() { return this.log('read_all_morses', this.morses.map(m => structuredClone(m))) }
+  get_fork(i: number) {
+    // Mirrors the firmware: the fork table answers past-the-end with Invalid.
+    if (i >= this.forks.length) {
+      this.calls.push(`get_fork:${i}`)
+      return Promise.reject(rejection('Rejected', 'device rejected Invalid'))
+    }
+    return this.log(`get_fork:${i}`, structuredClone(this.forks[i]!))
+  }
+
+  get_encoder(e: number, l: number) { return this.log(`get_encoder:${e},${l}`, structuredClone(this.encoders[e]!)) }
   get_lock_status() {
     return this.log('get_lock_status', {
       locked: this.locked,
@@ -130,6 +191,43 @@ class FakeClient {
     this.failSetKey = null
     if (fail) throw fail
     this.keymap[row * CAPS.num_cols + col] = action
+  }
+
+  async set_morse(i: number, config: Morse) {
+    this.calls.push(`set_morse:${i}`)
+    const fail = this.failSetMorse
+    this.failSetMorse = null
+    if (fail) throw fail
+    this.morses[i] = config
+  }
+
+  async set_fork(i: number, config: Fork) {
+    this.calls.push(`set_fork:${i}`)
+    this.forks[i] = config
+  }
+
+  async set_encoder(e: number, _l: number, action: EncoderAction) {
+    this.calls.push(`set_encoder:${e}`)
+    this.encoders[e] = action
+  }
+
+  async set_default_layer(l: number) {
+    this.calls.push(`set_default_layer:${l}`)
+    this.defaultLayer = l
+  }
+
+  async set_behavior() { this.calls.push('set_behavior') }
+
+  async write_all_keymap(actions: KeyAction[]) {
+    this.calls.push('write_all_keymap')
+    this.keymap = actions
+  }
+
+  async write_all_combos() { this.calls.push('write_all_combos') }
+
+  async write_all_morses(configs: Morse[]) {
+    this.calls.push('write_all_morses')
+    this.morses = configs
   }
 
   async lock() {
@@ -322,6 +420,121 @@ describe('lock gate', () => {
     const result = await keyboardStore.unlockPoll()
     expect(result._unsafeUnwrap().locked).toBe(false)
     expect(keyboardStore.status?.matrixState).toEqual({ pressed_bitmap: [0] })
+  })
+
+  it('skips the gated matrix poll while locked', async () => {
+    const client = new FakeClient()
+    client.locked = true
+    await connected(client)
+    const result = await keyboardStore.refreshMatrixState()
+    expect(result._unsafeUnwrap()).toBeNull()
+    expect(client.matrixReads).toBe(0)
+  })
+
+  it('caches the polled matrix state when unlocked', async () => {
+    const client = await connected()
+    const before = client.matrixReads
+    const result = await keyboardStore.refreshMatrixState()
+    expect(result._unsafeUnwrap()).toEqual({ pressed_bitmap: [0] })
+    expect(client.matrixReads).toBe(before + 1)
+  })
+})
+
+async function fullConnected(): Promise<FakeClient> {
+  const client = new FakeClient()
+  client.caps = FULL_CAPS
+  client.morses = [emptyMorse(), emptyMorse()]
+  client.forks = [emptyFork()]
+  client.encoders = [{ clockwise: 'No', counter_clockwise: 'No' }]
+  return await connected(client)
+}
+
+describe('morse / fork / encoder / default layer', () => {
+  it('connects when the fork table is shorter than its capacity', async () => {
+    // max_forks reports build-time capacity; the firmware answers reads past
+    // the live table with Invalid, which ends the scan instead of the connect.
+    const client = new FakeClient()
+    client.caps = { ...FULL_CAPS, max_forks: 4 }
+    client.morses = [emptyMorse(), emptyMorse()]
+    client.forks = [emptyFork()]
+    client.encoders = [{ clockwise: 'No', counter_clockwise: 'No' }]
+    await connected(client)
+    expect(keyboardStore.config?.forks).toHaveLength(1)
+  })
+
+  it('writes a morse slot optimistically', async () => {
+    await fullConnected()
+    const morse: Morse = { ...emptyMorse(), actions: [[0b10, 'No']] }
+    const result = await keyboardStore.setMorse(1, morse)
+    expect(result.isOk()).toBe(true)
+    expect(keyboardStore.config?.morses[1]).toEqual(morse)
+  })
+
+  it('rolls a rejected morse write back', async () => {
+    const client = await fullConnected()
+    client.failSetMorse = rejection('Rejected', 'device rejected Invalid')
+    const morse: Morse = { ...emptyMorse(), actions: [[0b10, 'No']] }
+    const result = await keyboardStore.setMorse(0, morse)
+    expect(result._unsafeUnwrapErr()).toEqual({ type: 'rynk', code: 'Invalid' })
+    expect(keyboardStore.config?.morses[0]).toEqual(emptyMorse())
+  })
+
+  it('rejects an out-of-range morse slot without touching the device', async () => {
+    const client = await fullConnected()
+    const before = client.calls.length
+    expect((await keyboardStore.setMorse(2, emptyMorse()))._unsafeUnwrapErr().type).toBe('invalid')
+    expect(client.calls).toHaveLength(before)
+  })
+
+  it('writes a fork slot', async () => {
+    await fullConnected()
+    const fork: Fork = { ...emptyFork(), trigger: 'Transparent' }
+    const result = await keyboardStore.setFork(0, fork)
+    expect(result.isOk()).toBe(true)
+    expect(keyboardStore.config?.forks[0]).toEqual(fork)
+  })
+
+  it('writes an encoder action for one layer', async () => {
+    const client = await fullConnected()
+    const action: EncoderAction = { clockwise: 'Transparent', counter_clockwise: 'No' }
+    const result = await keyboardStore.setEncoder(0, 0, action)
+    expect(result.isOk()).toBe(true)
+    expect(keyboardStore.config?.encoders[0]![0]).toEqual(action)
+    expect(client.calls).toContain('set_encoder:0')
+  })
+
+  it('sets the default layer and rejects one out of range', async () => {
+    const client = await fullConnected()
+    expect((await keyboardStore.setDefaultLayer(0)).isOk()).toBe(true)
+    expect(client.calls).toContain('set_default_layer:0')
+    expect((await keyboardStore.setDefaultLayer(9))._unsafeUnwrapErr().type).toBe('invalid')
+  })
+})
+
+describe('import', () => {
+  it('refuses a config from a different geometry before writing', async () => {
+    const client = await fullConnected()
+    const before = client.calls.length
+    const config = { ...keyboardStore.config!, keymap: [[['No']]] } as KeyboardConfig
+    const result = await keyboardStore.importConfig(config)
+    expect(result._unsafeUnwrapErr().type).toBe('invalid')
+    expect(client.calls).toHaveLength(before)
+  })
+
+  it('writes every table then refetches the device view', async () => {
+    const client = await fullConnected()
+    // Reads through the store's $state proxy; structuredClone can't.
+    const config = JSON.parse(JSON.stringify(keyboardStore.config)) as KeyboardConfig
+    config.keymap[0]![0]![1] = 'Transparent'
+    client.calls.length = 0
+
+    const result = await keyboardStore.importConfig(config)
+    expect(result.isOk()).toBe(true)
+    for (const call of ['set_behavior', 'set_default_layer:0', 'write_all_keymap', 'write_all_combos', 'write_all_morses', 'set_fork:0', 'set_encoder:0']) {
+      expect(client.calls).toContain(call)
+    }
+    // The store shows the device's own view, re-read after the writes.
+    expect(keyboardStore.config?.keymap[0]![0]![1]).toBe('Transparent')
   })
 })
 

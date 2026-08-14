@@ -46,10 +46,18 @@ describe('actionCatalog', () => {
     const bare = actionCatalog({ ...CAPS, max_morse: 0, macro_space_size: 0, lighting_enabled: false }, HID)
     expect(bare.map(g => g.name)).not.toContain('Light')
     const advanced = bare.find(g => g.name === 'Advanced')!.entries.map(e => e.id)
-    expect(advanced.some(id => id.startsWith('morse'))).toBe(false)
+    expect(advanced.some(id => id.startsWith('Morse'))).toBe(false)
     expect(advanced.some(id => id.startsWith('Macro'))).toBe(false)
     // The one-shots and special behaviours need no capability.
     expect(advanced).toContain('OSM LCtrl')
+  })
+
+  it('offers one Morse reference per live slot, not per capacity slot', () => {
+    // max_morse is 4, but the fixture's live table holds 2 — a Morse 2 would
+    // be rejected by the firmware, so it must not be offered.
+    const advanced = actionCatalog(CAPS, HID, 2).find(g => g.name === 'Advanced')!
+    const morses = advanced.entries.filter(e => e.id.startsWith('Morse'))
+    expect(morses.map(e => e.action)).toEqual([{ Morse: 0 }, { Morse: 1 }])
   })
 
   it('offers one layer action per layer', () => {

@@ -16,6 +16,8 @@
     title?: string
     /// Set to make the key a drag source for the board.
     action?: KeyAction
+    /// Search text, already lowercased; the label run it matches is picked out.
+    highlight?: string
     onpick: () => void
   }
 
@@ -27,8 +29,17 @@
     tint = 'base',
     title,
     action,
+    highlight,
     onpick,
   }: Props = $props()
+
+  const hit = $derived.by(() => {
+    if (!highlight) return null
+    const at = label.toLowerCase().indexOf(highlight)
+    if (at < 0) return null
+    const end = at + highlight.length
+    return { head: label.slice(0, at), mid: label.slice(at, end), tail: label.slice(end) }
+  })
 
   /// The picker is a control surface, not a board: only layer/macro and
   /// transport keys are tinted, so the colour still means something. Modifiers
@@ -71,7 +82,10 @@
   ondragend={() => drag.end()}
 >
   <span class={['text-center leading-[1.1] text-balance', SIZES[labelSize(label)]]}>
-    {label}
+    {#if hit}{hit.head}<span class='
+      text-brand-darker
+      dark:text-brand-fill
+    '>{hit.mid}</span>{hit.tail}{:else}{label}{/if}
   </span>
   {#if sub}
     <span class='text-[7px] leading-none opacity-55'>{sub}</span>

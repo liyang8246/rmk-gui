@@ -2,6 +2,7 @@
   import Icon from '@iconify/svelte'
   import Button from '../components/ui/Button.svelte'
   import Card from '../components/ui/Card.svelte'
+  import ConfirmOverlay from '../components/ui/ConfirmOverlay.svelte'
   import Pill from '../components/ui/Pill.svelte'
   import Row from '../components/ui/Row.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
@@ -25,10 +26,26 @@
   /// without it would otherwise gain a row that can never become active.
   const onDongle = $derived(activeProfile === dongleSlot(caps))
 
+  let confirming = $state<'reset' | null>(null)
+
   function bootloader() {
     void keyboardStore.bootloaderJump().match(
       // Not `success`: the jump ends the session, it does not complete a change.
       () => toast.info('Rebooting into bootloader…'),
+      e => toast.error(describeKeyboardError(e)),
+    )
+  }
+
+  function reboot() {
+    void keyboardStore.reboot().match(
+      () => toast.info('Rebooting…'),
+      e => toast.error(describeKeyboardError(e)),
+    )
+  }
+
+  function resetStorage() {
+    void keyboardStore.storageReset('Full').match(
+      () => toast.success('Storage reset — the keyboard is back to its built-in defaults'),
       e => toast.error(describeKeyboardError(e)),
     )
   }
@@ -175,6 +192,34 @@
       </div>
       <Button class='ml-auto' onclick={bootloader}>Enter bootloader</Button>
     </div>
+
+    <div class='mt-3.5 flex items-center gap-3.5 border-t border-border pt-3.5'>
+      <div>
+        <div class='text-[13.5px] font-semibold text-foreground'>Restart keyboard</div>
+        <div class='text-xs text-muted-foreground'>
+          Reboot the firmware. This ends the session.
+        </div>
+      </div>
+      <Button class='ml-auto' onclick={reboot}>Restart</Button>
+    </div>
+
+    {#if caps?.storage_enabled}
+      <div class='
+        mt-3.5 flex items-center gap-3.5 border-t border-border pt-3.5
+      '>
+        <div>
+          <div class='text-[13.5px] font-semibold text-foreground'>Reset stored settings</div>
+          <div class='text-xs text-muted-foreground'>
+            Wipe the keymap, macros, and every other stored setting — including
+            Bluetooth bonds.
+          </div>
+        </div>
+        <Button class='ml-auto' onclick={() => (confirming = 'reset')}>
+          <Icon icon='lucide:trash-2' width={14} height={14} />
+          Reset
+        </Button>
+      </div>
+    {/if}
   </Card>
 
   <Card flush>
@@ -256,3 +301,16 @@
     {/if}
   </Card>
 </ScreenScroll>
+
+{#if confirming === 'reset'}
+  <ConfirmOverlay
+    title='Reset stored settings?'
+    confirmLabel='Reset everything'
+    onconfirm={resetStorage}
+    onclose={() => (confirming = null)}
+  >
+    Every setting stored on the keyboard is wiped: keymap, combos, macros,
+    morse keys, and Bluetooth bonds. The keyboard falls back to the defaults
+    built into its firmware. This cannot be undone.
+  </ConfirmOverlay>
+{/if}
