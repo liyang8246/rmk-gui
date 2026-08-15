@@ -64,21 +64,6 @@ const bounds = $derived.by(() => {
   }
   return { minX, minY, w: (maxX - minX) * KEY_UNIT, h: (maxY - minY) * KEY_UNIT }
 })
-
-function keyGeo(key: Variant['keys'][number]) {
-  const r = key.rect
-  const b = bounds
-  const unit = KEY_UNIT
-  return {
-    left: (r.x - r.w / 2 - b.minX) * unit,
-    top: (r.y - r.h / 2 - b.minY) * unit,
-    width: r.w * unit,
-    height: r.h * unit,
-    rotation: key.r,
-  }
-}
-
-const geos = $derived((variant?.keys ?? []).map(k => ({ key: k, geo: keyGeo(k) })))
 </script>
 
 <div
@@ -87,10 +72,14 @@ const geos = $derived((variant?.keys ?? []).map(k => ({ key: k, geo: keyGeo(k) }
   style={`width:${bounds.w}px;height:${bounds.h}px`}
   onpointerdown={() => { selected = null }}
 >
-  {#each geos as { key, geo } (keyId(key.row, key.col))}
+  {#each variant?.keys ?? [] as key (keyId(key.row, key.col))}
     <div
       class='absolute'
-      style={`left:${geo.left}px;top:${geo.top}px;width:${geo.width}px;height:${geo.height}px;transform:rotate(${geo.rotation}deg);transform-origin:center`}
+      style={`
+        left:${(key.rect.x - bounds.minX) * KEY_UNIT}px;
+        top:${(key.rect.y - bounds.minY) * KEY_UNIT}px;
+        transform: rotate(${key.r}deg);
+      `}
     >
       <KeyCap
         {key}

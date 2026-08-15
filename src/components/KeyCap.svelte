@@ -1,45 +1,47 @@
 <script lang='ts'>
+import type { HTMLAttributes } from 'svelte/elements'
 import type { Key } from '../rynk'
 
-interface Props {
-  /// Firmware layout entry — row/col/rect/rect2 the content can draw on.
+interface Props extends HTMLAttributes<HTMLDivElement> {
   key: Key
   selected?: boolean
-  onpointerdown?: (e: PointerEvent) => void
 }
 
 const {
   key,
   selected = false,
-  onpointerdown,
+  ...rest
 }: Props = $props()
 
 const KEY_UNIT = 64
-
-const rect2Style = $derived(
-  key.rect2
-    ? [
-      `width:${key.rect2.w * KEY_UNIT}px`,
-      `height:${key.rect2.h * KEY_UNIT}px`,
-      `left:calc(50% + ${(key.rect2.x - key.rect.x) * KEY_UNIT}px)`,
-      `top:calc(50% + ${(key.rect2.y - key.rect.y) * KEY_UNIT}px)`,
-    ].join(';')
-    : '',
-)
+/// Per-side visual gap between the cap face and its outline.
+const CAP_GAP = 3
 </script>
 
-<div
-  class={[
-    'absolute inset-0 cursor-pointer rounded-lg',
-    selected ? 'bg-primary' : 'bg-base-300',
-  ].join(' ')}
-  role='button'
-  tabindex='0'
-  data-row={key.row}
-  data-col={key.col}
-  {onpointerdown}
->
+<div {...rest} class={['relative', rest.class]}>
+  <div
+    class={[
+      'pointer-events-auto absolute cursor-pointer rounded-md border shadow-sm',
+      selected ? 'border-primary bg-primary' : 'border-base-300 bg-base-200',
+    ]}
+    style:left={`${-key.rect.w * KEY_UNIT / 2 + CAP_GAP}px`}
+    style:top={`${-key.rect.h * KEY_UNIT / 2 + CAP_GAP}px`}
+    style:width={`${key.rect.w * KEY_UNIT - CAP_GAP * 2}px`}
+    style:height={`${key.rect.h * KEY_UNIT - CAP_GAP * 2}px`}
+  ></div>
   {#if key.rect2}
-    <div class='absolute rounded-lg' style={rect2Style}></div>
+    <div
+      class={[
+        `
+          pointer-events-auto absolute cursor-pointer rounded-md border
+          shadow-sm
+        `,
+        selected ? 'border-primary bg-primary' : 'border-base-300 bg-base-200',
+      ]}
+      style:left={`${(key.rect2.x - key.rect.x) * KEY_UNIT - (key.rect2.w * KEY_UNIT) / 2 + CAP_GAP}px`}
+      style:top={`${(key.rect2.y - key.rect.y) * KEY_UNIT - (key.rect2.h * KEY_UNIT) / 2 + CAP_GAP}px`}
+      style:width={`${key.rect2.w * KEY_UNIT - CAP_GAP * 2}px`}
+      style:height={`${key.rect2.h * KEY_UNIT - CAP_GAP * 2}px`}
+    ></div>
   {/if}
 </div>
