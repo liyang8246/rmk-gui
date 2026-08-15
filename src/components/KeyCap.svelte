@@ -14,34 +14,51 @@ const {
 }: Props = $props()
 
 const KEY_UNIT = 64
-/// Per-side visual gap between the cap face and its outline.
-const CAP_GAP = 3
+const KEY_GAP = 3
+const KEY_RING = 1
 </script>
 
 <div {...rest} class={['relative', rest.class]}>
-  <div
-    class={[
-      'pointer-events-auto absolute cursor-pointer rounded-md border shadow-sm',
-      selected ? 'border-primary bg-primary' : 'border-base-300 bg-base-200',
-    ]}
-    style:left={`${-key.rect.w * KEY_UNIT / 2 + CAP_GAP}px`}
-    style:top={`${-key.rect.h * KEY_UNIT / 2 + CAP_GAP}px`}
-    style:width={`${key.rect.w * KEY_UNIT - CAP_GAP * 2}px`}
-    style:height={`${key.rect.h * KEY_UNIT - CAP_GAP * 2}px`}
-  ></div>
+  <!-- key ring -->
   {#if key.rect2}
     <div
       class={[
-        `
-          pointer-events-auto absolute cursor-pointer rounded-md border
-          shadow-sm
-        `,
-        selected ? 'border-primary bg-primary' : 'border-base-300 bg-base-200',
+        `absolute rounded-md bg-base-200`,
       ]}
-      style:left={`${(key.rect2.x - key.rect.x) * KEY_UNIT - (key.rect2.w * KEY_UNIT) / 2 + CAP_GAP}px`}
-      style:top={`${(key.rect2.y - key.rect.y) * KEY_UNIT - (key.rect2.h * KEY_UNIT) / 2 + CAP_GAP}px`}
-      style:width={`${key.rect2.w * KEY_UNIT - CAP_GAP * 2}px`}
-      style:height={`${key.rect2.h * KEY_UNIT - CAP_GAP * 2}px`}
+      style:left={`${(key.rect2.x - key.rect.x) * KEY_UNIT - (key.rect2.w * KEY_UNIT) / 2 + KEY_GAP}px`}
+      style:top={`${(key.rect2.y - key.rect.y) * KEY_UNIT - (key.rect2.h * KEY_UNIT) / 2 + KEY_GAP}px`}
+      style:width={`${key.rect2.w * KEY_UNIT - KEY_GAP * 2}px`}
+      style:height={`${key.rect2.h * KEY_UNIT - KEY_GAP * 2}px`}
     ></div>
   {/if}
+  <div
+    class={[
+      `absolute rounded-md bg-base-200`,
+    ]}
+    style:left={`${-key.rect.w * KEY_UNIT / 2 + KEY_GAP}px`}
+    style:top={`${-key.rect.h * KEY_UNIT / 2 + KEY_GAP}px`}
+    style:width={`${key.rect.w * KEY_UNIT - KEY_GAP * 2}px`}
+    style:height={`${key.rect.h * KEY_UNIT - KEY_GAP * 2}px`}
+  ></div>
+  <!-- key base -->
+  {#if key.rect2}
+    <div
+      class='absolute cursor-pointer rounded-md bg-base-100'
+      style:left={`${(key.rect2.x - key.rect.x) * KEY_UNIT - (key.rect2.w * KEY_UNIT) / 2 + KEY_GAP}px`}
+      style:top={`${(key.rect2.y - key.rect.y) * KEY_UNIT - (key.rect2.h * KEY_UNIT) / 2 + KEY_GAP}px`}
+      style:width={`${key.rect2.w * KEY_UNIT - (KEY_GAP + KEY_RING) * 2}px`}
+      style:height={`${key.rect2.h * KEY_UNIT - (KEY_GAP + KEY_RING) * 2}px`}
+      style:margin={`${KEY_RING}px`}
+    ></div>
+  {/if}
+  <div
+    class={[
+      `absolute cursor-pointer rounded-md bg-base-100`,
+    ]}
+    style:left={`${-key.rect.w * KEY_UNIT / 2 + KEY_GAP}px`}
+    style:top={`${-key.rect.h * KEY_UNIT / 2 + KEY_GAP}px`}
+    style:width={`${key.rect.w * KEY_UNIT - (KEY_GAP + KEY_RING) * 2}px`}
+    style:height={`${key.rect.h * KEY_UNIT - (KEY_GAP + KEY_RING) * 2}px`}
+    style:margin={`${KEY_RING}px`}
+  ></div>
 </div>
