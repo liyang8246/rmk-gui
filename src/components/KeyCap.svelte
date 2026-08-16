@@ -22,10 +22,7 @@ const KEY_RING = 1
   <!-- key ring -->
   {#if key.rect2}
     <div
-      class='
-        absolute rounded-md bg-base-200 shadow-xs transition-all
-        group-hover:shadow-sm
-      '
+      class='absolute rounded-md bg-base-300 shadow-xs transition-all'
       style:left={`${(key.rect2.x - key.rect.x) * KEY_UNIT - (key.rect2.w * KEY_UNIT) / 2 + KEY_GAP}px`}
       style:top={`${(key.rect2.y - key.rect.y) * KEY_UNIT - (key.rect2.h * KEY_UNIT) / 2 + KEY_GAP}px`}
       style:width={`${key.rect2.w * KEY_UNIT - KEY_GAP * 2}px`}
@@ -33,10 +30,7 @@ const KEY_RING = 1
     ></div>
   {/if}
   <div
-    class='
-      absolute rounded-md bg-base-200 shadow-xs transition-all
-      group-hover:shadow-sm
-    '
+    class='absolute rounded-md bg-base-300 shadow-xs transition-all'
     style:left={`${-key.rect.w * KEY_UNIT / 2 + KEY_GAP}px`}
     style:top={`${-key.rect.h * KEY_UNIT / 2 + KEY_GAP}px`}
     style:width={`${key.rect.w * KEY_UNIT - KEY_GAP * 2}px`}
@@ -46,8 +40,9 @@ const KEY_RING = 1
   {#if key.rect2}
     <div
       class='
-        absolute cursor-pointer rounded-md bg-base-100 transition-all
-        group-hover:brightness-[0.98]
+        absolute cursor-pointer rounded-md bg-base-200 transition-all
+        group-hover:brightness-[0.97]
+        group-active:brightness-95
       '
       style:left={`${(key.rect2.x - key.rect.x) * KEY_UNIT - (key.rect2.w * KEY_UNIT) / 2 + KEY_GAP}px`}
       style:top={`${(key.rect2.y - key.rect.y) * KEY_UNIT - (key.rect2.h * KEY_UNIT) / 2 + KEY_GAP}px`}
@@ -58,8 +53,9 @@ const KEY_RING = 1
   {/if}
   <div
     class='
-      absolute cursor-pointer rounded-md bg-base-100 transition-all
-      group-hover:brightness-[0.98]
+      absolute cursor-pointer rounded-md bg-base-200 transition-all
+      group-hover:brightness-[0.97]
+      group-active:brightness-95
     '
     style:left={`${-key.rect.w * KEY_UNIT / 2 + KEY_GAP}px`}
     style:top={`${-key.rect.h * KEY_UNIT / 2 + KEY_GAP}px`}

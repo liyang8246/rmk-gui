@@ -1,10 +1,10 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-base-100: oklch(100% 0 0);
-  --color-base-200: #f2f2f2;
-  --color-base-300: #e5e6e6;
-  --color-base-content: #1f2937;
+  --color-base-100: #ffffff;
+  --color-base-200: #f8f8f8;
+  --color-base-300: #eeeeee;
+  --color-base-content: #18181b;
   --color-primary: oklch(49.12% 0.3096 275.75);
   --color-primary-content: oklch(98.71% 0.0106 342.55);
   --color-success: oklch(64.8% 0.15 160);
