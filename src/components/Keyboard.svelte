@@ -29,7 +29,6 @@ const bounds = $derived.by(() => {
   class='relative'
   role='presentation'
   style={`width:${bounds.w}px;height:${bounds.h}px`}
-  onpointerdown={() => { selected = null }}
 >
   {#each variant?.keys ?? [] as key (keyId(key.row, key.col))}
     <div
@@ -43,7 +42,7 @@ const bounds = $derived.by(() => {
       <KeyCap
         {key}
         selected={selected === keyId(key.row, key.col)}
-        onpointerdown={(e) => {
+        onclick={(e) => {
           e.stopPropagation()
           selected = keyId(key.row, key.col)
         }}
