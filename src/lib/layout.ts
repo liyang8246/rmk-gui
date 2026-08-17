@@ -1,5 +1,10 @@
 import type { DeviceCapabilities, Key, LayoutInfo, Rect, Variant } from '../rynk'
 
+/// Stable identity for a matrix key.
+export function keyId(row: number, col: number): string {
+  return `${row},${col}`
+}
+
 /// `Key.r` turns the whole key about `rect`'s centre — `rect2` rides along — and
 /// `pivot` is authoring metadata that carries no geometry. Corners come out in
 /// the layout's own frame.
