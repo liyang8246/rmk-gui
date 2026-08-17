@@ -2,17 +2,21 @@
   import type { Combo, KeyAction } from '../rynk'
   import Icon from '@iconify/svelte'
   import KeycodeSelect from '../components/KeycodeSelect.svelte'
+  import AddChip from '../components/ui/AddChip.svelte'
   import Button from '../components/ui/Button.svelte'
-  import Card from '../components/ui/Card.svelte'
-  import IconBtn from '../components/ui/IconBtn.svelte'
+  import EmptyCard from '../components/ui/EmptyCard.svelte'
+  import FieldRow from '../components/ui/FieldRow.svelte'
+  import KeyChip from '../components/ui/KeyChip.svelte'
   import Overlay from '../components/ui/Overlay.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
-  import Segmented from '../components/ui/Segmented.svelte'
   import Select from '../components/ui/Select.svelte'
+  import SlotCard from '../components/ui/SlotCard.svelte'
   import Unsupported from '../components/ui/Unsupported.svelte'
   import { capLegend } from '../lib/legend'
   import { toast } from '../lib/toast.svelte'
   import { describeKeyboardError, keyboardStore } from '../stores'
+
+  const EMPTY: Combo = { actions: [], output: 'No', layer: undefined }
 
   /// Which chip the picker overlay is currently filling.
   type Target
@@ -21,28 +25,46 @@
       | { slot: number, kind: 'add' }
 
   let picking = $state<Target | null>(null)
+  /// Slot drafted by "New combo": shown as a card so the combo is built in
+  /// place. Nothing is written until the first edit; deleting a still-blank
+  /// draft touches no storage.
+  let draft = $state<number | null>(null)
 
   const caps = $derived(keyboardStore.device?.capabilities)
   const combos = $derived(keyboardStore.config?.combos ?? [])
   /// A slot with no trigger keys is free; the firmware always reports the full
-  /// array, so "adding" means claiming the first empty one.
-  const used = $derived(combos.map((c, slot) => ({ combo: c, slot })).filter(e => e.combo.actions.length > 0))
+  /// array, so a draft claims the first empty one.
+  const visible = $derived(combos
+    .map((combo, slot) => ({ combo, slot }))
+    .filter(e => e.combo.actions.length > 0 || e.slot === draft))
+  const usedCount = $derived(combos.filter(c => c.actions.length > 0).length)
   const firstFree = $derived(combos.findIndex(c => c.actions.length === 0))
   const maxKeys = $derived(caps?.max_combo_keys ?? 0)
+
+  const pickTitle = $derived(picking?.kind === 'output' ? 'Output key' : 'Trigger key')
+  const pickSubtitle = $derived.by(() => {
+    if (!picking) return ''
+    if (picking.kind === 'output') return `Combo ${picking.slot} · the key the chord sends`
+    if (picking.kind === 'add') return `Combo ${picking.slot} · another key of the chord`
+    return `Combo ${picking.slot} · key ${picking.at + 1} of the chord`
+  })
 
   function save(slot: number, combo: Combo) {
     void keyboardStore.setCombo(slot, combo).mapErr(e => toast.error(describeKeyboardError(e)))
   }
 
   function add() {
-    if (firstFree < 0) return
-    save(firstFree, { actions: [], output: 'No', layer: undefined })
-    picking = { slot: firstFree, kind: 'add' }
+    if (firstFree >= 0) draft = firstFree
   }
 
   function remove(slot: number) {
-    save(slot, { actions: [], output: 'No', layer: undefined })
-    toast.success(`Cleared combo ${slot}`)
+    const combo = combos[slot]
+    if (draft === slot) draft = null
+    // A draft nothing was written to has nothing to clear on the keyboard.
+    if (!combo || JSON.stringify(combo) === JSON.stringify(EMPTY)) return
+    const had = combo.actions.length > 0
+    save(slot, { ...EMPTY })
+    if (had) toast.success(`Deleted combo ${slot}`)
   }
 
   function apply(action: KeyAction) {
@@ -77,147 +99,106 @@
   }
 </script>
 
-{#snippet chip(action: KeyAction, brand: boolean, onclick: () => void)}
-  <button
-    class={[
-      `
-        inline-flex h-[38px] min-w-10 cursor-pointer items-center justify-center
-        rounded-[7px] px-2 text-sm font-bold
-      `,
-      brand
-        ? 'border-2 border-brand bg-brand-tint text-brand-darker'
-        : 'border border-base-300 bg-base-100 text-foreground',
-    ]}
-    type='button'
-    onclick={onclick}
-  >
-    {capLegend(action, caps).main}
-  </button>
-{/snippet}
-
 <ScreenScroll
   title='Combos'
   desc='Press several keys at once to emit a different keycode.'
 >
   {#snippet actions()}
-    <Button
-      variant='brand'
-      disabled={firstFree < 0}
-      title={firstFree < 0 ? 'Every combo slot is in use' : 'Add a combo'}
-      onclick={add}
-    >
-      <Icon icon='lucide:plus' width={15} height={15} />
-      New combo
-    </Button>
+    {#if combos.length > 0}
+      <span class='self-center text-xs text-muted-foreground'>
+        {usedCount} / {combos.length} used
+      </span>
+      <Button
+        variant='brand'
+        disabled={firstFree < 0}
+        title={firstFree < 0 ? 'Every combo slot is in use' : 'Add a combo'}
+        onclick={add}
+      >
+        <Icon icon='lucide:plus' width={15} height={15} />
+        New combo
+      </Button>
+    {/if}
   {/snippet}
 
-  <div class='flex flex-col gap-3'>
-    {#each used as entry (entry.slot)}
-      {@const combo = entry.combo}
-      <Card class='flex flex-col gap-3.5'>
-        <div class='flex flex-wrap items-center gap-3'>
-          <!-- The protocol describes a combo by the actions its trigger keys
-               carry, never by matrix position. -->
-          <Segmented
-            items={[{ value: 'position', label: 'Position' }, { value: 'keys', label: 'Keys' }]}
-            value='keys'
-            disabled
-            onchange={() => {}}
-          />
-          <span class='text-xs text-muted-foreground'>
-            Pick the keys that trigger this combo
-          </span>
-          <span class='flex items-center gap-2 text-xs text-muted-foreground'>
-            on layer
-            <Select
-              items={[
-                { value: 'any', label: 'any' },
-                ...Array.from({ length: caps?.num_layers ?? 0 }, (_, l) => ({
-                  value: String(l),
-                  label: String(l),
-                })),
-              ]}
-              value={combo.layer === undefined ? 'any' : String(combo.layer)}
-              label='Combo layer'
-              onchange={v => setLayer(entry.slot, v)}
+  {#if combos.length === 0}
+    <EmptyCard>This firmware was built without combos.</EmptyCard>
+  {:else}
+    <div class='flex flex-col gap-3'>
+      {#each visible as entry (entry.slot)}
+        {@const combo = entry.combo}
+        <SlotCard
+          label='Combo {entry.slot}'
+          fresh={entry.slot === draft && combo.actions.length === 0}
+          deleteTitle='Delete combo'
+          advancedTitle='Combo options'
+          ondelete={() => remove(entry.slot)}
+        >
+          <div class='flex flex-wrap items-center gap-2'>
+            {#each combo.actions as action, at (at)}
+              <KeyChip
+                label={capLegend(action, caps).main}
+                title='Change trigger key {at + 1}'
+                onclick={() => (picking = { slot: entry.slot, kind: 'trigger', at })}
+                onremove={() => dropKey(entry.slot, at)}
+                removeTitle='Remove trigger key {at + 1}'
+              />
+            {/each}
+            <AddChip
+              title={combo.actions.length >= maxKeys
+                ? `This firmware allows ${maxKeys} keys per combo`
+                : 'Add a trigger key'}
+              disabled={combo.actions.length >= maxKeys}
+              onclick={() => (picking = { slot: entry.slot, kind: 'add' })}
             />
-          </span>
-          <div class='ml-auto flex items-center gap-2'>
-            <span class='text-xs text-muted-foreground'>outputs</span>
-            {@render chip(combo.output, true, () => (picking = { slot: entry.slot, kind: 'output' }))}
-            <IconBtn
-              icon='lucide:trash-2'
-              title='Delete combo'
-              size={34}
-              onclick={() => remove(entry.slot)}
+            <Icon class='mx-1 text-brand' icon='lucide:chevron-right' width={18} height={18} />
+            <KeyChip
+              emphasis
+              label={combo.output === 'No' ? '—' : capLegend(combo.output, caps).main}
+              title='Change the output key'
+              onclick={() => (picking = { slot: entry.slot, kind: 'output' })}
             />
           </div>
-        </div>
 
-        <div class='flex flex-wrap items-center gap-2'>
-          {#each combo.actions as action, at (at)}
-            {@render chip(action, false, () => (picking = { slot: entry.slot, kind: 'trigger', at }))}
-            <button
-              class={`
-                inline-flex cursor-pointer p-0.5 text-muted-foreground
-                hover:text-foreground
-              `}
-              type='button'
-              title='Remove key'
-              aria-label='Remove trigger key {at + 1}'
-              onclick={() => dropKey(entry.slot, at)}
-            >
-              <Icon icon='lucide:x' width={13} height={13} />
-            </button>
-          {/each}
-          <button
-            class={`
-              inline-flex size-[38px] cursor-pointer items-center justify-center
-              rounded-[7px] border border-dashed border-border
-              text-muted-foreground
-              hover:border-brand hover:text-brand-darker
-              disabled:cursor-not-allowed disabled:opacity-45
-            `}
-            type='button'
-            aria-label='Add trigger key'
-            title={combo.actions.length >= maxKeys
-              ? `This firmware allows ${maxKeys} keys per combo`
-              : 'Add trigger key'}
-            disabled={combo.actions.length >= maxKeys}
-            onclick={() => (picking = { slot: entry.slot, kind: 'add' })}
-          >
-            <Icon icon='lucide:plus' width={15} height={15} />
-          </button>
-          <Icon class='mx-1 text-brand' icon='lucide:chevron-right' width={18} height={18} />
-          {@render chip(combo.output, true, () => (picking = { slot: entry.slot, kind: 'output' }))}
-        </div>
+          {#if combo.actions.length < 2}
+            <Unsupported>Select at least two trigger keys.</Unsupported>
+          {/if}
 
-        {#if combo.actions.length < 2}
-          <Unsupported>Select at least two trigger keys.</Unsupported>
-        {/if}
-      </Card>
-    {/each}
+          {#snippet advanced()}
+            <FieldRow label='Active layer' hint='Trigger only while this layer is active.'>
+              <Select
+                items={[
+                  { value: 'any', label: 'any' },
+                  ...Array.from({ length: caps?.num_layers ?? 0 }, (_, l) => ({
+                    value: String(l),
+                    label: String(l),
+                  })),
+                ]}
+                value={combo.layer === undefined ? 'any' : String(combo.layer)}
+                label='Combo layer'
+                onchange={v => setLayer(entry.slot, v)}
+              />
+            </FieldRow>
+          {/snippet}
+        </SlotCard>
+      {/each}
 
-    {#if used.length === 0}
-      <Card>
-        <p class='py-3 text-center text-xs text-muted-foreground'>No combos yet.</p>
-      </Card>
-    {/if}
-  </div>
+      {#if visible.length === 0}
+        <EmptyCard>
+          No combos yet — press “New combo” to chord several keys into one.
+        </EmptyCard>
+      {/if}
+    </div>
 
-  <p class='mt-3.5 text-xs text-muted-foreground'>
-    This firmware has {combos.length} combo slots, each holding up to {maxKeys} keys.
-    Position-based triggering is not part of the protocol — a combo is always
-    described by the keycodes its trigger keys carry.
-  </p>
+    <p class='mt-3.5 text-xs text-muted-foreground'>
+      This firmware has {combos.length} combo slots, each holding up to {maxKeys} keys.
+      Position-based triggering is not part of the protocol — a combo is always
+      described by the keycodes its trigger keys carry.
+    </p>
+  {/if}
 </ScreenScroll>
 
 {#if picking}
-  <Overlay
-    title={picking.kind === 'output' ? 'Combo output' : 'Trigger key'}
-    subtitle='Choose a keycode for combo {picking.slot}.'
-    onclose={() => (picking = null)}
-  >
+  <Overlay title={pickTitle} subtitle={pickSubtitle} onclose={() => (picking = null)}>
     <KeycodeSelect {caps} onpick={apply} />
   </Overlay>
 {/if}

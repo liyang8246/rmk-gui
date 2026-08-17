@@ -3,12 +3,16 @@
   import type { Action, KeyAction, Morse, MorseMode, MorseProfile } from '../rynk'
   import Icon from '@iconify/svelte'
   import KeycodeSelect from '../components/KeycodeSelect.svelte'
+  import AddChip from '../components/ui/AddChip.svelte'
   import Button from '../components/ui/Button.svelte'
-  import Card from '../components/ui/Card.svelte'
+  import EmptyCard from '../components/ui/EmptyCard.svelte'
+  import FieldRow from '../components/ui/FieldRow.svelte'
   import IconBtn from '../components/ui/IconBtn.svelte'
+  import KeyChip from '../components/ui/KeyChip.svelte'
   import Overlay from '../components/ui/Overlay.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
   import Select from '../components/ui/Select.svelte'
+  import SlotCard from '../components/ui/SlotCard.svelte'
   import { asAction } from '../lib/keycatalog'
   import { actionLabel } from '../lib/keycode'
   import { decodePattern, DOUBLE_TAP, encodePattern, HOLD, HOLD_AFTER_TAP, MAX_PATTERN_STEPS, patternName, TAP } from '../lib/morse'
@@ -26,17 +30,26 @@
     quick_tap_timeout_ms: undefined,
   }
 
+  const EMPTY: Morse = { profile: { ...EMPTY_PROFILE }, actions: [] }
+
   /// Set while the action picker overlay is open: which slot, and which
   /// pattern the picked action will be bound to.
   let picking = $state<{ slot: number, pattern: number } | null>(null)
   /// Custom-pattern draft, one card at a time.
   let building = $state<{ slot: number, steps: MorseStep[] } | null>(null)
-  /// Which card shows its timing profile.
-  let profileOpen = $state<number | null>(null)
+  /// Slot drafted by "New morse key": shown as a card so the key is built in
+  /// place. Nothing is written until the first pattern is bound; deleting a
+  /// still-blank draft touches no storage.
+  let draft = $state<number | null>(null)
 
   const caps = $derived(keyboardStore.device?.capabilities)
   const morses = $derived(keyboardStore.config?.morses ?? [])
-  const used = $derived(morses.map((m, slot) => ({ morse: m, slot })).filter(e => e.morse.actions.length > 0))
+  /// A slot with no bound patterns is free; the firmware always reports the
+  /// full array, so a draft claims the first empty one.
+  const visible = $derived(morses
+    .map((morse, slot) => ({ morse, slot }))
+    .filter(e => e.morse.actions.length > 0 || e.slot === draft))
+  const usedCount = $derived(morses.filter(m => m.actions.length > 0).length)
   const firstFree = $derived(morses.findIndex(m => m.actions.length === 0))
   const maxPatterns = $derived(caps?.max_patterns_per_key ?? 0)
 
@@ -44,9 +57,19 @@
     void keyboardStore.setMorse(slot, morse).mapErr(e => toast.error(describeKeyboardError(e)))
   }
 
+  function add() {
+    if (firstFree >= 0) draft = firstFree
+  }
+
   function remove(slot: number) {
+    const morse = morses[slot]
+    if (draft === slot) draft = null
+    if (building?.slot === slot) building = null
+    // A draft nothing was written to has nothing to clear on the keyboard.
+    if (!morse || JSON.stringify(morse) === JSON.stringify(EMPTY)) return
+    const had = morse.actions.length > 0
     save(slot, { profile: { ...EMPTY_PROFILE }, actions: [] })
-    toast.success(`Cleared morse ${slot}`)
+    if (had) toast.success(`Deleted morse key ${slot}`)
   }
 
   function apply(action: KeyAction) {
@@ -83,16 +106,16 @@
   }
 
   function confirmBuild() {
-    const draft = building
-    if (!draft || draft.steps.length === 0) return
-    const pattern = encodePattern(draft.steps)
-    const morse = morses[draft.slot]
+    const b = building
+    if (!b || b.steps.length === 0) return
+    const pattern = encodePattern(b.steps)
+    const morse = morses[b.slot]
     if (morse?.actions.some(([p]) => p === pattern)) {
       toast.warning(`${patternName(pattern)} is already bound on this key`)
       return
     }
     building = null
-    pickFor(draft.slot, pattern)
+    pickFor(b.slot, pattern)
   }
 
   function setProfile(slot: number, patch: Partial<MorseProfile>) {
@@ -152,127 +175,107 @@
   desc='Tap dance: one key runs a different action for each tap/hold pattern.'
 >
   {#snippet actions()}
-    <Button
-      variant='brand'
-      disabled={firstFree < 0}
-      title={firstFree < 0 ? 'Every morse slot is in use' : 'Add a morse key'}
-      onclick={() => pickFor(firstFree, TAP)}
-    >
-      <Icon icon='lucide:plus' width={15} height={15} />
-      New morse key
-    </Button>
+    {#if morses.length > 0}
+      <span class='self-center text-xs text-muted-foreground'>
+        {usedCount} / {morses.length} used
+      </span>
+      <Button
+        variant='brand'
+        disabled={firstFree < 0}
+        title={firstFree < 0 ? 'Every morse slot is in use' : 'Add a morse key'}
+        onclick={add}
+      >
+        <Icon icon='lucide:plus' width={15} height={15} />
+        New morse key
+      </Button>
+    {/if}
   {/snippet}
 
   {#if morses.length === 0}
-    <Card>
-      <p class='py-3 text-center text-[13px] text-muted-foreground'>
-        This firmware was built without morse keys.
-      </p>
-    </Card>
+    <EmptyCard>This firmware was built without morse keys.</EmptyCard>
   {:else}
     <div class='flex flex-col gap-3'>
-      {#each used as entry (entry.slot)}
+      {#each visible as entry (entry.slot)}
         {@const morse = entry.morse}
-        <Card class='flex flex-col gap-3'>
-          <div class='flex items-center gap-2.5'>
-            <span class='text-xs font-extrabold text-brand-darker'>Morse {entry.slot}</span>
-            <span class='text-[13px] text-muted-foreground'>
-              Assign with the <b class='text-brand-darker'>Morse {entry.slot}</b> keycode
-            </span>
-            <div class='ml-auto flex items-center gap-1'>
-              <IconBtn
-                icon='lucide:timer'
-                title='Timing profile'
-                size={32}
-                active={profileOpen === entry.slot}
-                onclick={() => (profileOpen = profileOpen === entry.slot ? null : entry.slot)}
-              />
-              <IconBtn
-                icon='lucide:trash-2'
-                title='Delete morse key'
-                size={32}
-                onclick={() => remove(entry.slot)}
-              />
+        <SlotCard
+          label='Morse {entry.slot}'
+          hint='Assign with the Morse {entry.slot} keycode'
+          fresh={entry.slot === draft && morse.actions.length === 0}
+          deleteTitle='Delete morse key'
+          advancedTitle='Timing profile'
+          ondelete={() => remove(entry.slot)}
+        >
+          {#if morse.actions.length > 0}
+            <div class='flex flex-col gap-1.5'>
+              {#each morse.actions as [pattern, action] (pattern)}
+                <div class='
+                  flex items-center gap-3 rounded-md bg-base-200 px-3 py-1.5
+                '>
+                  {@render patternChips(pattern)}
+                  <span class='w-24 text-xs text-muted-foreground'>{patternName(pattern)}</span>
+                  <Icon class='text-brand' icon='lucide:chevron-right' width={15} height={15} />
+                  <KeyChip
+                    label={actionLabel(action)}
+                    title='Change the {patternName(pattern).toLowerCase()} action'
+                    onclick={() => pickFor(entry.slot, pattern)}
+                  />
+                  <span class='flex-1'></span>
+                  <IconBtn
+                    icon='lucide:x'
+                    title='Remove pattern'
+                    size={28}
+                    onclick={() => dropPattern(entry.slot, pattern)}
+                  />
+                </div>
+              {/each}
             </div>
-          </div>
-
-          <div class='flex flex-col gap-1.5'>
-            {#each morse.actions as [pattern, action] (pattern)}
-              <div class='
-                flex items-center gap-3 rounded-md bg-base-200 px-3 py-1.5
-              '>
-                {@render patternChips(pattern)}
-                <span class='w-24 text-xs text-muted-foreground'>{patternName(pattern)}</span>
-                <Icon class='text-brand' icon='lucide:chevron-right' width={15} height={15} />
-                <button
-                  class={`
-                    inline-flex h-8 min-w-12 cursor-pointer items-center
-                    justify-center rounded-[7px] border border-base-300
-                    bg-base-100 px-2 text-[13px] font-bold text-foreground
-                    hover:border-brand
-                  `}
-                  type='button'
-                  onclick={() => pickFor(entry.slot, pattern)}
-                >
-                  {actionLabel(action)}
-                </button>
-                <span class='flex-1'></span>
-                <IconBtn
-                  icon='lucide:x'
-                  title='Remove pattern'
-                  size={28}
-                  onclick={() => dropPattern(entry.slot, pattern)}
-                />
-              </div>
-            {/each}
-          </div>
+          {:else}
+            <p class='text-xs text-muted-foreground'>
+              No patterns yet — bind one below, then pick its action.
+            </p>
+          {/if}
 
           <div class='flex flex-wrap items-center gap-1.5'>
             {#each PRESETS as preset (preset)}
               {@const taken = morse.actions.some(([p]) => p === preset)}
-              <button
-                class={`
-                  inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md
-                  border border-dashed border-border px-2.5 text-xs
-                  font-semibold text-muted-foreground
-                  hover:enabled:border-brand hover:enabled:text-brand-darker
-                  disabled:cursor-not-allowed disabled:opacity-45
-                `}
-                type='button'
-                disabled={taken}
-                title={taken ? `${patternName(preset)} is already bound` : `Bind ${patternName(preset)}`}
+              {@const capped = !taken && morse.actions.length >= maxPatterns}
+              <AddChip
+                label={patternName(preset)}
+                title={taken
+                  ? `${patternName(preset)} is already bound`
+                  : capped
+                  ? `This firmware allows ${maxPatterns} patterns per morse key`
+                  : `Bind ${patternName(preset)}`}
+                disabled={taken || capped}
                 onclick={() => pickFor(entry.slot, preset)}
-              >
-                <Icon icon='lucide:plus' width={12} height={12} />
-                {patternName(preset)}
-              </button>
+              />
             {/each}
 
             {#if building?.slot === entry.slot}
-              {@const draft = building}
+              {@const b = building}
               <span class='
-                inline-flex h-7 items-center gap-1.5 rounded-md bg-base-200 px-2
+                inline-flex h-8 items-center gap-1.5 rounded-md bg-base-200 px-2
               '>
-                {#if draft.steps.length}
-                  {@render patternChips(encodePattern(draft.steps))}
+                {#if b.steps.length}
+                  {@render patternChips(encodePattern(b.steps))}
                 {:else}
                   <span class='text-xs text-muted-foreground'>tap or hold…</span>
                 {/if}
               </span>
-              <Button size='sm' disabled={draft.steps.length >= MAX_PATTERN_STEPS} onclick={() => { draft.steps = [...draft.steps, 'tap'] }}>Tap</Button>
-              <Button size='sm' disabled={draft.steps.length >= MAX_PATTERN_STEPS} onclick={() => { draft.steps = [...draft.steps, 'hold'] }}>Hold</Button>
+              <Button size='sm' disabled={b.steps.length >= MAX_PATTERN_STEPS} onclick={() => { b.steps = [...b.steps, 'tap'] }}>Tap</Button>
+              <Button size='sm' disabled={b.steps.length >= MAX_PATTERN_STEPS} onclick={() => { b.steps = [...b.steps, 'hold'] }}>Hold</Button>
               <IconBtn
                 icon='lucide:delete'
                 title='Remove last step'
                 size={28}
-                disabled={draft.steps.length === 0}
-                onclick={() => { draft.steps = draft.steps.slice(0, -1) }}
+                disabled={b.steps.length === 0}
+                onclick={() => { b.steps = b.steps.slice(0, -1) }}
               />
               <IconBtn
                 icon='lucide:check'
                 title='Pick the action for this pattern'
                 size={28}
-                disabled={draft.steps.length === 0}
+                disabled={b.steps.length === 0}
                 onclick={confirmBuild}
               />
               <IconBtn
@@ -282,93 +285,66 @@
                 onclick={() => (building = null)}
               />
             {:else}
-              <button
-                class={`
-                  inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md
-                  border border-dashed border-border px-2.5 text-xs
-                  font-semibold text-muted-foreground
-                  hover:border-brand hover:text-brand-darker
-                `}
-                type='button'
+              <AddChip
+                label='Custom…'
+                title='Build a custom tap/hold pattern'
                 onclick={() => (building = { slot: entry.slot, steps: [] })}
-              >
-                <Icon icon='lucide:plus' width={12} height={12} />
-                Custom…
-              </button>
+              />
             {/if}
           </div>
 
-          {#if profileOpen === entry.slot}
-            <div class='
-              flex flex-col gap-2.5 border-t border-border pt-3 text-[13px]
-            '>
-              <div class='flex items-center gap-3'>
-                <span class='w-28 font-semibold text-foreground'>Decision mode</span>
-                <Select
-                  items={MODES}
-                  value={morse.profile.mode ?? 'default'}
-                  label='Decision mode'
-                  onchange={v => setProfile(entry.slot, { mode: v === 'default' ? undefined : v as MorseMode })}
+          {#snippet advanced()}
+            <FieldRow label='Decision mode' hint='How a press decides between tap and hold.'>
+              <Select
+                items={MODES}
+                value={morse.profile.mode ?? 'default'}
+                label='Decision mode'
+                onchange={v => setProfile(entry.slot, { mode: v === 'default' ? undefined : v as MorseMode })}
+              />
+            </FieldRow>
+            {#each TIMEOUTS as t (t.field)}
+              <FieldRow label={t.label} hint={t.hint}>
+                <input
+                  class={`
+                    h-8 w-24 rounded-md border border-input bg-background px-2.5
+                    font-mono text-[12.5px] text-foreground outline-none
+                  `}
+                  type='number'
+                  min='0'
+                  max='8191'
+                  placeholder='default'
+                  aria-label={t.label}
+                  value={morse.profile[t.field] ?? ''}
+                  onchange={e => timeout(entry.slot, t.field, e.currentTarget.value)}
                 />
-                <span class='text-xs text-muted-foreground'>
-                  How a press decides between tap and hold.
-                </span>
-              </div>
-              {#each TIMEOUTS as t (t.field)}
-                <div class='flex items-center gap-3'>
-                  <span class='w-28 font-semibold text-foreground'>{t.label}</span>
-                  <input
-                    class={`
-                      h-8 w-24 rounded-md border border-input bg-background
-                      px-2.5 font-mono text-[12.5px] text-foreground
-                      outline-none
-                    `}
-                    type='number'
-                    min='0'
-                    max='8191'
-                    placeholder='default'
-                    aria-label={t.label}
-                    value={morse.profile[t.field] ?? ''}
-                    onchange={e => timeout(entry.slot, t.field, e.currentTarget.value)}
-                  />
-                  <span class='text-xs text-muted-foreground'>ms · {t.hint}</span>
-                </div>
-              {/each}
-              <div class='flex items-center gap-3'>
-                <span class='w-28 font-semibold text-foreground'>Unilateral tap</span>
-                <Select
-                  items={TRI}
-                  value={triValue(morse.profile.unilateral_tap)}
-                  label='Unilateral tap'
-                  onchange={v => setProfile(entry.slot, { unilateral_tap: triSet(v) })}
-                />
-                <span class='text-xs text-muted-foreground'>
-                  A same-hand key after this one forces a tap.
-                </span>
-              </div>
-              <div class='flex items-center gap-3'>
-                <span class='w-28 font-semibold text-foreground'>Flow tap</span>
-                <Select
-                  items={TRI}
-                  value={triValue(morse.profile.enable_flow_tap)}
-                  label='Flow tap'
-                  onchange={v => setProfile(entry.slot, { enable_flow_tap: triSet(v) })}
-                />
-                <span class='text-xs text-muted-foreground'>
-                  Fast typing resolves this key as a tap.
-                </span>
-              </div>
-            </div>
-          {/if}
-        </Card>
+                <span class='text-xs text-muted-foreground'>ms</span>
+              </FieldRow>
+            {/each}
+            <FieldRow label='Unilateral tap' hint='A same-hand key after this one forces a tap.'>
+              <Select
+                items={TRI}
+                value={triValue(morse.profile.unilateral_tap)}
+                label='Unilateral tap'
+                onchange={v => setProfile(entry.slot, { unilateral_tap: triSet(v) })}
+              />
+            </FieldRow>
+            <FieldRow label='Flow tap' hint='Fast typing resolves this key as a tap.'>
+              <Select
+                items={TRI}
+                value={triValue(morse.profile.enable_flow_tap)}
+                label='Flow tap'
+                onchange={v => setProfile(entry.slot, { enable_flow_tap: triSet(v) })}
+              />
+            </FieldRow>
+          {/snippet}
+        </SlotCard>
       {/each}
 
-      {#if used.length === 0}
-        <Card>
-          <p class='py-3 text-center text-xs text-muted-foreground'>
-            No morse keys yet.
-          </p>
-        </Card>
+      {#if visible.length === 0}
+        <EmptyCard>
+          No morse keys yet — press “New morse key” to give one key several
+          tap and hold actions.
+        </EmptyCard>
       {/if}
     </div>
 
@@ -383,7 +359,7 @@
 {#if picking}
   <Overlay
     title='{patternName(picking.pattern)} action'
-    subtitle='Choose what morse {picking.slot} does on {patternName(picking.pattern).toLowerCase()}.'
+    subtitle='Morse {picking.slot} · what this key does on {patternName(picking.pattern).toLowerCase()}'
     onclose={() => (picking = null)}
   >
     <KeycodeSelect {caps} onpick={apply} />
