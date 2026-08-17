@@ -14,15 +14,17 @@ const {
 }: Props = $props()
 
 const KEY_UNIT = 64
-const KEY_GAP = 3
-const KEY_RING = 1
+const KEY_GAP = 2
+const KEY_RING = 2
 </script>
 
 <div {...rest} class={['group relative', rest.class]}>
   <!-- key ring -->
   {#if key.rect2}
     <div
-      class='absolute rounded-md bg-base-300 shadow-xs transition-all'
+      class={['absolute rounded-lg bg-base-300 shadow-xs transition-all', selected && `
+        bg-primary
+      `]}
       style:left={`${(key.rect2.x - key.rect.x) * KEY_UNIT - (key.rect2.w * KEY_UNIT) / 2 + KEY_GAP}px`}
       style:top={`${(key.rect2.y - key.rect.y) * KEY_UNIT - (key.rect2.h * KEY_UNIT) / 2 + KEY_GAP}px`}
       style:width={`${key.rect2.w * KEY_UNIT - KEY_GAP * 2}px`}
@@ -30,7 +32,9 @@ const KEY_RING = 1
     ></div>
   {/if}
   <div
-    class='absolute rounded-md bg-base-300 shadow-xs transition-all'
+    class={['absolute rounded-lg bg-base-300 shadow-xs transition-all', selected && `
+      bg-primary
+    `]}
     style:left={`${-key.rect.w * KEY_UNIT / 2 + KEY_GAP}px`}
     style:top={`${-key.rect.h * KEY_UNIT / 2 + KEY_GAP}px`}
     style:width={`${key.rect.w * KEY_UNIT - KEY_GAP * 2}px`}
@@ -39,11 +43,11 @@ const KEY_RING = 1
   <!-- key base -->
   {#if key.rect2}
     <div
-      class='
+      class={[`
         absolute cursor-pointer rounded-md bg-base-200 transition-all
         group-hover:brightness-[0.97]
         group-active:brightness-95
-      '
+      `, selected && 'bg-base-primary']}
       style:left={`${(key.rect2.x - key.rect.x) * KEY_UNIT - (key.rect2.w * KEY_UNIT) / 2 + KEY_GAP}px`}
       style:top={`${(key.rect2.y - key.rect.y) * KEY_UNIT - (key.rect2.h * KEY_UNIT) / 2 + KEY_GAP}px`}
       style:width={`${key.rect2.w * KEY_UNIT - (KEY_GAP + KEY_RING) * 2}px`}
@@ -52,11 +56,11 @@ const KEY_RING = 1
     ></div>
   {/if}
   <div
-    class='
+    class={[`
       absolute cursor-pointer rounded-md bg-base-200 transition-all
       group-hover:brightness-[0.97]
       group-active:brightness-95
-    '
+    `, selected && 'bg-base-primary']}
     style:left={`${-key.rect.w * KEY_UNIT / 2 + KEY_GAP}px`}
     style:top={`${-key.rect.h * KEY_UNIT / 2 + KEY_GAP}px`}
     style:width={`${key.rect.w * KEY_UNIT - (KEY_GAP + KEY_RING) * 2}px`}
