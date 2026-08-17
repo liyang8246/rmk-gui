@@ -6,6 +6,7 @@
   --color-base-300: #eeeeee;
   --color-base-content: #18181b;
   --color-primary: oklch(49.12% 0.3096 275.75);
+  --color-base-primary: color-mix(in oklab, var(--color-base-100) 90%, var(--color-primary) 10%);
   --color-primary-content: oklch(98.71% 0.0106 342.55);
   --color-success: oklch(64.8% 0.15 160);
   --color-warning: oklch(84.71% 0.199 83.87);
