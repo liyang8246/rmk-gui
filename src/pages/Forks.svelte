@@ -3,11 +3,14 @@
   import Icon from '@iconify/svelte'
   import KeycodeSelect from '../components/KeycodeSelect.svelte'
   import Button from '../components/ui/Button.svelte'
-  import Card from '../components/ui/Card.svelte'
-  import IconBtn from '../components/ui/IconBtn.svelte'
+  import EmptyCard from '../components/ui/EmptyCard.svelte'
+  import FieldRow from '../components/ui/FieldRow.svelte'
+  import KeyChip from '../components/ui/KeyChip.svelte'
   import Overlay from '../components/ui/Overlay.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
-  import { keyActionText, NO_MODIFIERS } from '../lib/keycode'
+  import SlotCard from '../components/ui/SlotCard.svelte'
+  import ToggleChip from '../components/ui/ToggleChip.svelte'
+  import { NO_MODIFIERS } from '../lib/keycode'
   import { capLegend } from '../lib/legend'
   import { toast } from '../lib/toast.svelte'
   import { describeKeyboardError, keyboardStore } from '../stores'
@@ -40,20 +43,50 @@
   type Field = 'trigger' | 'positive_output' | 'negative_output'
 
   let picking = $state<{ slot: number, field: Field } | null>(null)
-  let advancedOpen = $state<number | null>(null)
+  /// Slot drafted by "New override": shown as a card so the override is built
+  /// in place. Nothing is written until the first edit; deleting a still-blank
+  /// draft touches no storage.
+  let draft = $state<number | null>(null)
 
   const caps = $derived(keyboardStore.device?.capabilities)
   const forks = $derived(keyboardStore.config?.forks ?? [])
-  const used = $derived(forks.map((f, slot) => ({ fork: f, slot })).filter(e => e.fork.trigger !== 'No'))
+  /// A slot with no trigger key is free; the firmware always reports the full
+  /// array, so a draft claims the first empty one.
+  const visible = $derived(forks
+    .map((fork, slot) => ({ fork, slot }))
+    .filter(e => e.fork.trigger !== 'No' || e.slot === draft))
+  const usedCount = $derived(forks.filter(f => f.trigger !== 'No').length)
   const firstFree = $derived(forks.findIndex(f => f.trigger === 'No'))
+
+  const FIELD_TITLES: Record<Field, string> = {
+    trigger: 'Trigger key',
+    positive_output: 'Matched output',
+    negative_output: 'Fallback output',
+  }
+
+  const pickSubtitle = $derived.by(() => {
+    if (!picking) return ''
+    if (picking.field === 'trigger') return `Override ${picking.slot} · the key this override watches`
+    if (picking.field === 'positive_output') return `Override ${picking.slot} · sent while the condition matches`
+    return `Override ${picking.slot} · sent when it does not`
+  })
 
   function save(slot: number, fork: Fork) {
     void keyboardStore.setFork(slot, fork).mapErr(e => toast.error(describeKeyboardError(e)))
   }
 
+  function add() {
+    if (firstFree >= 0) draft = firstFree
+  }
+
   function remove(slot: number) {
+    const fork = forks[slot]
+    if (draft === slot) draft = null
+    // A draft nothing was written to has nothing to clear on the keyboard.
+    if (!fork || JSON.stringify(fork) === JSON.stringify(EMPTY)) return
+    const had = fork.trigger !== 'No'
     save(slot, structuredClone(EMPTY))
-    toast.success(`Cleared override ${slot}`)
+    if (had) toast.success(`Deleted override ${slot}`)
   }
 
   function apply(action: KeyAction) {
@@ -89,61 +122,23 @@
     const leds = { ...state.leds, caps_lock: !state.leds.caps_lock }
     save(slot, { ...fork, [side]: { ...state, leds } })
   }
-
-  const FIELD_TITLES: Record<Field, string> = {
-    trigger: 'Trigger key',
-    positive_output: 'Output when the condition matches',
-    negative_output: 'Output otherwise',
-  }
-
-  const pickSubtitle = $derived.by(() => {
-    if (!picking) return ''
-    if (picking.field === 'trigger') return `Override ${picking.slot} · the key that activates this override`
-    return `Override ${picking.slot} · currently ${keyActionText(forks[picking.slot]?.[picking.field] ?? 'No')}`
-  })
 </script>
 
-{#snippet keyChip(slot: number, field: Field, action: KeyAction, brand: boolean)}
-  <button
-    class={[
-      `
-        inline-flex h-[38px] min-w-10 cursor-pointer items-center justify-center
-        rounded-[7px] px-2 text-sm font-bold
-      `,
-      brand
-        ? 'border-2 border-brand bg-brand-tint text-brand-darker'
-        : 'border border-base-300 bg-base-100 text-foreground',
-    ]}
-    type='button'
+{#snippet keyChip(slot: number, field: Field, action: KeyAction, emphasis: boolean)}
+  <KeyChip
+    {emphasis}
+    label={action === 'No' ? '—' : capLegend(action, caps).main}
     title={FIELD_TITLES[field]}
     onclick={() => (picking = { slot, field })}
-  >
-    {action === 'No' ? '—' : capLegend(action, caps).main}
-  </button>
+  />
 {/snippet}
 
 {#snippet modChips(slot: number, side: 'match_any' | 'match_none' | 'kept', mods: ModifierCombination)}
   <span class='inline-flex flex-wrap gap-1'>
     {#each MODS as [flag, label] (flag)}
-      <button
-        class={[
-          `
-            inline-flex h-6.5 cursor-pointer items-center rounded-md border
-            px-1.5 font-mono text-[11px] font-bold transition-colors
-          `,
-          mods[flag]
-            ? 'border-brand bg-brand-tint text-brand-darker'
-            : `
-              border-border text-muted-foreground
-              hover:text-foreground
-            `,
-        ]}
-        type='button'
-        aria-pressed={mods[flag]}
-        onclick={() => toggleMod(slot, side, flag)}
-      >
+      <ToggleChip mono pressed={mods[flag]} onclick={() => toggleMod(slot, side, flag)}>
         {label}
-      </button>
+      </ToggleChip>
     {/each}
   </span>
 {/snippet}
@@ -153,69 +148,48 @@
   desc='A fork sends one of two actions, decided by which modifiers are held.'
 >
   {#snippet actions()}
-    <Button
-      variant='brand'
-      disabled={firstFree < 0}
-      title={firstFree < 0 ? 'Every override slot is in use' : 'Add an override'}
-      onclick={() => (picking = { slot: firstFree, field: 'trigger' })}
-    >
-      <Icon icon='lucide:plus' width={15} height={15} />
-      New override
-    </Button>
+    {#if forks.length > 0}
+      <span class='self-center text-xs text-muted-foreground'>
+        {usedCount} / {forks.length} used
+      </span>
+      <Button
+        variant='brand'
+        disabled={firstFree < 0}
+        title={firstFree < 0 ? 'Every override slot is in use' : 'Add an override'}
+        onclick={add}
+      >
+        <Icon icon='lucide:plus' width={15} height={15} />
+        New override
+      </Button>
+    {/if}
   {/snippet}
 
   {#if forks.length === 0}
-    <Card>
-      <p class='py-3 text-center text-[13px] text-muted-foreground'>
-        This firmware was built without key overrides.
-      </p>
-    </Card>
+    <EmptyCard>This firmware was built without key overrides.</EmptyCard>
   {:else}
     <div class='flex flex-col gap-3'>
-      {#each used as entry (entry.slot)}
+      {#each visible as entry (entry.slot)}
         {@const fork = entry.fork}
-        <Card class='flex flex-col gap-3'>
+        <SlotCard
+          label='Override {entry.slot}'
+          fresh={entry.slot === draft && fork.trigger === 'No'}
+          deleteTitle='Delete override'
+          advancedTitle='Advanced conditions'
+          ondelete={() => remove(entry.slot)}
+        >
           <div class='flex flex-wrap items-center gap-2.5'>
             <span class='text-xs text-muted-foreground'>When</span>
             {@render keyChip(entry.slot, 'trigger', fork.trigger, false)}
             <span class='text-xs text-muted-foreground'>is pressed with</span>
             {@render modChips(entry.slot, 'match_any', fork.match_any.modifiers)}
-            <button
-              class={[
-                `
-                  inline-flex h-6.5 cursor-pointer items-center gap-1 rounded-md
-                  border px-1.5 text-[11px] font-bold transition-colors
-                `,
-                fork.match_any.leds.caps_lock
-                  ? 'border-brand bg-brand-tint text-brand-darker'
-                  : `
-                    border-border text-muted-foreground
-                    hover:text-foreground
-                  `,
-              ]}
-              type='button'
-              aria-pressed={fork.match_any.leds.caps_lock}
+            <ToggleChip
+              pressed={fork.match_any.leds.caps_lock}
               title='Also match while the Caps Lock light is on'
               onclick={() => toggleCaps(entry.slot, 'match_any')}
             >
               <Icon icon='lucide:lightbulb' width={11} height={11} />
               Caps
-            </button>
-            <div class='ml-auto flex items-center gap-1'>
-              <IconBtn
-                icon='lucide:settings-2'
-                title='Advanced'
-                size={32}
-                active={advancedOpen === entry.slot}
-                onclick={() => (advancedOpen = advancedOpen === entry.slot ? null : entry.slot)}
-              />
-              <IconBtn
-                icon='lucide:trash-2'
-                title='Delete override'
-                size={32}
-                onclick={() => remove(entry.slot)}
-              />
-            </div>
+            </ToggleChip>
           </div>
 
           <div class='flex flex-wrap items-center gap-2.5'>
@@ -227,60 +201,29 @@
             {@render keyChip(entry.slot, 'negative_output', fork.negative_output, false)}
           </div>
 
-          {#if advancedOpen === entry.slot}
-            <div class='
-              flex flex-col gap-2.5 border-t border-border pt-3 text-xs
-            '>
-              <div class='flex flex-wrap items-center gap-2.5'>
-                <span class='w-30 font-semibold text-foreground'>Suppress when</span>
-                {@render modChips(entry.slot, 'match_none', fork.match_none.modifiers)}
-                <span class='text-muted-foreground'>
-                  Any of these held keeps the override off.
-                </span>
-              </div>
-              <div class='flex flex-wrap items-center gap-2.5'>
-                <span class='w-30 font-semibold text-foreground'>Keep modifiers</span>
-                {@render modChips(entry.slot, 'kept', fork.kept_modifiers)}
-                <span class='text-muted-foreground'>
-                  Matched modifiers are swallowed unless kept here.
-                </span>
-              </div>
-              <div class='flex flex-wrap items-center gap-2.5'>
-                <span class='w-30 font-semibold text-foreground'>Chainable</span>
-                <button
-                  class={[
-                    `
-                      inline-flex h-6.5 cursor-pointer items-center rounded-md
-                      border px-2 text-[11px] font-bold transition-colors
-                    `,
-                    fork.bindable
-                      ? 'border-brand bg-brand-tint text-brand-darker'
-                      : `
-                        border-border text-muted-foreground
-                        hover:text-foreground
-                      `,
-                  ]}
-                  type='button'
-                  aria-pressed={fork.bindable}
-                  onclick={() => save(entry.slot, { ...fork, bindable: !fork.bindable })}
-                >
-                  {fork.bindable ? 'on' : 'off'}
-                </button>
-                <span class='text-muted-foreground'>
-                  Lets this override's output trigger other overrides.
-                </span>
-              </div>
-            </div>
-          {/if}
-        </Card>
+          {#snippet advanced()}
+            <FieldRow label='Suppress when' hint='Any of these held keeps the override off.'>
+              {@render modChips(entry.slot, 'match_none', fork.match_none.modifiers)}
+            </FieldRow>
+            <FieldRow label='Keep modifiers' hint='Matched modifiers are swallowed unless kept here.'>
+              {@render modChips(entry.slot, 'kept', fork.kept_modifiers)}
+            </FieldRow>
+            <FieldRow label='Chainable' hint="Lets this override's output trigger other overrides.">
+              <ToggleChip
+                pressed={fork.bindable}
+                onclick={() => save(entry.slot, { ...fork, bindable: !fork.bindable })}
+              >
+                {fork.bindable ? 'on' : 'off'}
+              </ToggleChip>
+            </FieldRow>
+          {/snippet}
+        </SlotCard>
       {/each}
 
-      {#if used.length === 0}
-        <Card>
-          <p class='py-3 text-center text-xs text-muted-foreground'>
-            No key overrides yet. Shift+Backspace → Delete is the classic one.
-          </p>
-        </Card>
+      {#if visible.length === 0}
+        <EmptyCard>
+          No key overrides yet — Shift+Backspace → Delete is the classic one.
+        </EmptyCard>
       {/if}
     </div>
 
