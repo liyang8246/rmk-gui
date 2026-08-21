@@ -77,16 +77,10 @@
   }
 </script>
 
-<ScreenScroll
-  title='Settings'
-  desc="App preferences. These don't change your keyboard."
->
+<ScreenScroll title='Settings'>
   <Card class='mb-4' flush>
     <Row class='border-b border-border'>
-      <div>
-        <div class='text-[13.5px] font-semibold text-foreground'>Appearance</div>
-        <div class='text-xs text-muted-foreground'>Light or dark interface.</div>
-      </div>
+      <div class='text-[13.5px] font-semibold text-foreground'>Appearance</div>
       <div class='ml-auto'>
         <Segmented
           items={[
@@ -101,10 +95,7 @@
     </Row>
 
     <Row class='border-b border-border'>
-      <div>
-        <div class='text-[13.5px] font-semibold text-foreground'>Language</div>
-        <div class='text-xs text-muted-foreground'>Interface language.</div>
-      </div>
+      <div class='text-[13.5px] font-semibold text-foreground'>Language</div>
       <span class='ml-auto text-xs text-muted-foreground'>English (US)</span>
     </Row>
 
@@ -114,7 +105,7 @@
           Start on last device
         </div>
         <div class='text-xs text-muted-foreground'>
-          Reconnect automatically on launch when exactly one keyboard is attached.
+          Reconnect on launch when exactly one keyboard is attached.
         </div>
       </div>
       <span class='ml-auto'>
@@ -130,7 +121,7 @@
       <div>
         <div class='text-[13.5px] font-semibold text-foreground'>Backup keymap</div>
         <div class='text-xs text-muted-foreground'>
-          Export the keyboard's configuration, or restore an exported backup.
+          Save the keyboard's configuration to a file, or restore one.
         </div>
       </div>
       <div class='ml-auto flex gap-2'>
@@ -165,8 +156,7 @@
 
   <Card class='mb-4'>
     <Unsupported>
-      Export writes the protocol's own JSON, not a keyboard.toml — the firmware
-      reports its live configuration, not the file it was built from.
+      Export writes the protocol's own JSON, not a keyboard.toml.
     </Unsupported>
   </Card>
 
@@ -190,8 +180,8 @@
     onconfirm={applyImport}
     onclose={() => (pending = null)}
   >
-    Everything on the keyboard — keymap, combos, macros, morse keys, and
-    timing — is replaced with the backup's contents. A backup from a
-    different keyboard model is refused before anything is written.
+    The keymap, combos, macros, morse keys, and timing on the keyboard are
+    replaced with the backup's. A backup from a different keyboard model is
+    refused before anything is written.
   </ConfirmOverlay>
 {/if}

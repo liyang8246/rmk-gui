@@ -43,7 +43,7 @@
 
 <Overlay
   title='Encoder {encoder}'
-  subtitle='What each turn direction does on layer {layer}.'
+  subtitle='Layer {layer}'
   {onclose}
 >
   <div class='flex min-h-0 flex-1 flex-col gap-3'>

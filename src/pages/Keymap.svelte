@@ -169,7 +169,7 @@
           />
           <IconBtn
             icon='lucide:target'
-            title='Auto-advance to the next key after assigning'
+            title='Auto-advance to the next key'
             size={32}
             active={autoAdvance}
             onclick={() => (autoAdvance = !autoAdvance)}

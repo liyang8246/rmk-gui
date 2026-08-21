@@ -56,7 +56,7 @@
 
 <Overlay
   title='Unlock keyboard'
-  subtitle='A physical-presence check guards security-sensitive commands.'
+  subtitle='Physical-presence check'
   {onclose}
 >
   <div class='flex flex-1 flex-col items-center justify-center gap-5'>

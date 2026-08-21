@@ -84,11 +84,6 @@
       height={28}
       onchange={v => (kind = v)}
     />
-    <span class='text-[11.5px] text-muted-foreground'>
-      {kind === 'LT'
-        ? 'Hold → switch layer · Tap → send key'
-        : 'Hold → modifier · Tap → send key'}
-    </span>
   </div>
 
   <div class='flex flex-wrap items-center gap-2.5'>
@@ -128,8 +123,8 @@
   </div>
 
   <div class='text-[11.5px] text-muted-foreground'>
-    Tap key → assigns
-    <b class='font-mono text-brand-darker'>hold {actionLabel(hold)} / tap …</b>
+    Pick a key below to assign
+    <b class='font-mono text-brand-darker'>hold {actionLabel(hold)} / tap it</b>
   </div>
 
   <div class='flex-1 overflow-y-auto'>

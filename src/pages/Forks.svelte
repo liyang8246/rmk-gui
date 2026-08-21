@@ -64,12 +64,7 @@
     negative_output: 'Fallback output',
   }
 
-  const pickSubtitle = $derived.by(() => {
-    if (!picking) return ''
-    if (picking.field === 'trigger') return `Override ${picking.slot} · the key this override watches`
-    if (picking.field === 'positive_output') return `Override ${picking.slot} · sent while the condition matches`
-    return `Override ${picking.slot} · sent when it does not`
-  })
+  const pickSubtitle = $derived(picking ? `Override ${picking.slot}` : '')
 
   function save(slot: number, fork: Fork) {
     void keyboardStore.setFork(slot, fork).mapErr(e => toast.error(describeKeyboardError(e)))
@@ -145,7 +140,7 @@
 
 <ScreenScroll
   title='Key overrides'
-  desc='A fork sends one of two actions, decided by which modifiers are held.'
+  desc='Send one of two actions, decided by which modifiers are held.'
 >
   {#snippet actions()}
     {#if forks.length > 0}
@@ -155,7 +150,7 @@
       <Button
         variant='brand'
         disabled={firstFree < 0}
-        title={firstFree < 0 ? 'Every override slot is in use' : 'Add an override'}
+        title={firstFree < 0 ? 'Every slot is in use' : undefined}
         onclick={add}
       >
         <Icon icon='lucide:plus' width={15} height={15} />
@@ -184,7 +179,7 @@
             {@render modChips(entry.slot, 'match_any', fork.match_any.modifiers)}
             <ToggleChip
               pressed={fork.match_any.leds.caps_lock}
-              title='Also match while the Caps Lock light is on'
+              title='Also match while Caps Lock is on'
               onclick={() => toggleCaps(entry.slot, 'match_any')}
             >
               <Icon icon='lucide:lightbulb' width={11} height={11} />
@@ -222,14 +217,13 @@
 
       {#if visible.length === 0}
         <EmptyCard>
-          No key overrides yet — Shift+Backspace → Delete is the classic one.
+          No overrides yet — Shift+Backspace → Delete is the classic one.
         </EmptyCard>
       {/if}
     </div>
 
     <p class='mt-3.5 text-xs text-muted-foreground'>
-      This firmware has {forks.length} override slots. An override with no
-      modifier condition always takes its “matched” branch.
+      With no modifier condition, an override always takes its “matched” branch.
     </p>
   {/if}
 </ScreenScroll>

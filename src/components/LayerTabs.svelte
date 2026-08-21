@@ -63,7 +63,7 @@
         hover:border-brand hover:text-brand-darker
       `}
       type='button'
-      title='Make layer {layer} the default layer'
+      title='Make layer {layer} the default'
       onclick={() => onsetdefault(layer)}
     >
       <Icon icon='lucide:star' width={11} height={11} />

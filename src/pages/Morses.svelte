@@ -77,7 +77,7 @@
     if (!target) return
     const plain = asAction(action)
     if (plain === null) {
-      toast.warning('A morse action must be a plain action — not transparent or another morse key')
+      toast.warning('A morse action must be a plain key')
       return
     }
     picking = null
@@ -99,7 +99,7 @@
   function pickFor(slot: number, pattern: number) {
     const morse = morses[slot]
     if (morse && morse.actions.every(([p]) => p !== pattern) && morse.actions.length >= maxPatterns) {
-      toast.warning(`This firmware allows ${maxPatterns} patterns per morse key`)
+      toast.warning(`Limit: ${maxPatterns} patterns per morse key`)
       return
     }
     picking = { slot, pattern }
@@ -151,8 +151,8 @@
   ]
 
   const TIMEOUTS = [
-    { field: 'hold_timeout_ms', label: 'Hold timeout', hint: 'Held longer than this counts as a hold.' },
-    { field: 'gap_timeout_ms', label: 'Gap timeout', hint: 'A longer pause ends the tap sequence.' },
+    { field: 'hold_timeout_ms', label: 'Hold timeout', hint: 'Held longer counts as a hold.' },
+    { field: 'gap_timeout_ms', label: 'Gap timeout', hint: 'A longer pause ends the sequence.' },
     { field: 'quick_tap_timeout_ms', label: 'Quick tap', hint: 'Retapping within this repeats the tap.' },
   ] as const
 </script>
@@ -172,7 +172,7 @@
 
 <ScreenScroll
   title='Morse'
-  desc='Tap dance: one key runs a different action for each tap/hold pattern.'
+  desc='One key, a different action for each tap and hold pattern.'
 >
   {#snippet actions()}
     {#if morses.length > 0}
@@ -182,7 +182,7 @@
       <Button
         variant='brand'
         disabled={firstFree < 0}
-        title={firstFree < 0 ? 'Every morse slot is in use' : 'Add a morse key'}
+        title={firstFree < 0 ? 'Every slot is in use' : undefined}
         onclick={add}
       >
         <Icon icon='lucide:plus' width={15} height={15} />
@@ -231,7 +231,7 @@
             </div>
           {:else}
             <p class='text-xs text-muted-foreground'>
-              No patterns yet — bind one below, then pick its action.
+              No patterns yet — bind one below.
             </p>
           {/if}
 
@@ -244,7 +244,7 @@
                 title={taken
                   ? `${patternName(preset)} is already bound`
                   : capped
-                  ? `This firmware allows ${maxPatterns} patterns per morse key`
+                  ? `Limit: ${maxPatterns} patterns per morse key`
                   : `Bind ${patternName(preset)}`}
                 disabled={taken || capped}
                 onclick={() => pickFor(entry.slot, preset)}
@@ -294,7 +294,7 @@
           </div>
 
           {#snippet advanced()}
-            <FieldRow label='Decision mode' hint='How a press decides between tap and hold.'>
+            <FieldRow label='Decision mode' hint='How a press picks tap or hold.'>
               <Select
                 items={MODES}
                 value={morse.profile.mode ?? 'default'}
@@ -341,17 +341,12 @@
       {/each}
 
       {#if visible.length === 0}
-        <EmptyCard>
-          No morse keys yet — press “New morse key” to give one key several
-          tap and hold actions.
-        </EmptyCard>
+        <EmptyCard>No morse keys yet.</EmptyCard>
       {/if}
     </div>
 
     <p class='mt-3.5 text-xs text-muted-foreground'>
-      This firmware has {morses.length} morse slots, each holding up to
-      {maxPatterns} patterns of at most {MAX_PATTERN_STEPS} steps. Timing
-      fields left at “default” inherit the keyboard-wide values.
+      Timing left at “default” follows the keyboard-wide values.
     </p>
   {/if}
 </ScreenScroll>
@@ -359,7 +354,7 @@
 {#if picking}
   <Overlay
     title='{patternName(picking.pattern)} action'
-    subtitle='Morse {picking.slot} · what this key does on {patternName(picking.pattern).toLowerCase()}'
+    subtitle='Morse {picking.slot}'
     onclose={() => (picking = null)}
   >
     <KeycodeSelect {caps} onpick={apply} />

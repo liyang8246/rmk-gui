@@ -22,7 +22,7 @@
     {
       field: 'tap_interval_ms',
       title: 'Tap interval',
-      desc: 'How long a synthesised tap holds the key down before releasing it.',
+      desc: 'How long a synthesised tap stays held.',
       min: 0,
       max: 200,
       step: 5,
@@ -46,7 +46,7 @@
     {
       field: 'oneshot_timeout_ms',
       title: 'One-shot timeout',
-      desc: 'Cancel a pending one-shot modifier or layer if no key follows in time.',
+      desc: 'How long a pending one-shot waits for the next key.',
       min: 0,
       max: 5000,
       step: 100,
@@ -57,12 +57,8 @@
   /// global home for. Listed rather than drawn as dead sliders.
   const ELSEWHERE = [
     {
-      title: 'Tapping term, permissive hold, quick tap, hold-on-other-key-press',
-      where: 'Set per key on its morse profile, not keyboard-wide.',
-    },
-    {
-      title: 'Tap dance term',
-      where: 'Part of each morse key\'s own profile.',
+      title: 'Tapping term, permissive hold, quick tap, hold-on-other-key-press, tap dance term',
+      where: 'Per key, on its morse profile.',
     },
     {
       title: 'One-shot retap to hold',
@@ -70,7 +66,7 @@
     },
     {
       title: 'Mouse cursor speed',
-      where: 'A firmware build option, fixed at compile time.',
+      where: 'Fixed at compile time.',
     },
   ]
 
@@ -88,7 +84,7 @@
 
 <ScreenScroll
   title='Behavior'
-  desc='Keyboard-side timing. Changes are written to the keyboard as you make them.'
+  desc='Timing that applies to the whole keyboard.'
 >
   <Card flush>
     {#each SETTINGS as setting, i (setting.field)}

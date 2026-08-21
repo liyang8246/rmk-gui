@@ -97,7 +97,7 @@
         ]}
         type='button'
         title={lockable
-          ? 'Security-sensitive commands are locked — click to unlock'
+          ? 'Click to unlock'
           : 'This firmware has no unlock keys, so the lock is permanent'}
         onclick={() => { if (lockable) unlocking = true }}
       >
@@ -112,7 +112,7 @@
           hover:text-foreground
         `}
         type='button'
-        title='Unlocked — click to lock security-sensitive commands again'
+        title='Click to lock'
         onclick={relock}
       >
         <Icon icon='lucide:lock-open' width={14} height={14} />
@@ -128,7 +128,7 @@
           `,
           link.tone,
         ]}
-        title='This app is connected over {link.label}'
+        title='Connected over {link.label}'
       >
         <Icon icon={link.icon} width={14} height={14} />
         {link.label}
