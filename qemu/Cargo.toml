@@ -20,7 +20,7 @@ bench = false
 locked = []
 
 [dependencies]
-rmk = { git = "https://github.com/rmk-rs/rmk.git", rev = "2ca24ad65bd15ee73073df84d47f4a3a17f91fbb", default-features = false, features = [ "rynk" ] }
+rmk = { version = "0.9.0", default-features = false, features = [ "rynk" ] }
 embassy-executor = { version = "0.10", features = [
   "platform-riscv32",
   "executor-thread"
@@ -42,4 +42,4 @@ static_cell = "2.0"
 uart_16550 = "0.6"
 
 [build-dependencies]
-rmk-config = { git = "https://github.com/rmk-rs/rmk.git", rev = "2ca24ad65bd15ee73073df84d47f4a3a17f91fbb" }
+rmk-config = "0.8.0"

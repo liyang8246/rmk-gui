@@ -19,7 +19,7 @@ hands it a `JsByteLink`. The backend's only job is to produce that link.
 │  ┌─────────────────────────────────┐                        │
 │  │ connect(JsByteLink) → RynkClient│  get_key / set_key / … │
 │  └──────────────┬──────────────────┘                        │
-│                 │ JsByteLink { send, recv, close }           │
+│                 │ JsByteLink { label, send, recv, close }    │
 │  ┌──────────────┴──────────────────┐                        │
 │  │ TauriByteLink / WebUsbLink /    │                        │
 │  │ WebHidLink                      │                        │
@@ -31,7 +31,7 @@ hands it a `JsByteLink`. The backend's only job is to produce that link.
     │  invoke('rynk_send/recv')   │     │  navigator.usb / navigator.hid
     │  ┌─ usb (rynk-usb / nusb)   │     │  ┌─ WebUsbLink (vendor bulk)
     │  ├─ tcp (tokio TcpStream)   │     │  └─ WebHidLink (BLE-bonded)
-    │  └─ ble (btleplug)          │
+    │  └─ ble (rynk-ble / bluest) │
     └─────────────────────────────┘
 ```
 
@@ -41,7 +41,7 @@ hands it a `JsByteLink`. The backend's only job is to produce that link.
 src-tauri/src/
 ├── main.rs                 — fn main() + tauri::Builder + generate_handler
 └── transport/
-    ├── mod.rs              — Session model, spawn_tokio_io, rynk_pump, rynk_send/recv/close
+    ├── mod.rs              — Session model, spawn_tokio_io/spawn_session, rynk_pump, rynk_send/recv/close/close_all
     ├── usb.rs              — UsbDeviceInfo, rynk_discover_usb, rynk_connect_usb
     ├── tcp.rs              — TcpDeviceInfo, rynk_discover_tcp, rynk_connect_tcp
     └── ble.rs              — BleDeviceInfo, rynk_discover_ble, rynk_connect_ble
@@ -54,20 +54,22 @@ src/rynk/
 
 ## Tauri Commands
 
-Nine commands, all returning `Result<T, String>` except `rynk_discover_tcp`
-(which has no `State` parameter):
+Ten commands, all returning `Result<T, String>` except `rynk_discover_tcp`,
+which returns a plain `Vec<TcpDeviceInfo>` — the probe cannot fail, only come
+up empty:
 
 | Command | Module | Purpose |
 |---------|--------|---------|
 | `rynk_discover_usb` | `usb.rs` | List devices carrying the Rynk vendor interface triple |
-| `rynk_discover_ble` | `ble.rs` | Scan for BLE devices advertising Rynk service UUID |
+| `rynk_discover_ble` | `ble.rs` | List OS-connected BLE devices exposing the Rynk service (no scan) |
 | `rynk_discover_tcp` | `tcp.rs` | Probe `127.0.0.1:7965` (dev-only, 300ms timeout) |
 | `rynk_connect_usb` | `usb.rs` | Open device, claim the vendor interface |
-| `rynk_connect_ble` | `ble.rs` | Connect + discover GATT + subscribe + spawn task |
+| `rynk_connect_ble` | `ble.rs` | Open via `rynk-ble` (GATT attach), pump the halves |
 | `rynk_connect_tcp` | `tcp.rs` | Connect TCP, split read/write |
 | `rynk_send` | `mod.rs` | Write bytes to session (waits for write ack) |
 | `rynk_recv` | `mod.rs` | Read bytes from session (parks until data) |
 | `rynk_close` | `mod.rs` | Close session, drop transport |
+| `rynk_close_all` | `mod.rs` | Close every session (frontend teardown) |
 
 ## Session Model
 
@@ -94,10 +96,11 @@ enum SessionCmd {
 }
 ```
 
-The `oneshot` ack on `Send` is critical: it serializes writes so two rapid
-sends from the frontend cannot reorder at the task. `rynk_send` awaits the
-ack before returning, honoring the rynk transport contract ("a successful
-write MUST commit the bytes").
+The `oneshot` ack on `Send` is critical: `rynk_send` resolves only once the
+task has written the bytes into the transport, honoring the rynk transport
+contract ("A successful `write` MUST commit the returned bytes"). Without
+it, the frontend's awaited `send()` would resolve while the bytes still sat
+queued in the command channel.
 
 ### Reader/writer task
 
@@ -107,21 +110,22 @@ a `tokio::select!` loop:
 - **TCP** (`spawn_tokio_io`): uses `tokio::io::split` to get separate
   `AsyncRead` + `AsyncWrite` halves. The select loop reads from the read half
   and writes from the command channel.
-- **USB** (`rynk_pump`): the same loop shape over the `embedded-io-async`
-  halves `rynk-usb` hands out.
-- **BLE** (`rynk_connect_ble`): uses btleplug's `notifications()` stream for
-  reads and `peripheral.write()` for writes. Same select loop shape, different
-  read source.
+- **USB and BLE** (`rynk_pump` via `spawn_session`): the same loop shape over
+  the `embedded-io-async` halves `rynk-usb` / `rynk-ble` hand out
+  (`UsbReader`/`UsbWriter`, `BleReader`/`BleWriter`). `spawn_session`
+  registers a session around a pump built at the caller's concrete types —
+  the pump's future only proves `Send` once the halves are concrete.
 
-Both produce `(cmd_tx, data_rx)` feeding into the same `Session` struct. The
-unification point is the Session contract, not a shared spawn function.
+All three produce `(cmd_tx, data_rx)` feeding into the same `Session` struct.
+The unification point is the Session contract, not a shared spawn function.
 
 ### EOF signaling
 
 When the transport reads `Ok(0)` or an error, the task sends `Vec::new()`
 (empty array) on `data_tx` and breaks. `rynk_recv` returns this empty array.
 The frontend's `TauriByteLink.recv()` returns `new Uint8Array(0)`, which
-`WasmTransport` interprets as EOF → `RynkHostError::Disconnected`.
+`WasmReader` reads as `Ok(0)` (EOF) — the rynk driver surfaces that as
+`RynkHostError::Disconnected`.
 
 ## USB Transport
 
@@ -131,7 +135,8 @@ The frontend's `TauriByteLink.recv()` returns `new Uint8Array(0)`, which
 vendor interface class triple (`0xFF/0x52/0x52`) against every USB device —
 VID/PID never enter into it. Enumeration reads cached descriptors and opens
 nothing; the returned `id` is the `nusb::DeviceId` formatted as a string, and
-the label is the descriptor's product string.
+the label is the descriptor's product string (falling back to the numeric
+`vid:pid` when the descriptor carries none).
 
 ### Connect
 
@@ -157,65 +162,44 @@ to `spawn_tokio_io`.
 
 ## BLE Transport
 
-### Library: btleplug
+### Library: rynk-ble
 
-rmk-gui uses [`btleplug`](https://crates.io/crates/btleplug) 0.12 — a
-`Send + Sync` BLE library supporting Windows (WinRT), macOS (CoreBluetooth),
-and Linux (BlueZ). Unlike `bluest` (used by the upstream `rynk-ble` crate),
-btleplug's `Peripheral` and `Adapter` types are `Send`, so BLE sessions use
-plain `tokio::spawn` — no `std::thread` + `LocalSet` workaround needed.
-
-### Constants
-
-Hardcoded in `ble.rs` (kept in sync with `rmk-types::protocol::rynk`):
-
-```rust
-const RYNK_SERVICE_UUID: Uuid    = Uuid::from_u128(0x10900067_537f_4f0a_9b55_929e271f61ab);
-const RYNK_INPUT_CHAR_UUID: Uuid  = Uuid::from_u128(0x80f9319b_0c74_43a5_9738_c59d6dda3db9);
-const RYNK_OUTPUT_CHAR_UUID: Uuid = Uuid::from_u128(0x19802524_6f90_4346_93c2_63dbc509ab55);
-const BLE_SAFE_WRITE: usize       = 20;
-const RYNK_BLE_CHUNK_SIZE: usize  = 244;
-```
+rmk-gui uses the upstream [`rynk-ble`](https://crates.io/crates/rynk-ble)
+crate (built on `bluest`). Everything BLE-specific — the service and
+characteristic UUIDs (from `rmk-types::protocol::rynk`), the GATT attach, the
+notification stream, write chunking — lives upstream; `ble.rs` is a thin
+adapter that feeds the halves `rynk-ble` hands out into the same session pump
+as USB.
 
 ### Discovery
 
-`rynk_discover_ble` scans for devices advertising the Rynk service UUID:
+There is no scan: a keyboard the host is typing on is already connected, and
+a connected peripheral stops advertising — scanning would never find it.
+`BleDevice::discover()` asks the adapter for already-connected devices
+exposing the Rynk service UUID, which is also the only way to tell a Rynk
+keyboard from any other.
 
-1. `adapter.start_scan(ScanFilter { services: [RYNK_SERVICE_UUID] })`
-2. `sleep(2s)` — let the scan populate results
-3. `adapter.peripherals()` — collect discovered devices
-4. `adapter.stop_scan()` — stop scanning (important on Linux/BlueZ)
+`rynk_discover_ble` wraps the call in a 3s timeout (`DISCOVER_TIMEOUT`): an
+adapter that is off, or whose permission the user has not answered, parks in
+`wait_available` instead of erroring — and the device list waits on every
+transport, so an unbounded BLE probe would hide the USB keyboards too.
 
-Each device is identified by `peripheral.id().to_string()` — the
-cross-platform stable identifier. On macOS, `address()` returns all-zeros
-(CoreBluetooth doesn't expose BD_ADDR), so `id()` must be used instead.
+Each device is identified by its `bluest` `DeviceId` formatted as a string —
+the stable picker key, unlike the BLE name, which may be absent or shared.
 
 ### Connect
 
-`rynk_connect_ble` performs five steps:
+`rynk_connect_ble` re-discovers, matches the id back to a device, and calls
+`device.open()`: `rynk-ble` connects, discovers the service and
+characteristics by UUID, and subscribes — bounded by its `GATT_TIMEOUT`
+(10s), since those GATT operations carry no inherent timeout. `open()`
+returns only once the subscription is live (the order the firmware needs
+before the client's first write), yielding the `BleReader`/`BleWriter`
+halves fed to `rynk_pump`.
 
-1. Re-enumerate `adapter.peripherals()` and find the matching `id()`
-2. `peripheral.connect()`
-3. `peripheral.discover_services()`
-4. Find input/output characteristics by UUID
-5. `peripheral.subscribe(&input)` + `peripheral.notifications()`
-
-Then spawns a `tokio::spawn` task that:
-- Reads from the notification stream → `data_tx`
-- Writes from `cmd_rx` → `peripheral.write()` with `WriteType::WithResponse`
-- On `Close`: `unsubscribe()` + `disconnect()` + break
-
-### Write chunking
-
-BLE writes are chunked to `mtu - 3` clamped to `[20, 244]`:
-
-```rust
-let write_chunk = (peripheral.mtu() as usize).saturating_sub(3)
-    .clamp(BLE_SAFE_WRITE, RYNK_BLE_CHUNK_SIZE);
-```
-
-The MTU may not be negotiated yet at connect time (defaults to 23), so the
-`clamp(20, 244)` lower bound keeps writes safe even with a stale MTU.
+Write chunking lives in `rynk-ble`'s `BleWriter`: one write-without-response
+per chunk, capped to the characteristic's `max_write_len` clamped to
+`[BLE_SAFE_WRITE = 20, RYNK_BLE_CHUNK_SIZE = 244]`.
 
 ## Frontend
 
@@ -225,12 +209,16 @@ Wraps Tauri `invoke` calls into the `JsByteLink` shape:
 
 ```typescript
 class TauriByteLink {
-  constructor(private sessionId: string) {}
+  constructor(private sessionId: string, readonly label: string) {}
   async send(frame: Uint8Array) { await invoke('rynk_send', { session: ..., data: Array.from(frame) }) }
   async recv(): Promise<Uint8Array> { return new Uint8Array(await invoke('rynk_recv', ...)) }
   async close() { await invoke('rynk_close', ...) }
 }
 ```
+
+`rynk-wasm` only ever uses `label`, `send`, and `recv`; `close()` (and
+`closeAllSessions()` → `rynk_close_all`) is the page's teardown — the
+protocol layer never closes a link.
 
 ### WebUsbLink (`src/rynk/web.ts`)
 
@@ -261,9 +249,12 @@ async function discover(): Promise<TransportInfo[]> {
 }
 ```
 
-Each `TransportInfo` carries a `connect()` closure that returns a `ByteLink`.
-The caller passes this to `rynk-wasm`'s `core.connect(link, label)` — the
-protocol layer takes over from there.
+Each `TransportInfo` carries a `connect()` closure that returns a
+`ConnectedDevice { link, label }`. The caller hands the link to
+`connectClient(link)` (`src/rynk/core.ts`), which probes the protocol
+version, loads the wasm, and calls `core.connect(link)` — `connect` takes
+only the link; the label rides on the link itself. The protocol layer takes
+over from there.
 
 Granting a new device needs the browser's picker, which must run inside a user
 gesture — `requestUsbDevice()` / `requestHidDevice()` are the click-handler

@@ -12,11 +12,9 @@ const elf = join(dir, 'target/riscv32imac-unknown-none-elf/release/rmk-qemu-risc
 // mistake, and two checkouts can run their fixtures side by side.
 const port = process.env.RMK_QEMU_PORT ?? '7965'
 
-const RMK_GIT = 'https://github.com/rmk-rs/rmk.git'
-
 /// Same resolution order as scripts/build-rynk-wasm.py: a local checkout builds
 /// both the firmware and the wasm client from one working tree. With none, both
-/// fall back to the rmk rev pinned in Cargo.toml and the script.
+/// fall back to the crates.io versions pinned in Cargo.toml and the script.
 function rmkRepo() {
   const env = process.env.RMK_REPO
   if (env) return resolve(env)
@@ -29,7 +27,7 @@ if (repo) console.log(`patching rmk to ${repo}`)
 // JSON.stringify escapes the path into a TOML basic string.
 const patch = (repo ? ['rmk', 'rmk-config'] : []).flatMap(crate => [
   '--config',
-  `patch.${JSON.stringify(RMK_GIT)}.${crate}.path=${JSON.stringify(join(repo, crate))}`,
+  `patch.crates-io.${crate}.path=${JSON.stringify(join(repo, crate))}`,
 ])
 
 // Extra args go to cargo, e.g. `pnpm qemu --features locked`.

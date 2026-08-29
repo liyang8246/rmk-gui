@@ -14,7 +14,7 @@
 
 - [Overview](./rynk-wasm/README.md)
 - [RynkClient API](./rynk-wasm/client.md)
-- [WasmTransport](./rynk-wasm/transport.md)
+- [WasmReader & WasmWriter](./rynk-wasm/transport.md)
 - [Lifecycle & Dead States](./rynk-wasm/lifecycle.md)
 - [JS Byte Link Implementations](./rynk-wasm/js-byte-link.md)
 

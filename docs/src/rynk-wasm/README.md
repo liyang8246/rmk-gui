@@ -12,16 +12,17 @@ package owns the Rynk protocol state machine.
 
 ```text
 WebUSB / WebHID / another browser transport
-        -> JsByteLink { send, recv, close }
-        -> transport::WasmTransport
-        -> rynk::Client
+        -> JsByteLink { label, send, recv }
+        -> transport::WasmReader / WasmWriter
+        -> rynk::Client + rynk::Driver
         -> RynkClient methods exposed to JavaScript
 ```
 
 This split is intentional: browser permissions, chooser UI, stream locks, and
 hot-plug events stay in JS, while request/response typing, topic handling, and
 protocol validation stay in Rust. The boundary between the two is a narrow
-byte-stream interface (`JsByteLink`) that any browser transport can implement.
+byte-stream interface (`JsByteLink`) that any browser transport can implement —
+the already-open link itself is the web transport's `RynkDevice`.
 
 ## Prerequisites
 
@@ -39,22 +40,28 @@ python3 -m http.server 8000         # localhost is a secure context for WebUSB /
 ```
 
 Open Chrome or Edge at `http://localhost:8000` and use `index.html` as the
-reference shell. `localhost` is a secure context, which WebUSB and WebHID
-require — an IP address will not work.
+reference shell — it connects via Web Serial (USB) or WebHID (BLE); `rmk-gui`'s
+own WebUSB and WebHID links live in `src/rynk/web.ts`. `localhost` is a secure
+context, which these APIs require — an IP address will not work.
 
-CI runs the same package build so binding generation is checked without
-committing generated files.
+Upstream CI runs the same package build so binding generation is checked
+without committing generated files. In `rmk-gui`,
+`scripts/build-rynk-wasm.py` runs this build and vendors the resulting `pkg/`
+into `src/rynk/wasm/`, preferring a local RMK checkout (`RMK_REPO` or the
+sibling `../rmk`) and otherwise downloading the published crate source for the
+pinned version.
 
 ## TypeScript Declarations
 
 `wasm-pack` generates `.d.ts` declarations alongside the JS glue in `pkg/`. The
 generated types are precise:
 
-- The `endpoints!` macro (see [RynkClient API](./client.md)) uses `tsify` so
-  every request body and response type maps to a concrete TypeScript type — no
-  `JsValue` or `any` leaks into the declarations.
-- Body and response types are tsify wire types, marshalled across the wasm ABI
-  by `serde-wasm-bindgen`.
+- Every request argument and response of the `endpoints!` methods (see
+  [RynkClient API](./client.md)) is a tsify wire type, so each maps to a
+  concrete TypeScript type — no `JsValue` or `any` in the method signatures.
+  (`connect(link)` is the exception: `JsByteLink` is a JS-defined extern type,
+  typed `any`.)
+- wasm-bindgen marshals the tsify wire types across the wasm ABI.
 - Errors convert to JS `Error` objects via `RynkHostError: Into<JsValue>`, with
   stable `name` values such as `Disconnected`, `Rejected`, and `Unsupported`.
 
@@ -77,7 +84,7 @@ console.log('current layer', await client.get_current_layer());
 
 // Pull topic pushes (layer changes, WPM, ...) until the link closes.
 (async () => {
-  try { for (;;) console.log('topic', await client.next_event()) }
+  try { for (;;) console.log('topic', await client.next_topic()) }
   catch (e) { console.log('disconnected:', e.message) }
 })()
 
@@ -90,6 +97,7 @@ interface):
 
 ```js
 {
+  label: 'My Keyboard',   // string shown in logs and device pickers
   async send(bytes) {
     // Uint8Array from wasm -> browser transport
   },
@@ -97,20 +105,26 @@ interface):
     // Browser transport -> Uint8Array for wasm.
     // Return an empty Uint8Array only when the link is closed.
   },
-  async close() {
-    // Release browser resources. Safe to call more than once.
-  },
 }
 ```
 
-A topic pump loop drives `next_event()` in a `for (;;)` loop until the
+The page owns the link's lifetime: it opens the link before `connect` and
+closes it on teardown. `rynk-wasm` never calls a `close()` method — the
+`link.close()` above is the page's own teardown API, not part of the
+`JsByteLink` contract.
+
+Every `RynkClient` method is `&self`, so the parked topic loop and up to four
+request calls run concurrently, full-duplex, with replies matched back by
+sequence number.
+
+A topic pump loop drives `next_topic()` in a `for (;;)` loop until the
 await rejects with `Disconnected`. This mirrors the native
-`Client::next_event()` pull used by `rynk-usb` and `rynk-ble`:
+`Client::next_topic()` pull:
 
 ```js
 async function pumpTopics(client) {
   try {
-    for (;;) console.log('topic', await client.next_event())
+    for (;;) console.log('topic', await client.next_topic())
   }
   catch {
     // Disconnected/closed — teardown owns the UI reset.
@@ -118,38 +132,44 @@ async function pumpTopics(client) {
 }
 ```
 
-See [Lifecycle & Dead States](./lifecycle.md) for the full connect/disconnect
-teardown pattern.
+See [Lifecycle](./lifecycle.md) for the full connect/disconnect teardown
+pattern.
 
 ## Crate Structure
 
-The crate is `#![cfg(target_arch = "wasm32")]` — native targets compile an empty
-crate. Four source files make up the package:
+The crate is `#![cfg(target_arch = "wasm32")]` — native targets compile an
+empty crate. Four source files make up the package:
 
-- `src/lib.rs` — Crate root gated to `wasm32`. Exports the `client`, `device`,
-  and `transport` modules. The `#[wasm_bindgen(start)]` `init()` function sets
-  the panic hook (`console_error_panic_hook`) and initializes `console_log` at
-  `Debug` level.
+- `src/lib.rs` — Crate root gated to `wasm32`. Declares the `catalog`,
+  `client`, and `transport` modules. The `#[wasm_bindgen(start)]` `init()`
+  function sets the panic hook (`console_error_panic_hook`) and initializes
+  `console_log` at `Debug` level.
 - `src/client.rs` — `RynkClient` exposed via `#[wasm_bindgen]`. Contains the
-  `connect()` entry point and the `endpoints!` macro that generates the typed
-  request methods from the native client shape.
-- `src/device.rs` — `WebDevice` implements `RynkDevice`. It wraps an
-  already-open `JsByteLink` plus the page-supplied label; `open()` constructs
-  the `WasmTransport`.
-- `src/transport.rs` — `WasmTransport` adapts `JsByteLink` to the
-  `rynk::io::Read` / `Write` traits, buffering received bytes and parking a
-  single in-flight `recv()` future.
+  `connect()` entry point, `next_topic()`, and the `endpoints!` macro that
+  generates the typed request methods from the native client shape. With no
+  resident task to pump the `Driver`, the in-flight calls elect one via
+  `RynkClient::drive`.
+- `src/transport.rs` — `JsByteLink` (the JS-owned byte link as an extern type)
+  implements `RynkDevice`; its `open()` hands out the `WasmReader` /
+  `WasmWriter` halves that adapt `send`/`recv` to the `rynk::io::Read` /
+  `Write` traits, parking in-flight `recv()` and `send()` promises so
+  cancelled reads and writes resume them instead of starting duplicates.
+- `src/catalog.rs` — The keycode tables, handed to JS whole
+  (`all_hid_keycodes`, `hid_keycode_values`, `all_consumer_keys`,
+  `all_system_control_keys`), so a host can iterate every keycode the firmware
+  understands instead of keeping its own copy.
 
 Dependencies (from `Cargo.toml`): `rynk` (with the `wasm` feature),
-`wasm-bindgen`, `wasm-bindgen-futures`, `js-sys`,
-`console_error_panic_hook`, `console_log`, `log`, and `serde-wasm-bindgen`.
+`embassy-futures`, `embassy-sync`, `wasm-bindgen`, `wasm-bindgen-futures`,
+`js-sys`, `console_error_panic_hook`, `console_log`, and `log`.
 
 ## Where to Go Next
 
 - [RynkClient API](./client.md) — every method, the `endpoints!` macro, and JS
   error names
-- [WasmTransport](./transport.md) — how `JsByteLink` becomes `Read`/`Write`
-- [Lifecycle & Dead States](./lifecycle.md) — connect flow, cancelled reads,
-  topic overflow, reconnect
+- [Wasm Transport](./transport.md) — how `JsByteLink` becomes the
+  `Read`/`Write` halves
+- [Lifecycle](./lifecycle.md) — connect flow, cancelled calls, topic
+  overflow, reconnect
 - [JS Byte Link Implementations](./js-byte-link.md) — WebUSB and WebHID
   reference code

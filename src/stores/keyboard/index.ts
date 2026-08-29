@@ -8,4 +8,5 @@ export type {
   KeyboardDevice,
   KeyboardStatus,
   KeyboardStore,
+  NumericBehaviorField,
 } from './types'

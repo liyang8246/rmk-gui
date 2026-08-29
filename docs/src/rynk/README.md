@@ -10,19 +10,22 @@ Rynk is built around three core principles:
 
 ### 1. Runtime-Free Core
 
-The `rynk` crate (the protocol client) depends only on `embedded-io-async`
-traits — no `tokio`, no `embassy`, no async runtime. A transport crate
-implements `Read + Write`, hands the link to `Client::connect`, and the client
-drives the protocol. This means the same protocol logic works on native
-desktop, embedded `no_std`, and `wasm32`.
+The `rynk` crate (the protocol client) depends on no async runtime — no
+`tokio`, no `embassy` executor; transports plug in through plain
+`embedded-io-async` traits. A transport crate
+implements `RynkDevice` (its `open()` hands out `Read + Write` halves), and
+the trait's provided `connect()` drives the handshake and yields a `Client` +
+`Driver` pair. This means the same protocol logic works on native desktop,
+embedded `no_std`, and `wasm32`.
 
 ### 2. Shared Typed Command Table
 
 Both the firmware and host compile against a single command table in
 `rmk-types::protocol::rynk::command`. Each command (`Cmd`) is bound to its
 request and response payload types at compile time via the `Endpoint` trait.
-Topic pushes (server→host) are similarly typed via the `Topic` trait. The two
-ends of the wire can never disagree about a message's types.
+Topic pushes (server→host) are similarly typed via the `topics!` table, which
+generates the `TopicEvent` union that `next_topic()` yields. The two ends of
+the wire can never disagree about a message's types.
 
 ### 3. Transport-Agnostic Byte Link
 
@@ -37,16 +40,16 @@ same `embedded-io-async` `Read + Write` interface to the client. The
 rynk/
 ├── src/              # rynk: core protocol client
 │   ├── lib.rs        # crate root, re-exports
-│   ├── driver.rs     # Client<T>: framing, SEQ correlation, topic queue, lifecycle
-│   ├── api.rs        # Typed endpoint methods + topic decoding
-│   ├── device.rs     # RynkDevice trait
+│   ├── driver.rs     # Client + Driver: framing, SEQ slots, topic queue
+│   ├── api.rs        # Typed request methods for each endpoint
+│   ├── device.rs     # RynkDevice trait (open + connect)
 │   └── layout.rs     # LayoutInfo: compressed blob → typed layout
 ├── rynk-wasm/        # Browser WASM client (core for rmk-gui)
 │   └── src/
 │       ├── lib.rs    # wasm32-gated crate root, init()
 │       ├── client.rs # RynkClient: #[wasm_bindgen] API + endpoints! macro
-│       ├── device.rs # WebDevice: RynkDevice for browser
-│       └── transport.rs # WasmTransport: JsByteLink → Read/Write
+│       ├── transport.rs # JsByteLink (RynkDevice) → WasmReader / WasmWriter
+│       └── catalog.rs # keycode tables handed to JS whole
 ├── rynk-usb/         # Raw-USB vendor bulk transport (native, nusb)
 ├── rynk-ble/         # BLE GATT transport (native)
 └── rynk-kle/         # KLE/Vial layout conversion (native + wasm)
@@ -54,34 +57,34 @@ rynk/
 
 ## Protocol at a Glance
 
-- **Wire format**: 5-byte header (`CMD u16 LE | SEQ u8 | LEN u16 LE`) + postcard-encoded payload
+- **Wire format**: 3-byte header (`CMD u16 LE | SEQ u8`) + postcard-encoded payload, COBS-encoded and `0x00`-delimited on the wire
 - **Commands**: `0x0000–0x7FFF` request/response; `0x8000–0xFFFF` topic (server→host push)
 - **Serialization**: [postcard](https://github.com/jamesmunns/postcard) (compact binary serde)
 - **Responses**: wrapped in `Result<T, RynkError>` envelope
 - **Versioning**: `GetVersion` handshake; major mismatch = hard reject, minor = informational
-- **Topics**: best-effort push, pull-based delivery via `next_event()`
+- **Topics**: best-effort push, pull-based delivery via `next_topic()`
 
 ## Data Flow
 
 ```text
 Host Application
     │
-    ├── rynk-wasm (browser) ─── JsByteLink ─── WebUSB / WebHID
-    ├── rynk-usb (native) ───── bulk halves ────── USB vendor interface
-    └── rynk-ble (native) ──── BleTransport ──── BLE GATT
+    ├── rynk-wasm (browser) ─── JsByteLink ──────── WebUSB / WebHID
+    ├── rynk-usb (native) ───── UsbReader/Writer ── USB vendor interface
+    └── rynk-ble (native) ───── BleReader/Writer ── BLE GATT
     │
-    └──► Client<T: Read + Write> ──► Rynk Protocol ──► RMK Firmware
+    └──► Client + Driver<R: Read, W: Write> ──► Rynk Protocol ──► RMK Firmware
 ```
 
-The host application chooses a transport, discovers a Rynk keyboard, opens the
-link, and hands it to `Client::connect()`. The handshake negotiates the
-protocol version and caches device capabilities. Typed methods then drive
-request/response round trips, while `next_event()` pulls topic pushes from a
-bounded queue.
+The host application chooses a transport, discovers a Rynk keyboard, and calls
+`RynkDevice::connect()` on it. The handshake negotiates the protocol version
+and caches device capabilities. Typed methods then drive request/response
+round trips, while `next_topic()` pulls topic pushes from a bounded queue.
 
 ## Where to Go Next
 
 - [Architecture](./architecture.md) — Client/Transport/Device split, `RynkDevice` trait
 - [Protocol & Wire Format](./protocol.md) — framing, commands, topics, errors
 - [API Reference](./api-reference.md) — full typed method surface
+- [Physical Layout](./layout.md) — the `GetLayout` blob, paging, and `LayoutInfo`
 - [Rynk-WASM Overview](../rynk-wasm/README.md) — the core for this application

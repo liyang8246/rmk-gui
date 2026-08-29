@@ -1,7 +1,7 @@
 import type { ChildProcess } from 'node:child_process'
 import type net from 'node:net'
 import type { RynkClient } from '../src/rynk/core'
-import type { KeyAction, Morse } from '../src/rynk/wasm/rynk_wasm.js'
+import type { BehaviorConfig, KeyAction, Morse } from '../src/rynk/wasm/rynk_wasm.js'
 import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, expect, it } from 'vitest'
 import { connectClient } from '../src/rynk/core'
@@ -163,11 +163,22 @@ it('round-trips the default layer', async () => {
 
 it('round-trips the behavior config', async () => {
   const original = await client.get_behavior()
-  const next = {
+  const next: BehaviorConfig = {
     combo_timeout_ms: 77,
     oneshot_timeout_ms: 850,
     tap_interval_ms: 25,
     tap_capslock_interval_ms: 350,
+    // The profile packs into a u64 with per-field presence bits, so every
+    // field set here must read back exactly.
+    morse_default_profile: {
+      unilateral_tap: true,
+      enable_flow_tap: false,
+      mode: 'PermissiveHold',
+      hold_timeout_ms: 260,
+      gap_timeout_ms: 180,
+      quick_tap_timeout_ms: 120,
+    },
+    morse_prior_idle_time_ms: 130,
   }
   try {
     await client.set_behavior(next)

@@ -16,14 +16,14 @@ canonical example before building rmk-gui's integration layer.
 ## Architecture
 
 ```text
-rmk-gui (Tauri/SolidJS)
+rmk-gui (Tauri/Svelte)
   │
   ├── User gesture → navigator.usb.requestDevice() / navigator.hid.requestDevice()
-  ├── JsByteLink { send, recv, close } — owns browser transport
+  ├── JsByteLink { label, send, recv } — owns browser transport
   ├── rynk-wasm pkg (wasm-pack output)
-  │   ├── connect(link, label?) → RynkClient
+  │   ├── connect(link) → RynkClient
   │   ├── Typed methods (get_key, set_key, get_layout, etc.)
-  │   └── next_event() → TopicEvent (layer changes, WPM, etc.)
+  │   └── next_topic() → TopicEvent (layer changes, WPM, etc.)
   └── Topic pump loop → UI state updates
 ```
 
@@ -31,6 +31,8 @@ The object passed to `connect(link)` only needs this shape:
 
 ```js
 {
+  label: "My keyboard", // display name; rynk-wasm reads it, never sets it
+
   async send(bytes) {
     // Uint8Array from wasm -> browser transport
   },
@@ -38,34 +40,38 @@ The object passed to `connect(link)` only needs this shape:
     // Browser transport -> Uint8Array for wasm.
     // Return an empty Uint8Array only when the link is closed.
   },
-  async close() {
-    // Release browser resources. Safe to call more than once.
-  },
 }
 ```
 
+Closing the link is the page's job: `rynk-wasm` never calls a `close` method
+and does not require one. Give the link your own `close()` and call it on
+every exit path — including a rejected `connect()` — releasing the device and
+waking any pending `recv()`, which then returns the EOF empty array.
+
 ## Connect Recipe
 
-The connect flow must begin inside a user gesture (button click) because Web
-Serial and WebHID both require one for `requestPort()` / `requestDevice()`.
+The connect flow must begin inside a user gesture (button click) because
+WebUSB and WebHID both require one for `requestDevice()`.
 
 1. **User clicks connect button** (user gesture required for WebUSB/WebHID).
-2. **Open browser transport, create `JsByteLink`.**
+2. **Open browser transport, create `JsByteLink`** with its `label` set.
 3. **(Optional) Probe version:** `link.probeVersion()` returns `{ major, minor }`.
+   Any pre-`connect()` probing must finish before `connect()` — only
+   `rynk-wasm` may call `recv()` afterwards.
 4. **Load version-matched wasm:** `loadCore(major)` dynamically imports
    `./pkg/rynk_wasm.js`.
 5. **Wasm init:** `await core.default()` — runs `wasm-bindgen` init (idempotent).
-6. **Connect:** `await core.connect(link, label)` — handshake, returns
-   `RynkClient`.
+6. **Connect:** `await core.connect(link)` — handshake, returns `RynkClient`.
+   The client carries no display name; keep showing `link.label`.
 7. **Cache capabilities:** `await client.get_capabilities()` — gate UI on the
    result.
 
 ```js
-l = await openLink()
+l = await openLink() // sets l.label from the chooser / device.productName
 const { major, minor } = await l.probeVersion()
 core = await loadCore(major)
 await core.default()
-client = await core.connect(l, device?.productName || null)
+client = await core.connect(l)
 const caps = await client.get_capabilities()
 ```
 
@@ -74,8 +80,8 @@ const caps = await client.get_capabilities()
 Use the `get_capabilities()` result to show or hide UI sections. A capability
 flag tells you whether a feature exists on this keyboard; calling a method
 gated behind a missing capability returns an `Unsupported` error (with
-`e.name === "Unsupported"`), but the link stays alive — it is not a fatal
-error.
+`e.name === "Unsupported"`, nothing sent on the wire), but the link stays
+alive — it is not a fatal error.
 
 | Capability                  | `false` means                                          |
 |-----------------------------|--------------------------------------------------------|
@@ -103,14 +109,15 @@ async function show(label, fn) {
 ## Topic Pump Loop
 
 Topic pushes (layer changes, WPM updates, etc.) are pulled, not delivered by
-callback. Drive `next_event()` in a loop. It parks until the next recognized
-topic and rejects with `Disconnected` at EOF.
+callback. Drive `next_topic()` in a loop. It parks until the next recognized
+topic and rejects with `Disconnected` at EOF. The session is full duplex: the
+parked pump loop and request calls run concurrently on the same client.
 
 ```js
 async function pumpTopics(client) {
   try {
     for (;;) {
-      const event = await client.next_event()
+      const event = await client.next_topic()
       // Update UI: LayerChange -> highlight layer, WpmUpdate -> WPM display, etc.
     }
   }
@@ -120,17 +127,19 @@ async function pumpTopics(client) {
 }
 ```
 
-`events_dropped()` reports topic queue overflow — use it to detect lag and
-re-read critical state via the matching `Get*` snapshot method.
+The topic queue holds 8 events (`TOPIC_QUEUE_CAPACITY`); when the pump lags,
+the oldest event is dropped silently — there is no drop counter. Treat topics
+as hints, and re-read critical state via the matching `Get*` snapshot method
+whenever the UI must be consistent (e.g. after resuming from a stall).
 
 ## Disconnect & Reconnect
 
 ### Disconnect
 
-Closing the `JsByteLink` EOFs the transport, which causes `next_event()` to
+Closing the `JsByteLink` EOFs the transport, which causes `next_topic()` to
 reject with `Disconnected`. The teardown sequence:
 
-- Close the link.
+- Close the link (the page's own `close()` — see above).
 - Null the client.
 - Reset UI state.
 - Re-enable the connect buttons.
@@ -185,6 +194,7 @@ Poll `unlock_poll()` every ~150ms while the user holds the challenge keys.
 
 ```js
 const start = await client.get_lock_status();
+if (!start.locked) return; // already unlocked
 if (start.key_positions.length === 0) {
   // permanently locked — set [host].unlock_keys in keyboard.toml
   return;
@@ -204,11 +214,18 @@ stop polling.
 
 Use the capability flags to choose the sync strategy:
 
-- **If `bulk_transfer_supported`** — use `get_keymap_bulk` / `set_keymap_bulk`
-  (or the high-level read_all / write_all pagers if available in the wasm
-  binding) to transfer the entire keymap in fewer round trips.
+- **If `bulk_transfer_supported`** — call the whole-resource pagers
+  `read_all_keymap()` / `write_all_keymap(actions)`. They page
+  `get_keymap_bulk` / `set_keymap_bulk` internally with up to four requests in
+  flight (`MAX_IN_FLIGHT` concurrent lanes, not a sequential loop), and return
+  or accept a flat `KeyAction` array of length
+  `num_layers * num_rows * num_cols` in layer-major, then row, then column
+  order. `read_all_combos` / `write_all_combos` and `read_all_morses` /
+  `write_all_morses` follow the same pattern, and `get_layout` reads its
+  layout-blob pages concurrently the same way.
 - **If not** — fall back to per-key `get_key(layer, row, col)` /
-  `set_key(layer, row, col)`.
+  `set_key(layer, row, col, action)`; the bulk endpoints (pagers included)
+  return `Unsupported` without sending anything.
 
 Use the capabilities (`num_layers`, `num_rows`, `num_cols`) to iterate the
 keymap grid.
@@ -216,9 +233,9 @@ keymap grid.
 ## Macro Handling
 
 `get_macro(offset)` always returns exactly `macro_chunk_size` bytes,
-zero-filled past the end of the macro data. A short chunk is **not**
-end-of-data — parse the macro encoding itself for termination, and iterate
-`offset` by `macro_chunk_size` until the encoding signals end.
+zero-filled past the end of macro space. There is never a short final chunk
+to signal end-of-data — parse the macro encoding itself for termination, and
+iterate `offset` by `macro_chunk_size` until the encoding signals end.
 
 ## Reference Implementation
 
@@ -232,5 +249,9 @@ end-of-data — parse the macro encoding itself for termination, and iterate
 - Capability-based show/hide of features
 
 Study it before building rmk-gui's integration layer. The `index.html` file
-contains complete WebUSB and WebHID `JsByteLink` implementations that can
-serve as a starting point for the transport layer.
+contains a complete WebHID `JsByteLink` (BLE keyboards over the OS HID link:
+usage page `0xFF14`, fixed 32-byte reports whose zero padding decodes as empty
+COBS frames the Rynk deframer discards). Its Web Serial button is legacy — it
+dates from the earlier CDC transport and does not reach current firmware — and
+there is no upstream WebUSB link: rmk-gui's WebUSB `JsByteLink` lives in
+`src/rynk/web.ts`.
