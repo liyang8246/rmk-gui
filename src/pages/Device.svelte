@@ -45,7 +45,7 @@
 
   function resetStorage() {
     void keyboardStore.storageReset('Full').match(
-      () => toast.success('Storage reset — the keyboard is back to its built-in defaults'),
+      () => toast.success('Storage reset to the firmware defaults'),
       e => toast.error(describeKeyboardError(e)),
     )
   }
@@ -65,10 +65,7 @@
   }
 </script>
 
-<ScreenScroll
-  title='Device'
-  desc='Connection, battery, firmware, and Bluetooth profiles for this keyboard.'
->
+<ScreenScroll title='Device'>
   <div class='mb-4 grid grid-cols-2 gap-4'>
     <Card>
       <div class='flex items-center gap-3.5'>
@@ -111,7 +108,7 @@
         />
         <p class='mt-2'>
           <Unsupported>
-            Switch output from the keyboard itself — bind the
+            Switch output from the keyboard, with the
             <b>OutputUsb</b> / <b>OutputBluetooth</b> keycodes.
           </Unsupported>
         </p>
@@ -119,10 +116,7 @@
     </Card>
 
     <Card>
-      <div class='flex items-baseline gap-2'>
-        <div class='text-[13.5px] font-semibold text-foreground'>Battery</div>
-        <div class='ml-auto text-xs text-muted-foreground'>current</div>
-      </div>
+      <div class='text-[13.5px] font-semibold text-foreground'>Battery</div>
       {#if cells.length}
         <div class='my-2.5 flex flex-col gap-2'>
           {#each cells as cell, i (cell.label || i)}
@@ -154,9 +148,6 @@
           This keyboard reports no battery.
         </p>
       {/if}
-      <Unsupported>
-        The keyboard stores no charge history, so there is no trend to plot.
-      </Unsupported>
     </Card>
   </div>
 
@@ -187,7 +178,7 @@
       <div>
         <div class='text-[13.5px] font-semibold text-foreground'>Bootloader mode</div>
         <div class='text-xs text-muted-foreground'>
-          Enter DFU to recover or flash a custom build. This ends the session.
+          Enter DFU to flash new firmware. Ends the session.
         </div>
       </div>
       <Button class='ml-auto' onclick={bootloader}>Enter bootloader</Button>
@@ -196,9 +187,7 @@
     <div class='mt-3.5 flex items-center gap-3.5 border-t border-border pt-3.5'>
       <div>
         <div class='text-[13.5px] font-semibold text-foreground'>Restart keyboard</div>
-        <div class='text-xs text-muted-foreground'>
-          Reboot the firmware. This ends the session.
-        </div>
+        <div class='text-xs text-muted-foreground'>Ends the session.</div>
       </div>
       <Button class='ml-auto' onclick={reboot}>Restart</Button>
     </div>
@@ -210,8 +199,7 @@
         <div>
           <div class='text-[13.5px] font-semibold text-foreground'>Reset stored settings</div>
           <div class='text-xs text-muted-foreground'>
-            Wipe the keymap, macros, and every other stored setting — including
-            Bluetooth bonds.
+            Wipe everything stored on the keyboard, Bluetooth bonds included.
           </div>
         </div>
         <Button class='ml-auto' onclick={() => (confirming = 'reset')}>
@@ -294,8 +282,8 @@
     {#if profiles > 0}
       <Row class='border-t border-border'>
         <Unsupported>
-          The keyboard stores a bond per slot, not the host's name, so slots are
-          shown by number. Clearing a bond is unlock-gated by the firmware.
+          Slots are numbered: the keyboard stores a bond per slot, not the
+          host's name.
         </Unsupported>
       </Row>
     {/if}
@@ -309,8 +297,7 @@
     onconfirm={resetStorage}
     onclose={() => (confirming = null)}
   >
-    Every setting stored on the keyboard is wiped: keymap, combos, macros,
-    morse keys, and Bluetooth bonds. The keyboard falls back to the defaults
-    built into its firmware. This cannot be undone.
+    Wipes the keymap, combos, macros, morse keys, and Bluetooth bonds, and
+    restores the firmware defaults. This cannot be undone.
   </ConfirmOverlay>
 {/if}

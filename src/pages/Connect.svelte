@@ -52,7 +52,7 @@
     usb: 'Plug the keyboard in over USB.',
     ble: native
       ? 'Turn the keyboard on and bring it in range.'
-      : 'Pair the keyboard with this computer first — the browser can only reach a keyboard the system has already bonded.',
+      : 'Pair it with this computer first — the browser only reaches bonded keyboards.',
   }
   const available = $derived(deviceStore.browserTransports)
   const canPick = $derived(!native && available.includes(PICKS[method]))
@@ -93,9 +93,6 @@
       <h1 class='text-[26px] font-extrabold tracking-tight text-foreground'>
         Connect your keyboard
       </h1>
-      <p class='mt-1.5 text-[13.5px] text-muted-foreground'>
-        Plug in over USB, or reach a paired keyboard over Bluetooth.
-      </p>
     </div>
 
     <Card class='flex w-[460px] max-w-full flex-none flex-col'>

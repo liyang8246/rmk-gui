@@ -70,10 +70,10 @@
     locked
       ? 'Editing is disabled while an unreadable macro is stored'
       : firstFree < 0
-      ? 'Every macro slot is in use'
+      ? 'Every slot is in use'
       : full
       ? 'Macro storage is full'
-      : 'Add a macro',
+      : undefined,
   )
 
   function commit(next: (MacroStep[] | null)[]) {
@@ -140,7 +140,7 @@
 
 <ScreenScroll
   title='Macros'
-  desc='A sequence of keystrokes, text, and delays. Assign one to any key with Macro n.'
+  desc='A sequence of keystrokes, text, and delays.'
 >
   {#snippet actions()}
     {#if capacity > 0}
@@ -173,9 +173,8 @@
     {#if locked}
       <p class='mb-3'>
         <Unsupported>
-          One of the stored macros uses the extended 16-bit keycode form,
-          which this editor cannot represent. Editing is disabled so the
-          region is not rewritten and lost.
+          A stored macro uses extended 16-bit keycodes this editor cannot
+          read, so editing is off to keep it from being overwritten.
         </Unsupported>
       </p>
     {/if}
@@ -265,7 +264,7 @@
               </div>
             {:else}
               <p class='text-xs text-muted-foreground'>
-                No steps yet — add taps, text, or delays below.
+                No steps yet — add one below.
               </p>
             {/if}
 
@@ -273,7 +272,7 @@
               {#each STEP_KINDS as kind (kind.kind)}
                 <AddChip
                   label={kind.label}
-                  title={full ? 'Macro storage is full' : `Add a ${kind.label} step`}
+                  title={full ? 'Macro storage is full' : `Add ${kind.label}`}
                   disabled={locked || full}
                   onclick={() => addStep(entry.slot, kind.kind)}
                 />
@@ -284,17 +283,13 @@
       {/each}
 
       {#if visible.length === 0}
-        <EmptyCard>
-          No macros yet — press “New macro” to record a sequence of
-          keystrokes, text, and delays.
-        </EmptyCard>
+        <EmptyCard>No macros yet.</EmptyCard>
       {/if}
     </div>
 
     <p class='mt-3.5 text-xs text-muted-foreground'>
-      Macros share one {capacity}-byte region, so every edit rewrites all
-      {MACRO_SLOTS} slots. Text is stored as ASCII and carries no modifiers —
-      use Press and Release around a Tap for capitals and symbols.
+      Text is stored as ASCII and carries no modifiers — wrap a Tap in Press
+      and Release for capitals and symbols.
     </p>
   {/if}
 </ScreenScroll>

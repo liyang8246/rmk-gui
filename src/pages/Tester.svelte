@@ -62,12 +62,11 @@
         Matrix tester
       </h1>
       <p class='text-xs text-muted-foreground'>
-        Press keys on the keyboard — live presses light up, and everything
-        pressed since the page opened stays marked.
+        Press keys on the keyboard — every one pressed stays marked.
       </p>
     </div>
     <div class='flex items-center gap-4 text-xs text-muted-foreground'>
-      <span title='Keys seen pressed since the page opened'>
+      <span title='Keys pressed since this page opened'>
         Tested <b class='text-foreground'>{seen.size}</b>
         / {variant?.keys.length ?? 0}
       </span>
@@ -81,8 +80,7 @@
     <Card class='flex flex-1 flex-col items-center justify-center gap-3'>
       <Icon class='text-muted-foreground' icon='lucide:lock' width={28} height={28} />
       <p class='max-w-105 text-center text-[13px] text-muted-foreground'>
-        Reading the key matrix is a security-sensitive command, so the
-        keyboard asks for a physical-presence check first.
+        Reading the key matrix needs a physical-presence check first.
       </p>
       {#if lockable}
         <Button variant='brand' onclick={() => (unlocking = true)}>
@@ -91,7 +89,7 @@
         </Button>
       {:else}
         <p class='text-xs text-muted-foreground'>
-          This firmware has no unlock keys configured, so the lock is permanent.
+          This firmware has no unlock keys, so the lock is permanent.
         </p>
       {/if}
     </Card>

@@ -44,9 +44,9 @@
   const pickTitle = $derived(picking?.kind === 'output' ? 'Output key' : 'Trigger key')
   const pickSubtitle = $derived.by(() => {
     if (!picking) return ''
-    if (picking.kind === 'output') return `Combo ${picking.slot} · the key the chord sends`
-    if (picking.kind === 'add') return `Combo ${picking.slot} · another key of the chord`
-    return `Combo ${picking.slot} · key ${picking.at + 1} of the chord`
+    return picking.kind === 'trigger'
+      ? `Combo ${picking.slot} · key ${picking.at + 1}`
+      : `Combo ${picking.slot}`
   })
 
   function save(slot: number, combo: Combo) {
@@ -111,7 +111,7 @@
       <Button
         variant='brand'
         disabled={firstFree < 0}
-        title={firstFree < 0 ? 'Every combo slot is in use' : 'Add a combo'}
+        title={firstFree < 0 ? 'Every slot is in use' : undefined}
         onclick={add}
       >
         <Icon icon='lucide:plus' width={15} height={15} />
@@ -145,7 +145,7 @@
             {/each}
             <AddChip
               title={combo.actions.length >= maxKeys
-                ? `This firmware allows ${maxKeys} keys per combo`
+                ? `Limit: ${maxKeys} keys per combo`
                 : 'Add a trigger key'}
               disabled={combo.actions.length >= maxKeys}
               onclick={() => (picking = { slot: entry.slot, kind: 'add' })}
@@ -183,17 +183,9 @@
       {/each}
 
       {#if visible.length === 0}
-        <EmptyCard>
-          No combos yet — press “New combo” to chord several keys into one.
-        </EmptyCard>
+        <EmptyCard>No combos yet.</EmptyCard>
       {/if}
     </div>
-
-    <p class='mt-3.5 text-xs text-muted-foreground'>
-      This firmware has {combos.length} combo slots, each holding up to {maxKeys} keys.
-      Position-based triggering is not part of the protocol — a combo is always
-      described by the keycodes its trigger keys carry.
-    </p>
   {/if}
 </ScreenScroll>
 
