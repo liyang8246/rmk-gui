@@ -1,5 +1,5 @@
 <script lang='ts'>
-  import type { BehaviorConfig } from '../rynk'
+  import type { NumericBehaviorField } from '../stores'
   import Icon from '@iconify/svelte'
   import Card from '../components/ui/Card.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
@@ -8,7 +8,7 @@
   import { describeKeyboardError, keyboardStore } from '../stores'
 
   interface Setting {
-    field: keyof BehaviorConfig
+    field: NumericBehaviorField
     title: string
     desc: string
     min: number
@@ -74,7 +74,7 @@
 
   const behavior = $derived(keyboardStore.config?.behavior)
 
-  function update(field: keyof BehaviorConfig, value: number) {
+  function update(field: NumericBehaviorField, value: number) {
     if (!behavior) return
     void keyboardStore
       .setBehavior({ ...behavior, [field]: value })

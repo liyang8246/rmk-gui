@@ -1,28 +1,31 @@
 # Lifecycle & Dead States
 
 This chapter covers the connect flow, the version-probe pattern, link lifecycle
-rules, topic queue overflow, and disconnect/reconnect handling. Understanding
-these is critical for building a reliable `rmk-gui`: a mishandled cancelled read
-or an unobserved topic overflow will leave the client in a dead state with no
-obvious error.
-
-The protocol client (`rynk::Client<T>`) owns the link lifecycle. Its source is
-`rynk/src/driver.rs`.
+and cancellation rules, topic queue overflow, and disconnect/reconnect
+handling. The division of labor to keep in mind for `rmk-gui`: the **page owns
+the link's lifetime** — it opens the link before `connect()` and closes it on
+teardown; nothing inside the wasm ever closes it — while the wasm owns the
+**session**, a `rynk::Client` + `Driver` pair (`rynk/src/driver.rs`) wrapped by
+`RynkClient` (`rynk/rynk-wasm/src/client.rs`).
 
 ## Connect Flow
 
-The full connect sequence, as implemented by the `index.html` reference shell:
+The full connect sequence, as implemented by the `connectVia` function in the
+`index.html` demo shell:
 
-1. **JS opens the browser transport** (WebUSB or WebHID) via a user gesture
-   (button click). Both APIs require a user activation.
-2. **JS optionally probes the version**: `link.probeVersion()` returns
-   `{ major, minor }` by sending a raw `GetVersion` frame and reading the reply.
+1. **JS opens the browser transport** via a user gesture (button click). The
+   demo offers Web Serial (USB) and WebHID (BLE); `rmk-gui` uses WebUSB and
+   WebHID instead (`src/rynk/web.ts`). The gesture is required for the
+   first-time chooser (`requestPort()` / `requestDevice()`); previously granted
+   devices reopen without one.
+2. **JS probes the version**: `link.probeVersion()` returns `{ major, minor }`
+   by sending a raw `GetVersion` frame and reading the reply.
 3. **JS loads the version-matched wasm**: `loadCore(major)` dynamically imports
    the wasm package for the reported protocol major.
 4. **`await core.default()`** — runs the `wasm_bindgen` `init()` (panic hook +
    `console_log`). Idempotent.
-5. **`await core.connect(link, label)`** — runs the Rynk handshake over the JS
-   link (negotiates version, caches capabilities) and returns a `RynkClient`.
+5. **`await core.connect(link)`** — runs the Rynk handshake over the JS link
+   (version check + capability snapshot) and returns a `RynkClient`.
 
 ```js
 l = await openLink()
@@ -33,28 +36,31 @@ log(`${label}: protocol v${major}.${minor} — loading rynk-wasm…`)
 core = await loadCore(major)
 await core.default() // wasm-bindgen init (idempotent)
 
-client = await core.connect(l, device?.productName || null)
+client = await core.connect(l)
 ```
 
-Source: `rynk/rynk-wasm/index.html`, lines 270-286 (the `connectVia` function).
+Source: `connectVia` in `rynk/rynk-wasm/index.html`. `rmk-gui` runs the same
+sequence in `connectClient` (`src/rynk/core.ts`).
 
-If the page does not probe the version, it can call `connect()` directly — the
-handshake inside `connect()` also negotiates the version and rejects on a major
-mismatch with `VersionMismatch`. The pre-probe exists so the page can load a
-protocol-major-specific wasm build before the handshake runs inside wasm.
+`connect()` takes only the `JsByteLink` — the display label is the link's own
+required `label` property. The handshake sends `GetVersion` and
+`GetCapabilities` in one round trip and rejects on a major mismatch with
+`VersionMismatch` (`handshake` in `rynk/src/device.rs`). If the page does not
+probe the version, it can call `connect()` directly — the pre-probe exists so
+the page can load a protocol-major-specific wasm build before the handshake
+runs inside wasm.
 
 ## Versioned Loading
 
-The Rynk frame envelope (5-byte header: `CMD u16 LE | SEQ u8 | LEN u16 LE`) and
-the `GetVersion` request are intended to stay stable across protocol majors.
-`index.html` uses that stability to probe the device first, then load the wasm
-package for the reported major:
+The Rynk frame envelope (3-byte header `CMD u16 LE | SEQ u8`, COBS-encoded on
+the wire and `0x00`-delimited) and the `GetVersion` request are frozen across
+protocol versions. The demo uses that stability to probe the device first, then
+load the wasm package for the reported major:
 
 ```js
 async function loadCore(major) {
   switch (major) {
     case 0: // protocol v0.x (ProtocolVersion::CURRENT = {0, 1})
-    case 1:
       return await import('./pkg/rynk_wasm.js')
     default:
       throw new Error(`no rynk-core wasm for protocol major ${major}`)
@@ -62,19 +68,22 @@ async function loadCore(major) {
 }
 ```
 
-Source: `rynk/rynk-wasm/index.html`, lines 245-253.
-
-Today there is one wasm package, so both major 0 and 1 load it. When protocol v2
+Source: `loadCore` in `rynk/rynk-wasm/index.html`; `rmk-gui`'s version
+(`src/rynk/core.ts`) maps majors 0 and 1 to the same module. When protocol v2
 lands, `loadCore(major)` can select a second wasm build while keeping the same
-JS byte-link implementations — the `JsByteLink` contract is version-independent.
+JS byte-link implementations — the `JsByteLink` contract is
+version-independent.
 
-The `probeVersion()` method is implemented in JS (not in wasm) because it must
-run before the version-matched wasm is loaded. It sends a raw `GetVersion`
-frame and reads the reply, ignoring any topic pushes that arrive first:
+The `probeVersion()` method is implemented in JS (in the demo's `framedLink`)
+because it must run before the version-matched wasm is loaded. Since
+`GetVersion` is frozen, a literal frame serves: `PROBE_GET_VERSION` is
+`[0x00, 0x02, 0x01, 0x02, 0x01, 0x00]` — a stale-byte `0x00` sync, then the
+COBS-encoded `GetVersion` (cmd `0x0001`, seq 1, no payload). The probe sends it
+and reads frames, ignoring any topic pushes that arrive first:
 
 ```js
 async probeVersion() {
-  await writer.write(frame(CMD_GET_VERSION, 1, new Uint8Array(0)));
+  await send(PROBE_GET_VERSION);
   // Ignore topic pushes that arrive before the reply.
   let f;
   do { f = await readFrame(); } while (f.cmd & RYNK_TOPIC_BIT);
@@ -85,269 +94,212 @@ async probeVersion() {
 }
 ```
 
-The reply payload is `Result<ProtocolVersion, RynkError>` in postcard: byte 0 is
-`0x00` for `Ok`, then `major` and `minor`.
+The reply payload is `Result<ProtocolVersion, RynkError>` in postcard: byte 0
+is `0x00` for `Ok`, then `major` and `minor`. `rmk-gui`'s `probeVersion`
+(`src/rynk/core.ts`) adds an idle watchdog so a silent device fails the probe
+instead of parking it forever.
 
 ## Link Lifecycle — Critical Rules
 
-The most important rule for a `rmk-gui` developer:
+Two rules for a `rmk-gui` developer:
 
-> **A cancelled read or write LATCHES THE LINK DEAD.**
+> **The page owns the link. Nothing inside the wasm ever closes it.**
 
-The `rynk::Client` tracks two in-flight flags:
+Dropping the `RynkClient` ends the session but leaves the link open; teardown
+must call `link.close()` itself (see the recipe below). Source: module docs in
+`rynk/rynk-wasm/src/transport.rs`.
 
-```rust
-pub struct Client<T: Read + Write> {
-    // ...
-    dead: bool,
-    /// Set across the `write_all` in `send_request`, cleared once it completes.
-    send_in_flight: bool,
-    /// Set while assembling an inbound frame. If the future is cancelled, the
-    /// flag remains set so the next operation rejects the desynchronized link.
-    receive_in_flight: bool,
-    // ...
-}
-```
+> **Cancelling a call is safe.**
 
-Source: `rynk/src/driver.rs`, lines 143-150.
+Dropping the `await` on any client method — a `Promise.race` with a timeout,
+navigating away mid-call — leaves the session healthy. The client has no
+built-in timeout (`Client::request` in `rynk/src/driver.rs`), so racing calls
+against a deadline is the intended pattern; `rmk-gui`'s `withDeadline`
+(`src/rynk/core.ts`) does exactly that.
 
-How it works:
+What makes cancellation safe:
 
-- `send_in_flight` is set `true` across the `transport.write_all()` call in
-  `send_request()`, then cleared when it completes.
-- `receive_in_flight` is set `true` across `next_frame_inner()` (frame
-  reassembly from `transport.read()`), then cleared when it completes.
-- If either flag is still `true` when a new operation starts, the link is
-  latched dead: `dead` is set to `true` and the call returns `Disconnected`
-  immediately.
+- **Requests**: each in-flight request claims a slot keyed by its SEQ.
+  `SlotGuard` frees the slot on drop, so a cancelled request's late reply
+  matches no slot and is dropped as unmatched (`SlotGuard` and `Driver::run` in
+  `rynk/src/driver.rs`).
+- **The wire never desyncs**: `WasmWriter` parks its in-flight `send()` — JS
+  promises cannot be cancelled, and two live sends would interleave their
+  bytes — and drains it before starting the next write. `WasmReader` parks its
+  in-flight `recv()` the same way (`rynk/rynk-wasm/src/transport.rs`).
+- **The pump resumes**: `Driver::run` takes `&mut self` with all receive state
+  (buffer + `Deframer`) in the struct, and has no await between `read` and
+  `commit`, so a cancelled run is simply re-entered later with no bytes lost.
 
-```rust
-async fn send_request<Req: Serialize>(&mut self, cmd: Cmd, req: &Req) -> Result<u8, RynkHostError> {
-    if self.dead || self.send_in_flight || self.receive_in_flight {
-        // A cancelled wire operation leaves the stream desynced.
-        self.dead = true;
-        return Err(RynkHostError::Disconnected);
-    }
-    // ...
-    self.send_in_flight = true;
-    let result = self.transport.write_all(msg.frame()).await;
-    self.send_in_flight = false;
-    // ...
-}
-```
+### Who pumps the driver
 
-### Why cancellation is fatal
+There is no resident task in the wasm, so the in-flight calls elect one:
+`RynkClient::drive` races each call's future against locking the driver. The
+lock winner runs `Driver::run`, pumping both directions for every parked call,
+and releases the lock when its own future resolves — handing the pump to a
+parked call. Source: `RynkClient::drive` in `rynk/rynk-wasm/src/client.rs`.
 
-Cancelling a `read()` or `write()` mid-flight leaves the stream boundary
-unknowable. The client may have written half a frame, or read half a frame and
-discarded the rest. There is no safe way to resynchronize, so the link is
-declared dead.
+### Dead links
 
-In JS, cancellation happens when the `await` on a client method is dropped — for
-example, a `Promise.race` with a timeout, or navigating away from the page while
-a call is in flight. The `wasm-bindgen` future is dropped, which cancels the
-underlying Rust future.
+A dead link is still terminal. `Driver::run` returns when the link dies (EOF
+maps to `Disconnected`, transport faults to `Io`); the error surfaces from
+whichever call was pumping and reproduces for every later call — the closed
+transport keeps reporting EOF, so broken links fail fast instead of hanging.
+There is no liveness probe and no in-band recovery. The only path forward:
 
-### is_alive()
-
-```rust
-pub fn is_alive(&self) -> bool {
-    !self.dead && !self.send_in_flight && !self.receive_in_flight
-}
-```
-
-`is_alive()` returns `false` immediately after a cancelled operation — before
-the next call latches `dead`. This is not exposed to JS directly, but it
-documents the internal state: once `send_in_flight` or `receive_in_flight` is
-stuck `true`, the link is already dead from the client's perspective.
-
-### Recovery
-
-There is no in-band recovery for a latched-dead link. The only path forward:
-
-1. Close the JS link — `await link.close()`. This EOFs the transport.
-2. Drop the `RynkClient` (null out the JS reference). `WasmTransport::drop`
-   also calls `link.close()`.
-3. Reconnect: re-open the browser transport and call `connect()` again.
-
-Broken links fail fast: every later call returns `Disconnected` without touching
-the wire. This prevents the client from hanging on a dead transport.
+1. Close the JS link — `await link.close()`.
+2. Drop the `RynkClient` (null out the JS reference).
+3. Reconnect: re-open the browser transport and run the connect flow again on
+   a fresh link.
 
 ## Topic Queue Overflow
 
-Topic pushes (server-to-host, CMD high bit set) are buffered in a bounded queue
-inside the client:
+Topic pushes (server-to-host, CMD high bit set) are decoded by the driver and
+buffered in a bounded queue inside the client:
 
 ```rust
-/// Topic frames buffered before the oldest is dropped.
-const EVENT_QUEUE_CAPACITY: usize = 64;
+/// How many topic events can queue up before the oldest is dropped.
+const TOPIC_QUEUE_CAPACITY: usize = 8;
 ```
 
-Source: `rynk/src/driver.rs`, line 41.
+Source: `TOPIC_QUEUE_CAPACITY` in `rynk/src/driver.rs`.
 
-When the queue is full and a new topic arrives, the oldest topic is dropped and
-`events_dropped` is incremented:
+When the queue is full and a new topic arrives, the driver drops the oldest
+(the read loop must never block) and logs at debug level. There is no drop
+counter and no JS accessor: overflow is silent by design, because topics are
+best-effort by contract — any missed push can be recovered with the matching
+`get_*` call. Two consequences for `rmk-gui`:
 
-```rust
-if self.events.len() == EVENT_QUEUE_CAPACITY {
-    self.events.pop_front();
-    self.events_dropped += 1;
-}
-```
+- Keep a `next_topic()` pump parked whenever a session is open, so the queue
+  drains as fast as topics arrive.
+- When a value matters, re-read it with the matching getter
+  (`get_current_layer()`, …) instead of trusting the last topic push.
 
-`events_dropped()` reports the observable overflow count. If it is non-zero,
-topic values may be stale — re-read critical state with the matching `Get*`
-call instead of trusting the last topic push:
-
-```js
-const dropped = client.events_dropped()
-if (dropped > 0) {
-  console.warn(`${dropped} topics dropped — re-reading current layer`)
-  const layer = await client.get_current_layer()
-}
-```
-
-On BLE, OS-level notification drops are invisible to the client.
-`events_dropped` only counts overflow the client can observe (queue full), not
-notifications the OS never delivered.
+Below the client, transports can lose data invisibly too — BLE notifications
+or HID reports the OS never delivered. COBS framing resyncs the byte stream at
+the next `0x00` delimiter, so the session survives; the lost pushes fall under
+the same best-effort contract.
 
 ## Disconnect & Reconnect
 
 ### Normal disconnect
 
-Closing the JS link EOFs the transport — `recv()` returns an empty
-`Uint8Array`, `WasmTransport::read()` returns `Ok(0)`, and the client maps that
-to `Disconnected`. Any parked `next_event()` rejects with `Disconnected`, ending
-the topic pump loop.
-
-JS-side teardown:
-
-```js
-async function teardown() {
-  // Closing the link EOFs the transport, ending any parked next_event() pump.
-  if (link) {
-    await link.close()
-  }
-  else if (device) {
-    try { await device.close() }
-    catch {}
-  }
-  device = null; link = null; core = null; client = null; connected = false
-  // ... reset UI ...
-}
-```
+Closing the JS link EOFs the transport — `recv()` resolves an empty
+`Uint8Array`, `WasmReader::read` returns `Ok(0)`, and `Driver::run` returns
+`Disconnected`. The error surfaces from whichever call was pumping; with the
+demo's topic pump parked that is `next_topic()`, whose rejection ends the pump
+loop.
 
 ### Auto-reconnect
 
-After a disconnect, the page can reconnect to previously granted devices without
-a new chooser prompt:
-
-- `navigator.usb.getDevices()` — USB devices the user previously granted,
-  filtered by the Rynk vendor interface class triple.
-- `navigator.hid.getDevices()` — HID devices the user previously granted.
+After a disconnect, the page can reconnect to previously granted devices
+without a new chooser prompt:
 
 ```js
-async function grantedUsbDevice() {
-  try {
-    const devs = navigator.usb ? await navigator.usb.getDevices() : []
-    return devs.find(hasRynkVendorInterface) || null // class 0xFF, subclass 0x52, protocol 0x52
-  }
-  catch { return null }
+// Auto-reconnect only to previously granted devices. Prefer USB, then WebHID.
+async function grantedSerialPort() {
+  try { return navigator.serial ? (await navigator.serial.getPorts())[0] || null : null; }
+  catch { return null; }
 }
 async function grantedHidDevice() {
   try {
-    const devs = navigator.hid ? await navigator.hid.getDevices() : []
-    return devs.find(d => (d.collections || []).some(c => c.usagePage === 0xFF14)) || null
-  }
-  catch { return null }
+    const devs = navigator.hid ? await navigator.hid.getDevices() : [];
+    return devs.find((d) => (d.collections || []).some((c) => c.usagePage === 0xFF14)) || devs[0] || null;
+  } catch { return null; }
 }
 ```
 
+Source: `grantedSerialPort` / `grantedHidDevice` / `autoConnect` in
+`rynk/rynk-wasm/index.html`. `rmk-gui`'s equivalents live in
+`src/rynk/web.ts`: `grantedUsbDevices()` filters `navigator.usb.getDevices()`
+by the Rynk vendor interface class triple (class `0xFF`, subclass `0x52`,
+protocol `0x52`), and `grantedHidDevices()` filters by the vendor usage
+(`usagePage 0xFF14`, `usage 0x61`).
+
 ### Transport removal events
 
-The browser fires `connect` / `disconnect` events on `navigator.usb` and
-`navigator.hid` when a device is plugged or unplugged. A page can use them to
+The browser fires `connect` / `disconnect` events on `navigator.serial` and
+`navigator.hid` when a device is plugged or unplugged (`navigator.usb` fires
+the same pair for `rmk-gui`'s WebUSB path). A page can use them to
 auto-connect when idle and to tear down when the active transport is removed:
 
 ```js
 // Reconnect when idle; disconnect on active transport removal.
-navigator.usb?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
+navigator.serial?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
 navigator.hid?.addEventListener?.('connect', () => { if (!connected) autoConnect() })
-function onDrop() { if (connected) teardown().then(() => log('\n— transport disconnected —')) }
-navigator.usb?.addEventListener?.('disconnect', onDrop)
+const onDrop = () => { if (connected) teardown().then(() => log('\n— transport disconnected —')) }
+navigator.serial?.addEventListener?.('disconnect', onDrop)
 navigator.hid?.addEventListener?.('disconnect', onDrop)
 ```
 
-An unplug also rejects the link's pending `transferIn`, so the link signals EOF
-on its own — the events are for UI state, not correctness.
+On Web Serial and WebUSB an unplug also fails the link's pending read, so the
+link signals EOF on its own and the events are only UI signal. On WebHID,
+input reports simply stop arriving — nothing rejects — so the `disconnect`
+handler (whose teardown closes the link) is what actually ends the session.
 
-The pattern: reconnect when idle, disconnect on active transport removal. Do
+The pattern: reconnect when idle, tear down on active transport removal. Do
 not attempt to reconnect over an active transport that was just removed — tear
 down first, then let the `connect` event (if the device reappears) drive the
 reconnect.
 
 ## Recipe: Handling Disconnect
 
-The reference shell's teardown function, annotated:
+The demo shell's teardown function, annotated:
 
 ```js
-let device = null; let link = null; let core = null; let client = null; let connected = false
+let port = null, device = null, l = null, core = null, client = null, connected = false
 
 async function teardown() {
-  // Closing the link EOFs the transport, ending any parked next_event() pump.
-  // Always close the link first so the topic pump's next_event() rejects.
-  if (link) {
-    await link.close()
-  }
-  else if (device) {
-    try { await device.close() }
-    catch {}
-  }
-  // Null out all references so the RynkClient (and its WasmTransport) is dropped.
-  // WasmTransport::drop also calls link.close() — safe because close is idempotent.
-  device = null; link = null; core = null; client = null; connected = false
-  // Reset UI state.
-  usbBtn.textContent = 'Connect via USB (WebUSB)'
-  bleBtn.textContent = 'Connect via BLE (WebHID)'
-  usbBtn.disabled = false; bleBtn.disabled = false
-  unlockBtn.hidden = true; unlockBtn.disabled = false
+  // Clear refs before closing: link shutdown rejects pumpTopics, which
+  // otherwise re-enters teardown.
+  const link = l, p = port
+  port = null; device = null; l = null; core = null; client = null; connected = false
+  // ... reset UI ...
+  if (link) await link.close()
+  else if (p) { try { await p.close() } catch {} }
 }
 ```
 
 Key points:
 
-- Close the link before nulling the client reference. This ensures the parked
-  `next_event()` pump rejects with `Disconnected` and exits its loop.
-- Nulling `client` drops the `RynkClient`, which drops `WasmTransport`, which
-  calls `link.close()` again via `spawn_local`. This is safe because `close()`
-  is idempotent.
+- Clear the references **before** closing. The topic pump's `catch` calls
+  `teardown()` when it observes link failure; nulling `client` first (plus the
+  pump's `client === c` guard) keeps that from re-entering a teardown that is
+  already running.
+- Closing the link is the page's job. Nulling `client` drops the `RynkClient`
+  session, but nothing inside the wasm closes the link.
 - The `connectVia` wrapper calls `teardown()` in its `catch` block too, so a
   failed connect attempt releases the transport for the next retry.
 
 ## Recipe: Topic Pump Loop
 
-The topic pump mirrors the native `Client::next_event()` pull. It runs in a
-`for (;;)` loop until `next_event()` rejects:
+The topic pump mirrors the native `Client::next_topic()` pull. It runs until
+`next_topic()` rejects, and in the demo it owns teardown when it is the first
+to observe link failure:
 
 ```js
+// The topic pump owns teardown when it first observes link failure.
 async function pumpTopics(c) {
   try {
-    for (;;) log(`topic ${JSON.stringify(await c.next_event())}`)
-  }
-  catch {
-    // Disconnected/closed — teardown owns the UI reset.
+    for (;;) {
+      const ev = await c.next_topic()
+      logTopic(`${new Date().toLocaleTimeString('en-GB')} ${JSON.stringify(ev)}`)
+    }
+  } catch {
+    if (client === c) { await teardown(); log('\n— transport disconnected —') }
   }
 }
 ```
 
-Source: `rynk/rynk-wasm/index.html`, lines 65-71.
+Source: `pumpTopics` in `rynk/rynk-wasm/index.html`.
 
 The pump is fire-and-forget (not awaited) — it runs concurrently with the rest
-of the page. When the link closes, `next_event()` rejects with `Disconnected`
-and the `catch` block exits silently. The `teardown()` function (called
-separately) owns the UI reset, so the pump does not need to touch the DOM.
+of the page. The `client === c` guard pins the pump to its own session, so a
+stale pump from a previous session cannot tear down the next one.
 
-Do not issue client requests from inside the pump loop — that would violate the
-single-borrow rule (the pump holds `&mut self` across the `next_event()` await).
-If you need to react to a topic, set a flag and handle it outside the pump, or
-let the pump finish its current `next_event()` before issuing the request.
+Issuing requests while the pump is parked — even from inside the loop body —
+is fine: every `RynkClient` method takes `&self`, and the session is
+full-duplex. A parked `next_topic()` and up to `MAX_IN_FLIGHT` (4) requests
+run concurrently, with replies matched back by SEQ. The demo leans on this:
+its unlock ceremony polls `unlock_poll()` while topic pushes from the held
+keys keep streaming into the Topics pane.

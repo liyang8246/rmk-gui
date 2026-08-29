@@ -249,9 +249,9 @@ wasm 预初始化：`mod.default({ module_or_path: await readFile(...) })`。此
 
 新增一个 Linux-only job，与现有 6-OS 构建矩阵并行（不进入关键路径，墙钟时间不变）：安装 `qemu-system-misc`、`riscv32imac-unknown-none-elf` target、`wasm-pack`，执行 `pnpm build:wasm` 与 `pnpm build:web` 后 `pnpm test`。
 
-**须一并处理的依赖一致性问题**：`.cargo/config.toml` 为 gitignore 的本地文件，因此 CI 中固件由 cargo 从 `git+rmk.git` 解析，而 `scripts/build-rynk-wasm.py` 会**另外**再拉一次源码。两次独立拉取若落在不同 commit（拉移动分支时必然如此），固件与 wasm 客户端将来自不同的协议 commit，测试会以难以定位的线路错误失败。
+**须一并处理的依赖一致性问题**：`.cargo/config.toml` 为 gitignore 的本地文件，因此 CI 中固件由 cargo 从 crates.io 解析，而 `scripts/build-rynk-wasm.py` 会**另外**再取一次源码。两次独立获取若落在不同协议版本，固件与 wasm 客户端将无法互通，测试会以难以定位的线路错误失败。
 
-处理方式：`qemu/Cargo.toml` 与 `scripts/build-rynk-wasm.py` 都按同一个 rmk commit 固定（rev pin，而非 `branch = "main"`），两次独立拉取因此必然同源，CI 不需要共享 checkout，也不设 `RMK_REPO`；升级时三处 pin（含 `src-tauri/Cargo.toml`）一起改。`qemu/run.mjs` 采用与 `build-rynk-wasm.py` 相同的解析顺序（`RMK_REPO` → 同级 `../rmk`），解析到则通过 `cargo --config` 把 `[patch]` 指向该 checkout。本地开发同样受益：有同级 `../rmk` 时固件与 wasm 客户端自动同源。
+处理方式：`qemu/Cargo.toml` 与 `scripts/build-rynk-wasm.py` 都固定到 crates.io 上同一个 rmk 发布批次的版本（rmk 与各 rynk crate 同 commit 发版，版本联动），两次独立获取因此必然同源，CI 不需要共享 checkout，也不设 `RMK_REPO`；升级时三处版本（含 `src-tauri/Cargo.toml`）一起改。`qemu/run.mjs` 采用与 `build-rynk-wasm.py` 相同的解析顺序（`RMK_REPO` → 同级 `../rmk`），解析到则通过 `cargo --config` 把 `[patch.crates-io]` 指向该 checkout。本地开发同样受益：有同级 `../rmk` 时固件与 wasm 客户端自动同源。
 
 顺带纳入（各一行，成本可忽略）：现有 `ci` job 的 ubuntu 分支增加 `pnpm check`（svelte-check 当前为 105 files / 0 errors）；`eslint.config.mjs` 的 `'qemu/**'` 忽略项收窄为 `'qemu/src/**'` + `'qemu/target/**'`，使 `qemu/run.mjs` 与新增 harness 脚本纳入 lint。
 
@@ -262,7 +262,7 @@ wasm 预初始化：`mod.default({ module_or_path: await readFile(...) })`。此
 | §5.2 的两条编译配置静默失效 | `$state` 不响应，测试行为无法解释 | 在写任何用例之前先验证二者生效 |
 | 断言绑定固件夹具，夹具调整时需同步改测试 | 维护成本 | 常量全部集中在 `tests/fixture.ts` 单一文件；夹具与断言基准本就应当一起变更 |
 | QEMU 单客户端限制导致并发连接失败 | 测试随机失败 | `fileParallelism: false`；`afterEach` 中确保 `resetStore()` 释放连接 |
-| CI 中固件与 wasm 客户端协议版本不一致 | 难以定位的线路错误 | §6.2 的单次 clone + `[patch]` 方案 |
+| CI 中固件与 wasm 客户端协议版本不一致 | 难以定位的线路错误 | §6.2 的同一发布批次版本联动方案 |
 | 固件重连行为不确定 | 用例 5、10 依赖 QEMU 接受第二次连接 | 落地时优先验证；若不稳定，退化为同一连接内以 `read_all_keymap` 回读比对 |
 | 首次运行需构建两份 riscv 固件 | 冷启动约 1–2 分钟 | `hookTimeout: 60_000`；两份使用独立 target 目录以保持增量；`RMK_E2E_ADDR` 提供手动模式绕过 |
 | `src-tauri` 的 375 行 Rust transport 无覆盖 | 串口/BLE 发现、MTU 分块、session 生命周期无防护 | 本方案不覆盖，属已知缺口 |

@@ -91,11 +91,15 @@ let device = UsbDevice::discover()
     .into_iter()
     .next()
     .ok_or("no Rynk keyboard found")?;
-let mut client = device.connect().await?;
+let (client, mut driver) = device.connect().await?;
 
-let caps = *client.capabilities();
+let caps = client.get_capabilities().await?;
 println!("{}×{}×{} keymap", caps.num_layers, caps.num_rows, caps.num_cols);
 # Ok(()) }
 ```
+
+`connect()` yields the `Client` + `Driver` pair. `get_capabilities()` answers
+from the handshake snapshot, so it resolves without wire traffic; any request
+that does hit the wire needs `driver.run(&client)` pumping concurrently.
 
 `rynk-ble` mirrors this flow; see [BLE (GATT)](./ble.md).

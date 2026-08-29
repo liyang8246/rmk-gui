@@ -8,7 +8,8 @@ Source: `src/rynk/web.ts` and `src/rynk/core.ts` (this repository)
 
 ## Overview
 
-Both links present the same `JsByteLink` shape to WASM:
+Both links implement this repository's `JsByteLink` interface
+(`src/rynk/core.ts`):
 
 ```ts
 interface JsByteLink {
@@ -18,6 +19,11 @@ interface JsByteLink {
   readonly label: string
 }
 ```
+
+WASM consumes only `label`, `send` and `recv` — `rynk-wasm` binds no `close`
+and never calls one (see [Transport](./transport.md)). `close` is the app's
+own teardown hook: the page owns the link's lifetime and closes it after
+dropping the client.
 
 Only the code that opens and normalizes the browser transport differs. WebUSB
 streams raw COBS-framed Rynk bytes over a bulk endpoint pair. WebHID fragments

@@ -23,11 +23,13 @@ tokio = { version = "1.53.1", features = [
 # The Rynk host transports live upstream: rynk-usb recognises a keyboard by
 # the vendor interface class triple, rynk-ble lists already-connected GATT
 # peers. Neither is reimplemented here — discovery rules belong with the
-# protocol. Pinned by rev: the firmware fixture and the wasm client must speak
-# the same protocol commit, so all three rmk pins move together.
-rynk = { git = "https://github.com/rmk-rs/rmk.git", rev = "2ca24ad65bd15ee73073df84d47f4a3a17f91fbb" }
-rynk-usb = { git = "https://github.com/rmk-rs/rmk.git", rev = "2ca24ad65bd15ee73073df84d47f4a3a17f91fbb" }
-rynk-ble = { git = "https://github.com/rmk-rs/rmk.git", rev = "2ca24ad65bd15ee73073df84d47f4a3a17f91fbb" }
+# protocol. The firmware fixture and the wasm client must speak the same
+# protocol release, so the versions here, in qemu/Cargo.toml and in
+# scripts/build-rynk-wasm.py come from one crates.io release train and move
+# together.
+rynk = "0.3.0"
+rynk-usb = "0.3.0"
+rynk-ble = "0.3.0"
 uuid = { version = "1.24.0", features = [ "v4" ] }
 
 [lints.clippy]

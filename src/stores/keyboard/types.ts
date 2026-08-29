@@ -20,6 +20,12 @@ import type {
 } from '../../rynk'
 import type { KeyboardError } from './errors'
 
+/// Keys of BehaviorConfig holding a plain number — the only ones a slider
+/// can drive. Excludes structured fields like `morse_default_profile`.
+export type NumericBehaviorField = {
+  [K in keyof BehaviorConfig]: BehaviorConfig[K] extends number ? K : never
+}[keyof BehaviorConfig]
+
 export type ConnectionPhase = 'connecting' | 'connected' | 'disconnected' | 'error'
 
 export interface ConnectionState {

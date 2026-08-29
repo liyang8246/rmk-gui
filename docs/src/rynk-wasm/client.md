@@ -1,8 +1,8 @@
 # RynkClient API
 
 `RynkClient` is the JavaScript-facing handle returned by `connect()`. It wraps
-the native `rynk::Client<WasmTransport>` protocol state machine and exposes a
-typed request/response surface plus a pull-based topic stream.
+the session's native `rynk::Client` protocol state machine plus its `Driver`,
+and exposes a typed request/response surface and a pull-based topic stream.
 
 Source: `rynk/rynk-wasm/src/client.rs`
 
@@ -10,89 +10,74 @@ Source: `rynk/rynk-wasm/src/client.rs`
 
 ```rust
 #[wasm_bindgen]
-pub struct RynkClient(Client<WasmTransport>);
-```
-
-`RynkClient` wraps `Client<WasmTransport>`. Each method borrows the client for
-one `await` — JS must await one call before issuing the next. This is the same
-single-borrow rule the native USB/BLE transports get from the compiler: the
-`&mut self` on every method serializes requests with no background task or
-shared state.
-
-Dropping the handle or closing the JS link ends the session. The `WasmTransport`
-`Drop` implementation calls `link.close()` (see
-[WasmTransport](./transport.md)).
-
-## connect(link, label?)
-
-```rust
-#[wasm_bindgen]
-pub async fn connect(link: JsByteLink, label: Option<String>) -> Result<RynkClient, JsValue>
-```
-
-`connect()` performs the Rynk handshake over the already-open JS byte link and
-returns a live `RynkClient`. It routes through `WebDevice` — the web transport's
-`RynkDevice` — so the browser path uses the same connect lifecycle as the native
-USB/BLE transports:
-
-```rust
-let client = WebDevice::new(link, label).connect().await?;
-Ok(RynkClient(client))
-```
-
-Parameters:
-
-- `link` — a `JsByteLink` object (the `{ send, recv, close }` interface; see
-  [JS Byte Link Implementations](./js-byte-link.md)).
-- `label` — the display name the page showed in its picker (WebHID
-  `productName`, or a page-derived string). Omit or pass `null` for the default
-  (`"Rynk keyboard"`).
-
-The handshake negotiates the protocol version (rejecting on major mismatch) and
-caches device capabilities. See [Lifecycle & Dead States](./lifecycle.md) for
-the full connect flow including the optional version probe.
-
-## label()
-
-```rust
-pub fn label(&self) -> String
-```
-
-Returns the display name supplied at connect time. Read back from the
-transport:
-
-```js
-console.log(client.label()) // e.g. "RMK Keyboard" (WebHID productName)
-```
-
-## next_event()
-
-```rust
-pub async fn next_event(&mut self) -> Result<TopicEvent, JsValue>
-```
-
-Pulls the next recognized topic push (server-to-host). Parks until one arrives;
-rejects with `Disconnected` at EOF (link closed).
-
-```rust
-loop {
-    match self.0.next_event().await {
-        Ok(IncomingTopic::Topic(t)) => return Ok(t),
-        // No JS shape for an unrecognized topic; wait for the next one.
-        Ok(IncomingTopic::Unknown(_)) => continue,
-        Err(e) => return Err(e.into()),
-    }
+pub struct RynkClient {
+    client: Client,
+    driver: Mutex<CriticalSectionRawMutex, Driver<WasmReader, WasmWriter>>,
 }
 ```
 
-Unrecognized topics are skipped (unlike the native `IncomingTopic::Unknown`
-variant, which is visible to native callers). JS drives this in a loop, like
-the native `next_event()` pull:
+All methods are `&self`: JS holds a parked `next_topic()` loop while issuing
+requests — the same full-duplex contract the native transports get from one
+session `select`. Up to `MAX_IN_FLIGHT` (4) requests run concurrently, with
+replies matched back by SEQ, so they may complete in any order. Overlapping a
+`read_all_*` pager with a bulk write is correct, just slower.
+
+There is no resident task pumping the driver; the in-flight calls elect one.
+`RynkClient::drive` races each call's future against locking the driver: the
+lock winner pumps both directions for every parked call, and releasing the lock
+when its own future resolves hands the pump to a parked call. Cancelling a call
+(dropping the `await` mid-flight) is safe — its request slot is freed and a
+late reply is dropped as unmatched, while the transport halves park their
+in-flight JS promises so a cancelled read or write resumes them instead of
+losing data (see [Transport](./transport.md)). A dead link surfaces from the
+pump arm and reproduces for every later call — the closed transport keeps
+reporting EOF.
+
+Dropping the handle, or closing the JS link, ends the session. rynk-wasm never
+closes the link itself — closing is the page's job (see
+[JS Byte Link Implementations](./js-byte-link.md)).
+
+## connect(link)
+
+```rust
+#[wasm_bindgen]
+pub async fn connect(link: JsByteLink) -> Result<RynkClient, JsValue>
+```
+
+`connect()` performs the Rynk handshake over the already-open JS byte link and
+returns a live `RynkClient`. The `JsByteLink` itself is the web transport's
+`RynkDevice`, so the browser path uses the same connect lifecycle as the native
+serial/BLE transports:
+
+```rust
+let (client, driver) = link.connect().await?;
+Ok(RynkClient { client, driver: Mutex::new(driver) })
+```
+
+`link` is a `JsByteLink` object — the `{ label, send, recv }` interface, where
+`label` is a required string property (WebHID `productName`, or a page-derived
+string); see [JS Byte Link Implementations](./js-byte-link.md).
+
+The handshake negotiates the protocol version (rejecting on major mismatch;
+same-major minors connect) and caches the device capabilities in the client.
+See [Lifecycle & Dead States](./lifecycle.md) for the full connect flow
+including the optional version probe.
+
+## next_topic()
+
+```rust
+pub async fn next_topic(&self) -> Result<TopicEvent, JsValue>
+```
+
+Pulls the next recognized topic push (server-to-host). Parks until one arrives;
+rejects when the link dies. Unrecognized topics were already skipped by the
+driver when they arrived. JS drives this in a loop, like the native
+`next_topic()` pull, and it runs concurrently with the request methods:
 
 ```js
 async function pumpTopics(client) {
   try {
-    for (;;) console.log('topic', await client.next_event())
+    for (;;) console.log('topic', await client.next_topic())
   }
   catch {
     // Disconnected/closed — teardown owns the UI reset.
@@ -100,59 +85,37 @@ async function pumpTopics(client) {
 }
 ```
 
-If an operation is cancelled while reading (the `await` is dropped mid-call),
-the link latches dead. Close the link and reconnect before issuing another call.
-See [Lifecycle & Dead States](./lifecycle.md).
-
-## events_dropped()
-
-```rust
-pub fn events_dropped(&self) -> f64
-```
-
-Returns the count of topic pushes the driver dropped because the event queue was
-full. The return type is `f64` so JS receives a `number`.
-
-```js
-const dropped = client.events_dropped()
-if (dropped > 0) {
-  console.warn(`${dropped} topics dropped — re-read critical state`)
-}
-```
-
-The event queue has a capacity of 64. When full, the oldest topic is dropped and
-`events_dropped` is incremented. Re-read critical state with the matching `Get*`
-call rather than relying on stale topic values. On BLE, OS-level notification
-drops are invisible to the client — `events_dropped` only counts overflow the
-client can observe.
+The topic queue holds `TOPIC_QUEUE_CAPACITY` (8) events (`rynk/src/driver.rs`).
+When full, the oldest is dropped: topics are best-effort by contract, and there
+is no dropped-count API — recover a missed push by re-reading the state with
+the matching `get_*` call (e.g. `get_connection_status()` after a missed
+`ConnectionChange`).
 
 ## endpoints! Macro
 
-The `endpoints!` macro generates typed wasm request methods from the native
-client shape. Each row has the form:
+The `endpoints!` macro generates the typed wasm request methods from the native
+client shape. Each row is a plain signature:
 
 ```
-name(scalar args ; body: BodyTy) -> RespTy
+name(arg: Ty, ...) -> RespTy
 ```
 
-- Scalar arguments (before `;`) are passed positionally.
-- The body argument (after `;`) is the request payload — a tsify wire type.
-- The return type is the response — also a tsify wire type.
+Arguments and responses are tsify wire types, so `wasm-bindgen` marshals them
+across the ABI and emits a precise `.d.ts` (no `JsValue`/`any`) — plain JS
+values and objects matching the Rust serde shape of the corresponding
+`rmk-types` type. Errors convert to a JS `Error` via
+`RynkHostError: Into<JsValue>`.
 
-Bodies and responses are tsify wire types, so `wasm-bindgen` marshals them
-across the ABI and emits a precise `.d.ts` (no `JsValue`/`any`). Errors convert
-to a JS `Error` via `RynkHostError: Into<JsValue>`.
-
-The macro expands each row into:
+The macro expands each row into a `drive()`-wrapped call:
 
 ```rust
-pub async fn $name(&mut self, $($s: $sty,)* $($j: $jty)?) -> Result<$rty, JsValue> {
-    self.0.$name($($s,)* $($j)?).await.map_err(Into::into)
+pub async fn $name(&self, $($arg: $arg_ty),*) -> Result<$rty, JsValue> {
+    self.drive(self.client.$name($($arg),*)).await
 }
 ```
 
-Source: `rynk/rynk-wasm/src/client.rs`, lines 81-92 (macro definition) and
-94-145 (the endpoint table).
+Source: `rynk/rynk-wasm/src/client.rs` (`macro_rules! endpoints` and the
+`endpoints! { ... }` table below it).
 
 ## Method Groups
 
@@ -164,12 +127,16 @@ Every method generated by `endpoints!`, grouped by function:
 |--------|-----------|---------|
 | `get_version` | `()` | `ProtocolVersion` |
 | `get_capabilities` | `()` | `DeviceCapabilities` |
+| `get_device_info` | `()` | `DeviceInfo` |
 | `reboot` | `()` | `()` |
 | `bootloader_jump` | `()` | `()` |
-| `storage_reset` | `(; mode: StorageResetMode)` | `()` |
+| `storage_reset` | `(mode: StorageResetMode)` | `()` |
 
-`reboot` and `bootloader_jump` are fire-and-forget — the firmware resets before
-replying. `storage_reset` takes a `StorageResetMode` body.
+`get_capabilities` is answered locally from the handshake snapshot — nothing is
+sent to the device. `reboot` and `bootloader_jump` are fire-and-forget — the
+firmware resets before replying. `storage_reset` requires
+`DeviceCapabilities.storage_enabled`; otherwise it rejects with `Unsupported`
+without touching the wire.
 
 ### Lock Gate
 
@@ -187,41 +154,59 @@ holding the configured physical keys while polling `unlock_poll()`.
 | Method | Signature | Returns |
 |--------|-----------|---------|
 | `get_key` | `(layer: u8, row: u8, col: u8)` | `KeyAction` |
-| `set_key` | `(layer, row, col; action: KeyAction)` | `()` |
+| `set_key` | `(layer: u8, row: u8, col: u8, action: KeyAction)` | `()` |
 | `get_default_layer` | `()` | `u8` |
 | `set_default_layer` | `(layer: u8)` | `()` |
 | `get_encoder` | `(encoder_id: u8, layer: u8)` | `EncoderAction` |
-| `set_encoder` | `(encoder_id, layer; action: EncoderAction)` | `()` |
+| `set_encoder` | `(encoder_id: u8, layer: u8, action: EncoderAction)` | `()` |
 | `get_keymap_bulk` | `(layer: u8, start_row: u8, start_col: u8)` | `GetKeymapBulkResponse` |
-| `set_keymap_bulk` | `(; request: SetKeymapBulkRequest)` | `()` |
+| `set_keymap_bulk` | `(request: SetKeymapBulkRequest)` | `()` |
 | `get_layout` | `()` | `LayoutInfo` |
 
-Bulk methods require `DeviceCapabilities.bulk_transfer_supported`; otherwise they
-reject with `Unsupported` without touching the wire.
+Bulk methods require `DeviceCapabilities.bulk_transfer_supported`; otherwise
+they reject with `Unsupported` without touching the wire.
+
+### Whole-Resource Pagers
+
+| Method | Signature | Returns |
+|--------|-----------|---------|
+| `read_all_keymap` | `()` | `Vec<KeyAction>` |
+| `write_all_keymap` | `(actions: Vec<KeyAction>)` | `()` |
+| `read_all_combos` | `()` | `Vec<Combo>` |
+| `write_all_combos` | `(configs: Vec<Combo>)` | `()` |
+| `read_all_morses` | `()` | `Vec<Morse>` |
+| `write_all_morses` | `(configs: Vec<Morse>)` | `()` |
+
+Each pager reads or writes the entire resource with concurrent paged bulk
+transfers on the request lanes (`rynk/src/api.rs`, `Client::read_all` and
+`Client::write_all`). Reads end early at a short page; write pages are sized by
+real encoded item size (fitting more per frame than the advertised worst-case
+count), and a failed write leaves the earlier pages applied.
+`read_all_keymap` returns every layer in `get_keymap_bulk` order.
 
 ### Combos / Forks / Morse / Macros
 
 | Method | Signature | Returns |
 |--------|-----------|---------|
 | `get_combo` | `(index: u8)` | `Combo` |
-| `set_combo` | `(index; config: Combo)` | `()` |
+| `set_combo` | `(index: u8, config: Combo)` | `()` |
 | `get_combo_bulk` | `(start_index: u8)` | `GetComboBulkResponse` |
-| `set_combo_bulk` | `(; request: SetComboBulkRequest)` | `()` |
+| `set_combo_bulk` | `(request: SetComboBulkRequest)` | `()` |
 | `get_fork` | `(index: u8)` | `Fork` |
-| `set_fork` | `(index; config: Fork)` | `()` |
+| `set_fork` | `(index: u8, config: Fork)` | `()` |
 | `get_morse` | `(index: u8)` | `Morse` |
-| `set_morse` | `(index; config: Morse)` | `()` |
+| `set_morse` | `(index: u8, config: Morse)` | `()` |
 | `get_morse_bulk` | `(start_index: u8)` | `GetMorseBulkResponse` |
-| `set_morse_bulk` | `(; request: SetMorseBulkRequest)` | `()` |
+| `set_morse_bulk` | `(request: SetMorseBulkRequest)` | `()` |
 | `get_macro` | `(offset: u16)` | `MacroData` |
-| `set_macro` | `(offset; data: MacroData)` | `()` |
+| `set_macro` | `(offset: u16, data: MacroData)` | `()` |
 
 ### Behavior
 
 | Method | Signature | Returns |
 |--------|-----------|---------|
 | `get_behavior` | `()` | `BehaviorConfig` |
-| `set_behavior` | `(; config: BehaviorConfig)` | `()` |
+| `set_behavior` | `(config: BehaviorConfig)` | `()` |
 
 ### Status
 
@@ -235,9 +220,8 @@ reject with `Unsupported` without touching the wire.
 | `get_wpm` | `()` | `u16` |
 | `get_sleep_state` | `()` | `bool` |
 
-`get_matrix_state` is gated behind the lock. `get_battery_status` and
-`get_ble_status` require `DeviceCapabilities.ble_enabled`. `get_peripheral_status`
-requires `is_split`.
+`get_matrix_state` is gated behind the lock. `get_battery_status` requires
+`DeviceCapabilities.ble_enabled`. `get_peripheral_status` requires `is_split`.
 
 ### Connection
 
@@ -249,9 +233,9 @@ requires `is_split`.
 | `switch_ble_profile` | `(slot: u8)` | `()` |
 | `clear_ble_profile` | `(slot: u8)` | `()` |
 
-Getter results and topic values are plain JS values produced through
-`serde-wasm-bindgen`. Setter payloads are plain JS objects matching the Rust
-serde shape for the corresponding `rmk-types` type.
+`get_ble_status`, `switch_ble_profile`, and `clear_ble_profile` require
+`DeviceCapabilities.ble_enabled`; otherwise they reject with `Unsupported`
+without touching the wire.
 
 ## JS Error Names
 
@@ -261,20 +245,18 @@ behind the `wasm` feature). Use `error.name` to branch in JS:
 
 | `RynkHostError` variant | `error.name` | Meaning |
 |-------------------------|--------------|---------|
-| `Disconnected` | `"Disconnected"` | Transport closed or link latched dead |
+| `Disconnected` | `"Disconnected"` | Transport closed |
 | `Io(_)` | `"TransportError"` | I/O failure on the wire |
+| `Transport(..)` | `"TransportError"` | A transport step (port open, GATT attach, …) failed |
 | `DeviceNotFound(_)` | `"DeviceNotFound"` | No matching device (native) |
 | `Rejected(_)` | `"Rejected"` | Firmware returned a `RynkError` |
 | `Unsupported(..)` | `"Unsupported"` | Capability gate rejected the command |
 | `VersionMismatch { .. }` | `"VersionMismatch"` | Protocol major version mismatch |
-| `Encode(_)` | `"RequestEncodeError"` | Request serialization failed |
-| `TooLarge { .. }` | `"RequestTooLarge"` | Frame exceeds device `max_payload_size` |
+| `Encode(_)` | `"RequestEncodeError"` | Request failed to encode or exceeds the device's `max_payload_size` |
 | `Deserialize { .. }` | `"ResponseDecodeError"` | Response deserialization failed |
 | `Layout(_)` | `"LayoutDecodeError"` | Layout blob inflate/decode failed |
 | `TrailingBytes { .. }` | `"ResponseTrailingBytes"` | Response had bytes beyond the decoded value |
 | `CmdMismatch { .. }` | `"ResponseCommandMismatch"` | Reply CMD did not match the request |
-| `InboundTooLarge { .. }` | `"ResponseTooLarge"` | Inbound frame exceeds negotiated max |
-| `TopicCmd(_)` | `"InvalidRequestCommand"` | A topic CMD was passed to a request method |
 
 Example of branching by `error.name`:
 
@@ -295,7 +277,7 @@ catch (e) {
 }
 ```
 
-Note: `Unsupported` and `TooLarge` are rejected locally without killing the link
-— `is_alive()` stays true. A `Disconnected`, `TransportError`,
+Note: `Unsupported` and a local `Encode` are rejected without touching the wire
+— the session stays usable. A `Disconnected`, `TransportError`,
 `VersionMismatch`, or any error from a wire round trip means the link may be
 dead; see [Lifecycle & Dead States](./lifecycle.md).

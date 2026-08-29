@@ -19,15 +19,16 @@ connection state, battery, etc.) — all without reflashing firmware.
 The protocol is:
 
 - **Runtime-free** — the core client (`rynk` crate) has no async runtime
-  dependency; concrete transports (serial, BLE, WASM) live in separate crates.
+  dependency; concrete transports (USB, BLE, WASM) live in separate crates.
 - **Typed** — a shared command table (`rmk-types`) binds each command to its
   request/response payload types, so the firmware and host can never disagree
   about a message's shape.
 - **Versioned** — a `GetVersion` handshake establishes compatibility; major
-  mismatches are hard-rejected, same-major minors connect with a warning.
-- **Transport-agnostic** — the same `Client<T>` drives raw USB, BLE GATT,
-  and browser (WebUSB / WebHID) transports through a common
-  `embedded-io-async` byte-link interface.
+  mismatches are hard-rejected, same-major minors connect (a newer firmware
+  minor just logs a note).
+- **Transport-agnostic** — the same `Client` + `Driver` pair drives raw USB,
+  BLE GATT, and browser (WebUSB / WebHID) transports through common
+  `embedded-io-async` `Read`/`Write` byte links.
 
 ## Crate Map
 
@@ -41,10 +42,9 @@ The protocol is:
 
 ## Source Repository
 
-The Rynk source code is available as a cloned dependency at:
+Rynk lives in the [RMK repository](https://github.com/rmk-rs/rmk) under
+`rynk/`, with the shared protocol types in `rmk-types/`. This documentation
+covers the `rynk*` 0.3.0 releases published on crates.io.
 
-```
-.slim/clonedeps/repos/HaoboGu__rmk/rynk/
-```
-
-All file references in this documentation point to paths within that clone.
+File references in this documentation (such as `rynk/src/driver.rs`) are
+paths relative to that repository's root.

@@ -7,9 +7,12 @@ Source: `rynk/rynk-ble/src/lib.rs`
 `rynk-ble` is a BLE GATT transport for the Rynk host library, built on
 [`bluest`](https://docs.rs/bluest). A Rynk keyboard is identified by its service
 UUID (`RYNK_SERVICE_UUID`), not its user-settable BLE name — the counterpart to
-the serial transport's serial magic marker. The service UUID is defined by the
+the USB transport's vendor interface class triple. The service UUID is defined by the
 firmware and is not user-configurable, so it reliably identifies a Rynk keyboard
 regardless of what the user named it.
+
+`BleDevice::discover()` lists already-connected devices exposing that service
+(no scan, no attach); `RynkDevice::connect()` then attaches and handshakes.
 
 ## GATT Service & Characteristics
 
@@ -26,7 +29,8 @@ output characteristic carries host-to-firmware data as GATT writes.
 ## Discovery
 
 `BleDevice::discover()` lists already-connected devices exposing the Rynk
-service UUID — no scan, no attach.
+service UUID — no scan, no attach. Discovery is transport-specific, so it's an
+inherent call, not part of `RynkDevice`.
 
 ```rust
 pub async fn discover() -> Result<Vec<BleDevice>, RynkHostError>
@@ -44,20 +48,23 @@ pub struct BleDevice {
 }
 ```
 
-`BleDevice` holds cheap `bluest` handles, not a live session. `connect()`
+`BleDevice` holds cheap `bluest` handles, not a live session. `open()`
 performs the first attach.
 
+- **`name`** — the keyboard's BLE name, if it advertised one. `label()` (the
+  `RynkDevice` picker text) falls back to the `DeviceId` when it's absent.
 - **`id()`** — returns a stable `DeviceId` picker key. Unlike the BLE name,
   which may be absent or shared across devices, the ID is unique and stable.
 
 ## Connect Flow
 
-`BleDevice::open()` (the `RynkDevice` implementation) performs three bounded
-steps:
+`BleDevice::open()` (the `RynkDevice` implementation) performs three steps,
+all inside one 10-second `GATT_TIMEOUT`. GATT connection, discovery, and
+subscription carry no inherent timeout, so a radio-silent device would
+otherwise pend forever; hitting the bound returns
+`RynkHostError::Io(ErrorKind::TimedOut)`.
 
-1. **`adapter.connect_device(&device)`** — bounded by a 5-second timeout
-   (`GATT_TIMEOUT`). GATT steps carry no inherent timeout, so a radio-silent
-   device would otherwise pend forever.
+1. **`adapter.connect_device(&device)`** — the first attach.
 2. **`discover_characteristic()`** — finds the input and output characteristics
    inside the Rynk service. Missing service or characteristics return
    `DeviceNotFound`.
@@ -67,53 +74,58 @@ steps:
      background task.
    - A synthetic empty first chunk acks that the subscription is live;
      consuming it here means `attach` returns only once subscribed, which is
-     the order the firmware needs before the client's first write.
-   - Blocks on the readiness ack (bounded 5s). A silent device that never acks
-     returns `Disconnected` or an I/O timeout error.
+     the order the firmware needs before the client's first write. The block on
+     that readiness ack is bounded by `open()`'s overall timeout; a silent
+     device that never acks times out or returns `Disconnected`.
 
 A failure at any step means the device is gone or is not a Rynk keyboard.
 
-## BleTransport
+## BleReader / BleWriter
+
+The attached link is handed out as two independent halves, consumed by the
+client/driver split (`Driver<BleReader, BleWriter>`). Both implement the
+`rynk::io` traits with `type Error = std::io::Error`.
 
 ```rust
-pub struct BleTransport {
-    output: Characteristic,
-    input: BoxStream<'static, Vec<u8>>,
-    write_chunk: usize,
+pub struct BleReader {
+    input: BoxStream<'static, std::io::Result<Vec<u8>>>,
     pending: Vec<u8>,
-    pos: usize,
-    name: Option<String>,
     _adapter: Adapter,
+}
+
+pub struct BleWriter {
+    output: Characteristic,
+    write_chunk: usize,
 }
 ```
 
-### Write side
+### Write side (`BleWriter`)
 
-- **`output: Characteristic`** — the write side uses acknowledged GATT writes.
+- **`output: Characteristic`** — the write side uses GATT
+  write-without-response. The LE link layer still delivers reliably, and
+  skipping the ATT ack saves a full connection-interval round trip per chunk.
 - **`write_chunk`** — clamped to `[BLE_SAFE_WRITE=20, RYNK_BLE_CHUNK_SIZE=244]`,
   using the characteristic's advertised `max_write_len_async` (falling back to
   20, the ATT-minimum MTU payload).
-- **`write()`** — one GATT write per call, acknowledged. A dropped chunk would
-  desync the firmware's reassembler, so writes are not fire-and-forget.
+- **`write()`** — one GATT write per call, capped to `write_chunk`; `write_all`
+  loops the rest. A GATT error is logged with its detail, then reduced to
+  `std::io::Error::other("gatt write")` before the driver reduces it further to
+  an `ErrorKind`. `flush()` is a no-op.
 
-### Read side
+### Read side (`BleReader`)
 
 - **`input: BoxStream`** — the read side is an async generator yielding
-  notification chunks. The `notify()` borrow stays inside one pinned state
-  machine; dropping the transport unsubscribes (bluest's guard runs) and frees
-  the characteristic.
-- **`read()`** — yields notification chunks. When the generator ends (notify
-  error or disconnect), `read()` returns `0` (EOF), which surfaces as
-  `Disconnected` in the client.
-- **`pending` / `pos`** — holds a notification chunk larger than one `read`
-  buffer across reads.
-
-### Metadata
-
-- **`device_name()`** — returns the connected keyboard's BLE name, if it
-  advertised one.
-- **`_adapter`** — holds a clone of the adapter so the GATT connection (owned by
-  the central) outlives the `BleDevice`.
+  notification chunks as `std::io::Result<Vec<u8>>`. The `notify()` borrow
+  stays inside one pinned state machine; dropping the reader unsubscribes
+  (bluest's guard runs) and frees the characteristic.
+- **`read()`** — yields notification chunks. A notify error propagates as
+  `Err`, which the driver surfaces as `RynkHostError::Io`. When the generator
+  ends (unsubscribe or disconnect), `read()` returns `0` (EOF), which
+  `Driver::run` surfaces as `Disconnected`.
+- **`pending`** — holds a notification chunk larger than one `read` buffer
+  across reads.
+- **`_adapter`** — holds a clone of the adapter so the GATT connection (owned
+  by the central) outlives the `BleDevice`.
 
 ## Native Only
 
@@ -126,16 +138,19 @@ keyboard, so `rynk-wasm` uses WebHID over the existing OS HID link instead.
 
 ```rust
 impl RynkDevice for BleDevice {
-    type Transport = BleTransport;
+    type Read = BleReader;
+    type Write = BleWriter;
 
     fn label(&self) -> String { /* BLE name or DeviceId fallback */ }
 
-    async fn open(self) -> Result<BleTransport, RynkHostError> { /* connect + discover + attach */ }
+    async fn open(self) -> Result<(BleReader, BleWriter), RynkHostError> { /* connect + discover + attach */ }
 }
 ```
 
 `open()` connects, discovers characteristics, and subscribes — once, no retry.
-A failure means the device is gone or isn't a Rynk keyboard.
+A failure means the device is gone or isn't a Rynk keyboard. The
+trait-provided `connect()` builds on it: open the link, then complete the Rynk
+handshake over the normal pumps, yielding `(Client, Driver<BleReader, BleWriter>)`.
 
-The full connect flow mirrors the serial transport; see
+The full connect flow mirrors the USB transport; see
 [USB (Vendor Bulk)](./usb.md).

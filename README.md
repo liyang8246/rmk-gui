@@ -46,7 +46,7 @@ Make sure you have Rust, NodeJS and Python installed on your system.
    ```
    `src/rynk/wasm/` is a build artifact and is not checked in, so this step is
    required before anything else runs. It compiles `rynk-wasm` from a sibling
-   `../rmk` checkout when one exists, otherwise it fetches the rmk revision
+   `../rmk` checkout when one exists, otherwise it builds the crates.io release
    pinned in the script; set `RMK_REPO` to point somewhere else.
 4. Start the development server:
    ```bash
@@ -78,9 +78,9 @@ one client at a time.
 
 The fixture firmware resolves `rmk` the same way step 3 does (`RMK_REPO`, then a
 sibling `../rmk`), so the firmware and the wasm client stay on one revision.
-With neither, both fall back to the same pinned rmk revision — bump it in
-`qemu/Cargo.toml`, `src-tauri/Cargo.toml` and `scripts/build-rynk-wasm.py`
-together.
+With neither, both fall back to the crates.io versions of one rmk release
+train — bump them in `qemu/Cargo.toml`, `src-tauri/Cargo.toml` and
+`scripts/build-rynk-wasm.py` together.
 
 `CI=true` matters for linting: the eslint config detects editors and relaxes
 some rules, so a bare `pnpm lint` is more permissive than CI.
