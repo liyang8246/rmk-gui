@@ -1,17 +1,15 @@
 # AGENTS.md
 
-## Svelte Task Workflow
+## Frontend Checks
 
-Before any Svelte task: load the `svelte` skill from `.agents/skills/svelte/`.
-After completing any Svelte task: run these checks in order and fix all issues before considering the task done:
+After completing any frontend task under `app/`, run these checks and fix all issues before considering the task done:
 
 ```bash
-npx svelte-check --tsconfig ./tsconfig.json
-npx eslint .
-npx -y @sveltejs/mcp svelte-autofixer ./src/lib/PageHost.svelte   # repeat per .svelte file touched
+pnpm typecheck
+CI=true pnpm lint:ts
 ```
 
-All three must pass with zero errors and zero warnings.
+Both must pass with zero errors and zero warnings.
 
 ## Comment Policy
 
@@ -22,5 +20,5 @@ No verbose/long comments, no ornate dividers (`──`, box-drawing, ASCII art),
 Read-only dependency source repositories are available under
 `.slim/clonedeps/repos/` for inspection. Do not edit these clones.
 
-- `.slim/clonedeps/repos/rmk-rs__rmk/` - `rmk-rs/rmk` at `main` (`ae22ccda`); rynk protocol source (full-duplex header+payload protocol, RynkHidService, WASM/TS type generation, command handlers) to help rmk-gui adapt the new communication protocol.
+- `.slim/clonedeps/repos/HaoboGu__rmk/` - `rmk-rs/rmk` at `main`; rynk protocol source (full-duplex header+payload protocol, RynkHidService, WASM/TS type generation, command handlers) to help rmk-gui adapt the new communication protocol.
 - `.slim/clonedeps/repos/deviceplug__btleplug/` - `deviceplug/btleplug` at `0.12.0` (`ee381ac`); BLE API source for Peripheral/Central traits, notification stream, and write chunking behavior.

@@ -1,7 +1,7 @@
 <div align="center">
 <img src="./src-tauri/icons/icon.png" alt="RMK GUI" width="128" />
 <h3>
-Gui configuration for <a href="https://github.com/rmk-rs/rmk">RMK</a> based on <a href="https://github.com/tauri-apps/tauri">Tauri</a> and <a href="https://github.com/sveltejs/svelte">Svelte</a>
+Gui configuration for <a href="https://github.com/rmk-rs/rmk">RMK</a> based on <a href="https://github.com/tauri-apps/tauri">Tauri</a> and <a href="https://nuxt.com">Nuxt</a>
 </h3>
 </div>
 
@@ -20,7 +20,8 @@ and macOS 10.15+ (intel/apple).
 ## Features
 
 - Based on Rust and Tauri2 frameworks.
-- Concise and modern user interface, built with Svelte 5 and Tailwind CSS 4.
+- Nuxt 4 + Pinia frontend. The UI is intentionally empty for now; what lives
+  here is the rynk transport and the keyboard store.
 - Talks the rynk protocol over USB serial, BLE, and Web Serial.
 - Support for Windows, macOS, and Linux.
 
@@ -43,7 +44,7 @@ Make sure you have Rust, NodeJS and Python installed on your system.
    ```bash
    pnpm build:wasm
    ```
-   `src/rynk/wasm/` is a build artifact and is not checked in, so this step is
+   `app/rynk/wasm/` is a build artifact and is not checked in, so this step is
    required before anything else runs. It compiles `rynk-wasm` from a sibling
    `../rmk` checkout when one exists, otherwise it clones `rmk-rs/rmk`; set
    `RMK_REPO` to point somewhere else.
@@ -66,7 +67,7 @@ to connect to. It needs `qemu-system-riscv32` and the
 ### Checking
 
 ```bash
-pnpm check       # svelte-check
+pnpm typecheck   # vue-tsc
 CI=true pnpm lint
 ```
 
@@ -83,9 +84,9 @@ RMK-GUI was based on or inspired by these projects and so on:
 
 - [Tauri](https://github.com/tauri-apps/tauri) A framework for building tiny, fast binaries for all major desktop and
   mobile platforms.
-- [Svelte](https://github.com/sveltejs/svelte) A UI framework that compiles components to small, surgical JavaScript.
-- [Ark UI](https://github.com/chakra-ui/ark) A headless, accessible component library for building design systems.
-- [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) A utility-first CSS framework.
+- [Nuxt](https://nuxt.com) The Vue framework for building full-stack web applications.
+- [Vue](https://vuejs.org) The progressive JavaScript framework.
+- [Pinia](https://pinia.vuejs.org) The Vue store library.
 - [Vial-gui](https://github.com/vial-kb/vial-gui) An open-source cross-platform (Windows, Linux and Mac) GUI and a QMK
   fork for configuring your keyboard in real time.
 - [RMK](https://github.com/rmk-rs/rmk) Rust keyboard firmware library with layers, macros, real-time keymap editing,

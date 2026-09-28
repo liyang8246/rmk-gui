@@ -5,9 +5,9 @@
   "identifier": "rs.rmk.gui",
   "build": {
     "beforeDevCommand": "pnpm dev:web",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:3000",
     "beforeBuildCommand": "pnpm build:web",
-    "frontendDist": "../dist"
+    "frontendDist": "../.output/public"
   },
   "app": {
     "withGlobalTauri": false,

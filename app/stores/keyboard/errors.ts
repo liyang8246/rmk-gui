@@ -7,8 +7,6 @@ export type KeyboardError
     | { type: 'invalid', cause: string }
     | { type: 'unknown', cause: unknown }
 
-// A Record (not an array) so a new RynkError variant upstream fails this build.
-// Exported so tests iterate this list instead of keeping a stale copy.
 export const RYNK_ERROR_CODES: Record<RynkError, true> = {
   Busy: true,
   Internal: true,
@@ -32,7 +30,7 @@ function isRynkError(s: string): s is RynkError {
 
 export function toKeyboardError(e: unknown): KeyboardError {
   if (!(e instanceof Error)) return { type: 'unknown', cause: e }
-  if (e.message === 'link closed' || TRANSPORT_NAMES.includes(e.name)) {
+  if (TRANSPORT_NAMES.includes(e.name)) {
     return { type: 'transport', cause: e }
   }
   const reject = e.name === 'Rejected' ? REJECTED_RE.exec(e.message) : null
@@ -45,11 +43,8 @@ export function toKeyboardError(e: unknown): KeyboardError {
   return { type: 'unknown', cause: e }
 }
 
-/// Short, user-facing reason — for the status bar and the connect button.
 export function describeKeyboardError(e: KeyboardError): string {
   return match(e)
-    // Not a rejection: the request was fine and the device may take it later —
-    // a flash write in flight, or a relay whose keyboard is out of range.
     .with({ type: 'rynk', code: 'NotReady' }, () => 'keyboard not ready — try again in a moment')
     .with({ type: 'rynk' }, x => `device rejected ${x.code}`)
     .with({ type: 'transport' }, () => 'link lost')

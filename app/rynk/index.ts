@@ -13,33 +13,20 @@ export interface ConnectedDevice {
 
 export interface TransportInfo {
   kind: 'serial' | 'ble' | 'tcp' | 'hid'
-  /// Stable across scans (port path / BLE id / socket address); identifies the
-  /// live session so a rescan can leave it alone.
   id: string
   label: string
   connect: () => Promise<ConnectedDevice>
-  /// Web only: the `SerialPort`/`HIDDevice` this entry stands for. Neither API
-  /// gives a device an id, so the object itself is the identity — it lets a
-  /// freshly granted handle be matched back to its row in the list.
   handle?: SerialPort | HIDDevice
 }
 
-/// Devices reachable without a user gesture. Native builds enumerate the
-/// transports directly; the browser offers what the user has already granted —
-/// both APIs list that, so a granted port and a granted HID device appear alike.
 export async function discover(): Promise<TransportInfo[]> {
   if (!isTauri()) {
     const [ports, devices] = await Promise.all([grantedSerialPorts(), grantedHidDevices()])
-    /// Web Serial withholds the product string, so the name comes from a
-    /// granted HID sibling — one keyboard exposes both interfaces under the
-    /// same ids. Only until the keyboard reports its own name once connected.
     const nameOf = (vendorId?: number, productId?: number): string | undefined => {
       if (vendorId === undefined || productId === undefined) return undefined
       return devices.find(d => d.vendorId === vendorId && d.productId === productId)?.productName
     }
     return [
-      // Neither API exposes a device id, so identity is what each does report,
-      // plus the position that disambiguates two identical keyboards.
       ...ports.map((port, i) => {
         const { usbVendorId, usbProductId } = port.getInfo()
         return {
@@ -79,8 +66,10 @@ export async function discover(): Promise<TransportInfo[]> {
   ]
 }
 
-export { connectClient, keycodeTables } from './core'
+export { connect } from './core'
 export type { JsByteLink } from './core'
+export { connectSession } from './session'
+export type { Session } from './session'
 export { closeAllSessions }
 export type * from './wasm/rynk_wasm.js'
 export { canUseWebHid, canUseWebSerial, requestHidDevice, requestSerialPort } from './web'

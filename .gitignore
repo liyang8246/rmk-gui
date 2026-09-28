@@ -35,7 +35,7 @@ qemu/target
 /.cargo/config.toml
 
 # Generated WASM (built by scripts/build-rynk-wasm.py in CI)
-src/rynk/wasm
+app/rynk/wasm
 
 # Env
 .env

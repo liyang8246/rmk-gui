@@ -3,9 +3,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev:web": "vite",
+    "postinstall": "nuxt prepare",
+    "dev:web": "nuxt dev",
     "dev:tauri": "tauri dev",
-    "build:web": "vite build",
+    "build:web": "nuxt generate",
     "build:tauri": "tauri build",
     "build:wasm": "python3 scripts/build-rynk-wasm.py",
     "qemu": "uv run qemu/run.py",
@@ -15,33 +16,28 @@
     "lint:fix": "run-s lint:fix:ts lint:fix:rs",
     "lint:fix:ts": "eslint . --fix",
     "lint:fix:rs": "cd src-tauri && cargo fmt",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@iconify/svelte": "^5.0.1",
+    "@pinia/nuxt": "^1.0.2",
     "@tauri-apps/api": "^2.11.1",
-    "bits-ui": "^2.18.1",
     "neverthrow": "^8.2.0",
-    "svelte-sonner": "^1.1.1",
+    "pinia": "^4.0.3",
     "ts-pattern": "^5.9.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^9.2.0",
-    "@sveltejs/vite-plugin-svelte": "^7.2.0",
-    "@tailwindcss/vite": "^4.3.3",
+    "@antfu/eslint-config": "^9.5.1",
+    "@nuxt/eslint": "^1.17.0",
     "@tauri-apps/cli": "^2.11.4",
-    "@tsconfig/svelte": "^5.0.4",
     "@types/node": "^26.1.1",
     "@types/w3c-web-hid": "^1.0.7",
     "@types/w3c-web-serial": "^1.0.8",
     "eslint": "^10.7.0",
-    "eslint-plugin-better-tailwindcss": "^4.7.0",
-    "eslint-plugin-svelte": "^3.11.0",
     "npm-run-all2": "^9.0.2",
-    "svelte": "^5.38.6",
-    "svelte-check": "^4.3.1",
-    "tailwindcss": "^4.3.3",
+    "nuxt": "^4.5.2",
     "typescript": "^6.0.3",
-    "vite": "^8.1.5"
+    "vue": "^3.5.0",
+    "vue-router": "^4.5.0",
+    "vue-tsc": "^3.3.11"
   }
 }

@@ -1,22 +1,9 @@
 {
-  "extends": "@tsconfig/svelte/tsconfig.json",
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "paths": {
-      "~/*": ["./src/*"],
-      "@/*": ["./src/*"]
-    },
-    "resolveJsonModule": true,
-    "types": ["node", "w3c-web-serial", "w3c-web-hid"],
-    "allowImportingTsExtensions": true,
-    "strict": true,
-    "noEmit": true,
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*.ts", "src/**/*.svelte", "src/**/*.js"],
-  "exclude": ["node_modules", "dist", "src-tauri"]
+  "references": [
+    { "path": "./.nuxt/tsconfig.app.json" },
+    { "path": "./.nuxt/tsconfig.server.json" },
+    { "path": "./.nuxt/tsconfig.shared.json" },
+    { "path": "./.nuxt/tsconfig.node.json" }
+  ],
+  "files": []
 }

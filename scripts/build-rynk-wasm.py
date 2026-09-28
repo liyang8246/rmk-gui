@@ -4,7 +4,7 @@ from pathlib import Path
 
 URL, BRANCH = "https://github.com/rmk-rs/rmk.git", "main"
 ROOT = Path(__file__).resolve().parent.parent
-WASM_OUT = ROOT / "src" / "rynk" / "wasm"
+WASM_OUT = ROOT / "app" / "rynk" / "wasm"
 
 def has_rynk(repo):
     return (repo / "rynk" / "rynk-wasm" / "Cargo.toml").is_file()
