@@ -41,10 +41,6 @@ The protocol is:
 
 ## Source Repository
 
-The Rynk source code is available as a cloned dependency at:
-
-```
-.slim/clonedeps/repos/HaoboGu__rmk/rynk/
-```
-
-All file references in this documentation point to paths within that clone.
+The Rynk source code is available as a cloned dependency — see the `rmk` entry in the
+Cloned Dependency Source table of `AGENTS.md`. All file references in this documentation
+point to paths within that clone.

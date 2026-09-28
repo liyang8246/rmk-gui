@@ -42,12 +42,8 @@ app/rynk/wasm
 .env.*
 !.env.example
 
-# BEGIN oh-my-opencode-slim clonedeps
-.slim/clonedeps/repos/
-# END oh-my-opencode-slim clonedeps
-
-# Deepwork state
-.slim/deepwork/
+# Cloned dependency sources
+.agents/clonedeps/repos/*
 
 # mdBook build output
 docs/book

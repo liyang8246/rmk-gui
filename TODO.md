@@ -8,7 +8,7 @@
 ## Phase 1: rynk-wasm Build & Transport Layer
 
 - [ ] **1.1** Add `wasm-pack` build script to package.json / CI
-  - Build rynk-wasm from `.slim/clonedeps/repos/HaoboGu__rmk/rynk/rynk-wasm/` with `wasm-pack build --target web`
+  - Build rynk-wasm from the `rmk` cloned dependency (see AGENTS.md), `rynk/rynk-wasm/`, with `wasm-pack build --target web`
   - Output `pkg/` into `src/lib/rynk-wasm/` or similar, gitignored (build artifact)
   - Copy `.d.ts` type declarations alongside
 

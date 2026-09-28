@@ -1,0 +1,15 @@
+[
+  {
+    "name": "rmk",
+    "resolvedVersion": "main@e3480de",
+    "repoUrl": "https://github.com/rmk-rs/rmk.git",
+    "ref": "e3480deceaf63d8f8e558f04469447bdf96819ca",
+    "packagePath": ""
+  },
+  {
+    "name": "btleplug",
+    "resolvedVersion": "0.12.0",
+    "repoUrl": "https://github.com/deviceplug/btleplug.git",
+    "ref": "ee381ac34fd8600cc0faae1b8e71470db84135cf"
+  }
+]

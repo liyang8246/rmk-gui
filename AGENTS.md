@@ -15,10 +15,14 @@ Both must pass with zero errors and zero warnings.
 
 No verbose/long comments, no ornate dividers (`──`, box-drawing, ASCII art), no restating what code already shows. One-line comments only, and only for a non-obvious *why* (invariant, platform quirk, wire layout, cross-file sync, real TODO). When in doubt, delete it.
 
+<!-- clonedeps head -->
 ## Cloned Dependency Source
 
-Read-only dependency source repositories are available under
-`.slim/clonedeps/repos/` for inspection. Do not edit these clones.
+Read-only dependency source repositories are available under `.agents/clonedeps/repos/` for inspection. Do not edit these clones. Keep this list in sync with `.agents/clonedeps/lock.json`: when a dependency is added, removed or upgraded, update the lock file and run `sync`.
 
-- `.slim/clonedeps/repos/HaoboGu__rmk/` - `rmk-rs/rmk` at `main`; rynk protocol source (full-duplex header+payload protocol, RynkHidService, WASM/TS type generation, command handlers) to help rmk-gui adapt the new communication protocol.
-- `.slim/clonedeps/repos/deviceplug__btleplug/` - `deviceplug/btleplug` at `0.12.0` (`ee381ac`); BLE API source for Peripheral/Central traits, notification stream, and write chunking behavior.
+| Dependency | Version | Path |
+| --- | --- | --- |
+| `btleplug` | `0.12.0` | `.agents/clonedeps/repos/btleplug__ee38` |
+| `rmk` | `main@e3480de` | `.agents/clonedeps/repos/rmk__e348` |
+
+<!-- clonedeps tail -->
