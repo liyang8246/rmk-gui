@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# ///
+
 import shutil, subprocess, tempfile
 from pathlib import Path
 

@@ -9,7 +9,7 @@
     "build:web": "nuxt generate",
     "build:tauri": "tauri build",
     "build:wasm": "python3 scripts/build-rynk-wasm.py",
-    "qemu": "uv run qemu/run.py",
+    "qemu": "uv run scripts/run-qemu.py",
     "lint": "run-s lint:ts lint:rs",
     "lint:ts": "eslint .",
     "lint:rs": "cd src-tauri && cargo clippy --all-targets -- -D warnings",
