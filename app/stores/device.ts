@@ -43,8 +43,8 @@ export const useDeviceStore = defineStore('device', () => {
     await dying?.close()
   }
 
-  function handleDeath(dead: Session, cause: unknown): void {
-    if (session !== dead) return
+  function handleDeath(cause: unknown): void {
+    if (!session) return
     session = null
     connectedId.value = null
     connectedKind.value = null
@@ -64,11 +64,8 @@ export const useDeviceStore = defineStore('device', () => {
     let cause: KeyboardError | null = null
     try {
       opened = await info.connect()
-      const next = await connectSession(opened.link, opened.label)
+      const next = await connectSession(opened.link, opened.label, handleDeath)
       session = next
-      next.onDeath((c) => {
-        handleDeath(next, c)
-      })
 
       const attached = await keyboard.attach(next)
       if (attached.isErr()) {
