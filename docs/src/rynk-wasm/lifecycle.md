@@ -44,7 +44,8 @@ sequence in `connectClient` (`src/rynk/core.ts`).
 
 `connect()` takes only the `JsByteLink` — the display label is the link's own
 required `label` property. The handshake sends `GetVersion` and
-`GetCapabilities` in one round trip and rejects on a major mismatch with
+`GetCapabilities` in one round trip and rejects an incompatible version (any
+other minor on 0.x, any other major from 1.0) with
 `VersionMismatch` (`handshake` in `rynk/src/device.rs`). If the page does not
 probe the version, it can call `connect()` directly — the pre-probe exists so
 the page can load a protocol-major-specific wasm build before the handshake
@@ -69,8 +70,8 @@ async function loadCore(major) {
 ```
 
 Source: `loadCore` in `rynk/rynk-wasm/index.html`; `rmk-gui`'s version
-(`src/rynk/core.ts`) maps majors 0 and 1 to the same module. When protocol v2
-lands, `loadCore(major)` can select a second wasm build while keeping the same
+(`src/rynk/core.ts`) loads its one bundled module for every version and lets
+the handshake reject a mismatch. When a second protocol version must be supported, `loadCore(major)` can select a second wasm build while keeping the same
 JS byte-link implementations — the `JsByteLink` contract is
 version-independent.
 

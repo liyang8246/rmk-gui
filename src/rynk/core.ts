@@ -151,22 +151,20 @@ export async function probeVersion(link: JsByteLink, timeoutMs = PROBE_TIMEOUT_M
   }
 }
 
-async function loadCore(major: number) {
-  switch (major) {
-    case 0: case 1: return await import('./wasm/rynk_wasm.js')
-    default: throw new Error(`no rynk-core wasm for protocol major ${major}`)
-  }
+/// One core speaks one protocol version; its handshake rejects any other with
+/// `VersionMismatch`, so every probed version loads it.
+async function loadCore() {
+  return await import('./wasm/rynk_wasm.js')
 }
 
 /// `wasm` overrides where the module is fetched from. The browser default
 /// resolves it next to the JS glue, which Node's fetch cannot do (file: URL).
 export async function connectClient(link: JsByteLink, wasm?: BufferSource, timeoutMs?: number) {
-  // Every protocol major we support maps to the same module, so its fetch and
-  // compile overlap the probe round trip instead of following it. loadCore
-  // resolves to this same in-flight import; a failed probe leaves it caught.
+  // Start the fetch and compile now so they overlap the probe round trip.
+  // loadCore resolves to this same in-flight import; a failed probe leaves it caught.
   import('./wasm/rynk_wasm.js').catch(() => {})
   const { major, minor } = await probeVersion(link, timeoutMs)
-  const core = await loadCore(major)
+  const core = await loadCore()
   await core.default(wasm ? { module_or_path: wasm } : undefined)
   const client = await core.connect(link)
   return { client, major, minor }
@@ -177,7 +175,7 @@ export async function connectClient(link: JsByteLink, wasm?: BufferSource, timeo
 /// next; a TS union cannot be iterated, so the wasm hands over the values.
 /// Initialising twice is cheap — the glue returns the module it already has.
 export async function keycodeTables(wasm?: BufferSource) {
-  const core = await loadCore(0)
+  const core = await loadCore()
   await core.default(wasm ? { module_or_path: wasm } : undefined)
   return {
     hid: core.all_hid_keycodes(),

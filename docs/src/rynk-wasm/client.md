@@ -58,8 +58,8 @@ Ok(RynkClient { client, driver: Mutex::new(driver) })
 `label` is a required string property (WebHID `productName`, or a page-derived
 string); see [JS Byte Link Implementations](./js-byte-link.md).
 
-The handshake negotiates the protocol version (rejecting on major mismatch;
-same-major minors connect) and caches the device capabilities in the client.
+The handshake negotiates the protocol version (exact match on 0.x; from 1.0,
+rejecting on major mismatch while same-major minors connect) and caches the device capabilities in the client.
 See [Lifecycle & Dead States](./lifecycle.md) for the full connect flow
 including the optional version probe.
 
