@@ -1,9 +1,6 @@
 import type { ConnectedDevice, Session, TransportInfo } from '../rynk'
 import type { KeyboardError } from './keyboard/errors'
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
 import { connectSession, discover, requestHidDevice, requestSerialPort } from '../rynk'
-import { useKeyboardStore } from './keyboard'
 import { toKeyboardError } from './keyboard/errors'
 
 export type ConnectionPhase = 'connecting' | 'connected' | 'disconnected' | 'error'

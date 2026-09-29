@@ -20,9 +20,7 @@ import type {
 import type { KeyboardError } from './keyboard/errors'
 import type { KeyboardConfig, KeyboardDevice, KeyboardStatus } from './keyboard/types'
 import { err, errAsync, ResultAsync } from 'neverthrow'
-import { defineStore } from 'pinia'
 import { match, P } from 'ts-pattern'
-import { ref } from 'vue'
 import { toKeyboardError } from './keyboard/errors'
 
 let client: RynkClient | null = null
