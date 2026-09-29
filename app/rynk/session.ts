@@ -30,7 +30,7 @@ export async function connectSession(link: JsByteLink, label: string): Promise<S
 
   async function runLoop(): Promise<void> {
     try {
-      for (;;) {
+      while (true) {
         const event = await client.next_topic()
         if (closed) break
         for (const cb of topics) cb(event)

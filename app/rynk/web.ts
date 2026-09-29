@@ -55,7 +55,7 @@ export class WebByteLink extends BufferedLink {
   }
 
   private async pump() {
-    for (;;) {
+    while (true) {
       const { value, done } = await this.reader.read()
       if (done) break
       if (value) this.push(value)
