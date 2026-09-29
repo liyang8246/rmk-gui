@@ -77,9 +77,6 @@ function runMutation<T>(m: Mutation<T>): ResultAsync<void, KeyboardError> {
 async function fetchKeymap(c: RynkClient, caps: DeviceCapabilities): Promise<KeyAction[][][]> {
   const keymap: KeyAction[][][] = []
   const flat = await c.read_all_keymap()
-  const expected = caps.num_layers * caps.num_rows * caps.num_cols
-  if (flat.length !== expected)
-    throw new Error(`keymap: got ${flat.length} actions, expected ${expected}`)
   for (let layer = 0; layer < caps.num_layers; layer++) {
     const rows: KeyAction[][] = []
     for (let r = 0; r < caps.num_rows; r++) {
