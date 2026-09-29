@@ -150,13 +150,11 @@ export async function openHid(device: HIDDevice): Promise<ConnectedDevice> {
   return { link: new WebHidLink(device, label), label }
 }
 
-export async function requestHidDevice(): Promise<HIDDevice> {
+export async function requestHidDevice(): Promise<HIDDevice | null> {
   const devices = await navigator.hid.requestDevice({
     filters: [{ usagePage: RYNK_HID_USAGE_PAGE, usage: RYNK_HID_USAGE }],
   })
-  const device = devices[0]
-  if (!device) throw new Error('no keyboard chosen')
-  return device
+  return devices[0] ?? null
 }
 
 export async function grantedHidDevices(): Promise<HIDDevice[]> {
