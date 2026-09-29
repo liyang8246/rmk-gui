@@ -56,9 +56,9 @@ export class WebByteLink extends BufferedLink {
 
   private async pump() {
     while (true) {
-      const { value, done } = await this.reader.read()
-      if (done) break
-      if (value) this.push(value)
+      const result = await this.reader.read().catch(() => null)
+      if (!result || result.done) break
+      if (result.value) this.push(result.value)
     }
     this.end()
   }
@@ -81,6 +81,7 @@ export class WebByteLink extends BufferedLink {
 
 export class WebHidLink extends BufferedLink {
   private listener: (event: HIDInputReportEvent) => void
+  private onHidDisconnect: (event: HIDConnectionEvent) => void
 
   constructor(private device: HIDDevice, readonly label: string) {
     super()
@@ -88,7 +89,11 @@ export class WebHidLink extends BufferedLink {
       const { buffer, byteOffset, byteLength } = event.data
       this.push(new Uint8Array(buffer, byteOffset, byteLength))
     }
+    this.onHidDisconnect = (event) => {
+      if (event.device === device) this.end()
+    }
     device.addEventListener('inputreport', this.listener)
+    navigator.hid.addEventListener('disconnect', this.onHidDisconnect)
   }
 
   async send(frame: Uint8Array): Promise<void> {
@@ -101,6 +106,7 @@ export class WebHidLink extends BufferedLink {
 
   async close(): Promise<void> {
     this.device.removeEventListener('inputreport', this.listener)
+    navigator.hid.removeEventListener('disconnect', this.onHidDisconnect)
     this.end()
     try {
       await this.device.close()
