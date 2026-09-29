@@ -2,7 +2,7 @@ import type { TauriByteLink } from './tauri'
 import type { WebByteLink, WebHidLink } from './web'
 import { isTauri } from '@tauri-apps/api/core'
 import { closeAllSessions, connectBle, connectSerial, connectTcp, discoverBle, discoverSerial, discoverTcp } from './tauri'
-import { connectGrantedHid, connectGrantedSerial, grantedHidDevices, grantedSerialPorts, hidLabel, serialLabel } from './web'
+import { grantedHidDevices, grantedSerialPorts, hidLabel, openHid, openSerial, serialLabel } from './web'
 
 export type ByteLink = TauriByteLink | WebByteLink | WebHidLink
 
@@ -33,7 +33,7 @@ export async function discover(): Promise<TransportInfo[]> {
           kind: 'serial' as const,
           id: `serial:${usbVendorId}:${usbProductId}:${i}`,
           label: nameOf(usbVendorId, usbProductId) ?? serialLabel(port),
-          connect: () => connectGrantedSerial(port),
+          connect: () => openSerial(port),
           handle: port,
         }
       }),
@@ -41,7 +41,7 @@ export async function discover(): Promise<TransportInfo[]> {
         kind: 'hid' as const,
         id: `hid:${device.vendorId}:${device.productId}:${device.productName}`,
         label: nameOf(device.vendorId, device.productId) ?? hidLabel(device),
-        connect: () => connectGrantedHid(device),
+        connect: () => openHid(device),
         handle: device,
       })),
     ]

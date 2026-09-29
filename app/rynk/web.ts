@@ -133,7 +133,7 @@ export function serialLabel(port: SerialPort): string {
   return `USB ${id(usbVendorId)}:${id(usbProductId)}`
 }
 
-async function openSerial(port: SerialPort): Promise<ConnectedDevice> {
+export async function openSerial(port: SerialPort): Promise<ConnectedDevice> {
   if (!port.readable) await port.open({ baudRate: 115200 })
   const label = serialLabel(port)
   return { link: new WebByteLink(port, label), label }
@@ -148,11 +148,7 @@ export async function grantedSerialPorts(): Promise<SerialPort[]> {
   return navigator.serial.getPorts().catch(() => [])
 }
 
-export async function connectGrantedSerial(port: SerialPort): Promise<ConnectedDevice> {
-  return openSerial(port)
-}
-
-async function openHid(device: HIDDevice): Promise<ConnectedDevice> {
+export async function openHid(device: HIDDevice): Promise<ConnectedDevice> {
   if (!device.opened) await device.open()
   const label = hidLabel(device)
   return { link: new WebHidLink(device, label), label }
@@ -173,8 +169,4 @@ export async function grantedHidDevices(): Promise<HIDDevice[]> {
   return devices.filter(d =>
     d.collections.some(c => c.usagePage === RYNK_HID_USAGE_PAGE && c.usage === RYNK_HID_USAGE),
   )
-}
-
-export async function connectGrantedHid(device: HIDDevice): Promise<ConnectedDevice> {
-  return openHid(device)
 }
