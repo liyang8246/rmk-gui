@@ -1,7 +1,7 @@
 import type { ConnectedDevice, Session, TransportInfo } from '../rynk'
 import type { KeyboardError } from './keyboard/errors'
 import { errAsync, okAsync, ResultAsync } from 'neverthrow'
-import { connectSession, discover, requestHidDevice, requestSerialPort } from '../rynk'
+import { connectSession, discover } from '../rynk'
 import { toKeyboardError } from './keyboard/errors'
 
 export type ConnectionPhase = 'connecting' | 'connected' | 'disconnected' | 'error'
@@ -13,10 +13,6 @@ export interface ConnectionState {
 }
 
 let session: Session | null = null
-
-function isPickerCancel(error: KeyboardError): boolean {
-  return error.type === 'unknown' && error.cause instanceof DOMException && error.cause.name === 'NotFoundError'
-}
 
 export const useDeviceStore = defineStore('device', () => {
   const devices = ref<TransportInfo[]>([])
@@ -106,25 +102,11 @@ export const useDeviceStore = defineStore('device', () => {
       .orTee(() => { connecting.value = false })
   }
 
-  function pick(kind: 'serial' | 'hid'): ResultAsync<void, KeyboardError> {
-    if (connecting.value) return okAsync<void, KeyboardError>(undefined)
-    connecting.value = true
-    return ResultAsync.fromThrowable(
-      (): Promise<HIDDevice | SerialPort | null> => (kind === 'hid' ? requestHidDevice() : requestSerialPort()),
-      toKeyboardError,
-    )()
-      .andThen((handle) => {
-        if (!handle) return okAsync<void, KeyboardError>(undefined)
-        return (session ? drop() : okAsync<void, KeyboardError>(undefined))
-          .andThen(() => scan())
-          .andThen(() => {
-            const listed = devices.value.find(d => d.handle === handle)
-            return listed ? open(listed) : okAsync<void, KeyboardError>(undefined)
-          })
-      })
-      .andTee(() => { connecting.value = false })
-      .orTee(() => { connecting.value = false })
-      .orElse(error => (isPickerCancel(error) ? okAsync<void, KeyboardError>(undefined) : errAsync<void, KeyboardError>(error)))
+  function connectHandle(handle: SerialPort | HIDDevice): ResultAsync<void, KeyboardError> {
+    return scan().andThen(() => {
+      const listed = devices.value.find(d => d.handle === handle)
+      return listed ? connect(listed) : okAsync<void, KeyboardError>(undefined)
+    })
   }
 
   function disconnect(): ResultAsync<void, KeyboardError> {
@@ -135,13 +117,14 @@ export const useDeviceStore = defineStore('device', () => {
 
   return {
     connect,
+    connectHandle,
     connectedId,
     connectedKind,
     connection,
     connecting,
     devices,
     disconnect,
-    pick,
     scan,
+    scanning,
   }
 })
