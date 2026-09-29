@@ -45,9 +45,8 @@ Make sure you have Rust, NodeJS and Python installed on your system.
    pnpm build:wasm
    ```
    `app/rynk/wasm/` is a build artifact and is not checked in, so this step is
-   required before anything else runs. It compiles `rynk-wasm` from a sibling
-   `../rmk` checkout when one exists, otherwise it clones `rmk-rs/rmk`; set
-   `RMK_REPO` to point somewhere else.
+   required before anything else runs. It compiles `rynk-wasm` from a shallow
+   clone of `rmk-rs/rmk` (`main`) in a temp directory.
 4. Start the development server:
    ```bash
    pnpm dev:web     # browser only
