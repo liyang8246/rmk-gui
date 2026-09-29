@@ -28,8 +28,7 @@ export const useDeviceStore = defineStore('device', () => {
     scanning.value = true
     try {
       devices.value = await discover()
-    }
-    finally {
+    } finally {
       scanning.value = false
     }
   }
@@ -70,16 +69,14 @@ export const useDeviceStore = defineStore('device', () => {
       const attached = await keyboard.attach(next)
       if (attached.isErr()) {
         cause = attached.error
-      }
-      else {
+      } else {
         const label = keyboard.device?.info.product_name.trim() || next.label
         connection.value = { phase: 'connected', label }
         connectedId.value = info.id
         connectedKind.value = info.kind
         return
       }
-    }
-    catch (e) {
+    } catch (e) {
       cause = toKeyboardError(e)
     }
 
@@ -90,8 +87,7 @@ export const useDeviceStore = defineStore('device', () => {
     connectedKind.value = null
     if (dying) {
       await dying.close().catch(() => {})
-    }
-    else if (opened) {
+    } else if (opened) {
       await opened.link.close().catch(() => {})
     }
     connection.value = { phase: 'error', label: info.label, cause: cause! }
@@ -104,8 +100,7 @@ export const useDeviceStore = defineStore('device', () => {
     try {
       if (session) await drop()
       await open(info)
-    }
-    finally {
+    } finally {
       connecting.value = null
     }
   }
@@ -122,11 +117,9 @@ export const useDeviceStore = defineStore('device', () => {
         connecting.value = listed.id
         await open(listed)
       }
-    }
-    catch (e) {
+    } catch (e) {
       if (!(e instanceof DOMException && e.name === 'NotFoundError')) throw e
-    }
-    finally {
+    } finally {
       connecting.value = null
     }
   }

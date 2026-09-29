@@ -37,8 +37,7 @@ export async function connectSession(
         if (closed) break
         for (const cb of topics) cb(event)
       }
-    }
-    catch (cause) {
+    } catch (cause) {
       if (closed) return
       await finish(true).catch(() => {})
       onDeath?.(cause)

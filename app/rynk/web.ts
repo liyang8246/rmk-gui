@@ -75,9 +75,7 @@ export class WebByteLink extends BufferedLink {
     this.end()
     try {
       await this.port.close()
-    }
-    catch {
-    }
+    } catch {}
   }
 }
 
@@ -106,9 +104,7 @@ export class WebHidLink extends BufferedLink {
     this.end()
     try {
       await this.device.close()
-    }
-    catch {
-    }
+    } catch {}
   }
 }
 

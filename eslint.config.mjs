@@ -9,7 +9,7 @@ export default withNuxt(
     name: 'global-rule-overrides',
     rules: {
       'antfu/if-newline': 'off',
-      'style/brace-style': 'off',
+      'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
     },
   },
 )
