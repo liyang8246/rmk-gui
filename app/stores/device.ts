@@ -19,7 +19,7 @@ let session: Session | null = null
 export const useDeviceStore = defineStore('device', () => {
   const devices = ref<TransportInfo[]>([])
   const scanning = ref(false)
-  const connecting = ref<string | null>(null)
+  const connecting = ref(false)
   const connection = ref<ConnectionState | null>(null)
   const connectedId = ref<string | null>(null)
   const connectedKind = ref<TransportInfo['kind'] | null>(null)
@@ -96,31 +96,28 @@ export const useDeviceStore = defineStore('device', () => {
 
   async function connect(info: TransportInfo): Promise<void> {
     if (connecting.value) return
-    connecting.value = info.id
+    connecting.value = true
     try {
       if (session) await drop()
       await open(info)
     } finally {
-      connecting.value = null
+      connecting.value = false
     }
   }
 
   async function pick(kind: 'serial' | 'hid'): Promise<void> {
     if (connecting.value) return
-    connecting.value = `web-${kind}`
+    connecting.value = true
     try {
       const handle = kind === 'hid' ? await requestHidDevice() : await requestSerialPort()
       if (session) await drop()
       await scan()
       const listed = devices.value.find(d => d.handle === handle)
-      if (listed) {
-        connecting.value = listed.id
-        await open(listed)
-      }
+      if (listed) await open(listed)
     } catch (e) {
       if (!(e instanceof DOMException && e.name === 'NotFoundError')) throw e
     } finally {
-      connecting.value = null
+      connecting.value = false
     }
   }
 
