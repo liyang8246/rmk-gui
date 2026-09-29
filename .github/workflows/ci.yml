@@ -41,7 +41,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:wasm
       - run: pnpm lint
-      - run: pnpm check
+      - run: pnpm typecheck
       - run: pnpm build:tauri
 
       - uses: actions/upload-artifact@v7
