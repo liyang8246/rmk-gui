@@ -13,6 +13,7 @@ import type {
   LayoutInfo,
   LedIndicator,
   LockStatus,
+  MacroOp,
   MatrixState,
   Morse,
   PeripheralStatus,
@@ -49,7 +50,7 @@ export interface KeyboardConfig {
   encoders: EncoderAction[][]
   forks: Fork[]
   keymap: KeyAction[][][]
-  macros: number[]
+  macros: MacroOp[][]
   morses: Morse[]
 }
 

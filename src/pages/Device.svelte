@@ -108,8 +108,8 @@
         />
         <p class='mt-2'>
           <Unsupported>
-            Switch output from the keyboard, with the
-            <b>OutputUsb</b> / <b>OutputBluetooth</b> keycodes.
+            Switch output from the keyboard with the <b>Out Tgl</b> key
+            in the Wireless group.
           </Unsupported>
         </p>
       </div>

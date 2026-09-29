@@ -198,8 +198,8 @@ count), and a failed write leaves the earlier pages applied.
 | `set_morse` | `(index: u8, config: Morse)` | `()` |
 | `get_morse_bulk` | `(start_index: u8)` | `GetMorseBulkResponse` |
 | `set_morse_bulk` | `(request: SetMorseBulkRequest)` | `()` |
-| `get_macro` | `(offset: u16)` | `MacroData` |
-| `set_macro` | `(offset: u16, data: MacroData)` | `()` |
+| `read_macro` | `(index: u8)` | `MacroOp[]` |
+| `write_macro` | `(index: u8, ops: MacroOp[])` | `()` |
 
 ### Behavior
 

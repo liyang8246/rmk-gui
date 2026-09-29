@@ -3,7 +3,7 @@ import type net from 'node:net'
 import type { KeyboardConfig } from '../src/stores'
 import { readFileSync } from 'node:fs'
 import { afterAll, beforeAll, expect, it, vi } from 'vitest'
-import { encodeMacros } from '../src/lib/macro-codec'
+import { fromSteps } from '../src/lib/macro-editor'
 import { keycodeTables } from '../src/rynk/core'
 import { keyboardStore } from '../src/stores'
 import { dial, socketLink, spawnQemu } from './harness'
@@ -64,7 +64,7 @@ it('connects and lands the whole fixture config in the store', () => {
   expect(config.combos).toHaveLength(caps.max_combos)
   expect(config.morses).toHaveLength(caps.max_morse)
   expect(config.forks).toHaveLength(caps.max_forks)
-  expect(config.macros).toHaveLength(caps.macro_space_size)
+  expect(config.macros).toHaveLength(caps.max_macros)
   expect(config.defaultLayer).toBe(0)
 
   const status = keyboardStore.status!
@@ -147,18 +147,21 @@ it('writes the behavior timing and restores it', async () => {
   expect((await keyboardStore.setBehavior(original)).isOk()).toBe(true)
 })
 
-it('writes the macro region through the app codec', async () => {
+it('loads native macro slots and respects read-only firmware', async () => {
   const caps = keyboardStore.device!.capabilities
-  // The fixture ships macro storage; a build without it would zero this and
-  // the macros screen would not exist to write anything.
-  expect(caps.macro_space_size).toBeGreaterThan(0)
-  const original = snapshot(keyboardStore.config!.macros)
-  const slots = Array.from({ length: 8 }, () => [] as never[])
-  const bytes = encodeMacros([[{ kind: 'text', value: 'hi' }], ...slots.slice(1)], caps.macro_space_size)!
-  expect(bytes).not.toBeNull()
-  expect((await keyboardStore.setMacroRegion(bytes)).isOk()).toBe(true)
-  expect(keyboardStore.config!.macros).toEqual(bytes)
-  expect((await keyboardStore.setMacroRegion(original)).isOk()).toBe(true)
+  expect(caps.max_macros).toBeGreaterThan(0)
+  const original = snapshot(keyboardStore.config!.macros[0]!)
+  const ops = fromSteps([{ kind: 'text', value: 'hi' }])
+  const result = await keyboardStore.setMacro(0, ops)
+  if (!caps.macros_writable) {
+    expect(result.isErr()).toBe(true)
+    expect(keyboardStore.config!.macros[0]).toEqual(original)
+  }
+  else {
+    expect(result.isOk()).toBe(true)
+    expect(keyboardStore.config!.macros[0]).toEqual(ops)
+    expect((await keyboardStore.setMacro(0, original)).isOk()).toBe(true)
+  }
 })
 
 it('polls the matrix state on demand', async () => {

@@ -51,7 +51,7 @@ const PUNCTUATION = ['Minus', 'Equal', 'LeftBracket', 'RightBracket', 'Backslash
 const EDITING = ['Enter', 'Escape', 'Backspace', 'Tab', 'Space', 'CapsLock'] satisfies HidKeyCode[]
 const NAVIGATION = ['Insert', 'Home', 'PageUp', 'Delete', 'End', 'PageDown', 'Up', 'Down', 'Left', 'Right', 'PrintScreen', 'ScrollLock', 'Pause', 'Application', 'Menu'] satisfies HidKeyCode[]
 const LAUNCHERS = ['Mail', 'Calculator', 'MyComputer', 'ControlPanel', 'Assistant', 'MissionControl', 'Launchpad'] satisfies HidKeyCode[]
-const KEYBOARD_CONTROL = ['Bootloader', 'Reboot', 'DebugToggle', 'ClearEeprom', 'OutputAuto', 'OutputUsb', 'OutputBluetooth', 'ComboOn', 'ComboOff', 'ComboToggle', 'CapsWordToggle'] satisfies KeyboardAction[]
+const KEYBOARD_CONTROL = ['Bootloader', 'Reboot', 'ClearEeprom', 'ComboOn', 'ComboOff', 'ComboToggle', 'CapsWordToggle'] satisfies KeyboardAction[]
 const LIGHTING = ['BacklightToggle', 'BacklightUp', 'BacklightDown', 'BacklightStep', 'BacklightToggleBreathing', 'RgbTog', 'RgbModeForward', 'RgbModeReverse', 'RgbHui', 'RgbHud', 'RgbSai', 'RgbSad', 'RgbVai', 'RgbVad', 'RgbSpi', 'RgbSpd'] satisfies LightAction[]
 
 const SINGLE_MODIFIER = {
@@ -68,11 +68,6 @@ const SINGLE_MODIFIER = {
 function modifiersOf(names: (keyof ModifierCombination)[]): ModifierCombination {
   return names.reduce<ModifierCombination>((acc, n) => ({ ...acc, [n]: true }), { ...NO_MODIFIERS })
 }
-
-/// The GUI addresses a fixed number of macro slots: the protocol exposes the
-/// macro region as flat bytes, and the firmware finds macro `n` by counting
-/// `0x00` terminators, so the slot count is ours to pick.
-export const MACRO_SLOTS = 8
 
 /// Not keys: the HID error codes a keyboard reports when it cannot keep up.
 /// Offering them would let someone bind a rollover error to a keycap.
@@ -108,6 +103,8 @@ export function actionCatalog(
       ],
     },
     { name: 'Media', entries: pick(MEDIA).map(key) },
+    { name: 'Mouse', entries: pick(MOUSE).map(key) },
+    { name: 'System', entries: pick(COMPUTER, LAUNCHERS).map(key) },
     {
       name: 'Layer',
       entries: [
@@ -122,14 +119,6 @@ export function actionCatalog(
         act('TriUpper', 'TriLayerUpper'),
       ],
     },
-    {
-      name: 'Control',
-      entries: [
-        ...pick(COMPUTER, LAUNCHERS).map(key),
-        ...KEYBOARD_CONTROL.map(c => act(c, { KeyboardControl: c })),
-      ],
-    },
-    { name: 'Mouse', entries: pick(MOUSE).map(key) },
     {
       // Everything a key can be bound to that is not a key: one-shot
       // modifiers, the two special behaviours, and the slot references whose
@@ -151,7 +140,7 @@ export function actionCatalog(
         act('GraveEsc', { Special: 'GraveEscape' }, 'Grave, or Escape when a modifier is held'),
         act('Repeat', { Special: 'Repeat' }, 'Repeat the last key'),
         ...Array.from(
-          { length: (caps?.macro_space_size ?? 0) > 0 ? MACRO_SLOTS : 0 },
+          { length: caps?.max_macros ?? 0 },
           (_, i) => act(`Macro ${i}`, { TriggerMacro: i }),
         ),
         // Morse is the one KeyAction that is not `Single`-wrapped: the slot
@@ -164,6 +153,7 @@ export function actionCatalog(
         })),
       ],
     },
+    { name: 'Control', entries: KEYBOARD_CONTROL.map(c => act(c, { KeyboardControl: c })) },
   ]
 
   // Profile switching, output routing and dongle pairing are all driven from
@@ -210,8 +200,7 @@ export function asAction(action: KeyAction): Action | null {
   return null
 }
 
-/// The plain HID key behind a pick, or null when it is anything richer. Macros
-/// store a bare keycode, so they can only take the former.
+/// The plain HID key behind a pick, or null when it is anything richer.
 export function asHidKey(action: KeyAction): HidKeyCode | null {
   const plain = asAction(action)
   if (plain === null || typeof plain !== 'object' || !('Key' in plain)) return null

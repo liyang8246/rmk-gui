@@ -255,7 +255,7 @@ Source: `LockStatus` in `rmk-types/src/protocol/rynk/payload/system.rs`.
 Always gated: `bootloader_jump()`, `storage_reset()`, `get_matrix_state()`,
 and (on BLE builds) `clear_ble_profile()`. When the firmware is built with
 `write_requires_unlock` in its `[host]` config, every config write
-(`set_key`, `set_default_layer`, `set_encoder`, `set_macro`, `set_combo`,
+(`set_key`, `set_default_layer`, `set_encoder`, `write_macro`, `set_combo`,
 `set_morse`, `set_fork`, `set_behavior`, and the `Set*Bulk` endpoints — so
 also the `write_all_*` pagers) is gated too. A locked device returns
 `RynkError::Locked`, which the client flattens to
@@ -463,7 +463,7 @@ Source: `keymap_pos` in `rynk/src/api.rs`.
 ## 6. Combos, Forks, Morse, Macros
 
 Single-entry read/write for the configuration tables. Each takes an index
-(or offset, for macros) and a config value.
+and a config value.
 
 ```rust
 // Combos
@@ -479,24 +479,28 @@ pub async fn get_morse(&self, index: u8) -> Result<Morse, RynkHostError>
 pub async fn set_morse(&self, index: u8, config: Morse) -> Result<(), RynkHostError>
 
 // Macros
-pub async fn get_macro(&self, offset: u16) -> Result<MacroData, RynkHostError>
-pub async fn set_macro(&self, offset: u16, data: MacroData) -> Result<(), RynkHostError>
+pub async fn get_macro(&self, index: u8) -> Result<Macro, RynkHostError>
+pub async fn write_macro(&self, index: u8, ops: &[MacroOp]) -> Result<(), RynkHostError>
+pub async fn read_macro(&self, index: u8) -> Result<Vec<MacroOp>, RynkHostError> // `alloc`
 ```
 
-Source: `Client::get_combo` … `Client::set_macro` in `rynk/src/api.rs`.
+Source: `Client::get_combo` … `Client::write_macro` in `rynk/src/api.rs`.
 
-### Macro chunking contract
+### Macros
 
-Macros live in a flat byte region addressed by `offset`; its byte size is
-the `macro_space_size` capability (`0` disables the macro data endpoints).
-The firmware always replies to `get_macro` with exactly its build-time
-`macro_chunk_size`, **zero-filling past the end** of its macro space. The
-end of the data therefore **never** shows up as a short chunk — parse the
-macro encoding itself for termination. Writes past the end of the device's macro
-space are truncated by the firmware.
+Each call moves one whole macro: a list of at most `macro_max_size`
+`MacroOp`s (`Tap`, `Press`, `Release`, `Delay`, `Char`, `PauseForRelease`),
+at an index below `max_macros`. An unset slot reads as an empty list.
 
-Source: `Client::get_macro` / `Client::set_macro` in `rynk/src/api.rs`,
-`DeviceCapabilities::{macro_space_size, macro_chunk_size}` in
+`write_macro` fails with `RynkHostError::Encode` before sending when the list
+does not fit. The firmware answers `Invalid` for a macro it cannot run (a
+nested `TriggerMacro`, two `PauseForRelease`s, a non-ASCII `Char`) and
+`Unimplemented` when `macros_writable` is false, as on a firmware without
+storage, which serves its compiled-in macros read-only.
+
+Source: `Client::get_macro` / `Client::write_macro` in `rynk/src/api.rs`,
+`MacroOp` in `rmk-types/src/keyboard_macros.rs`,
+`DeviceCapabilities::{max_macros, macro_max_size, macros_writable}` in
 `rmk-types/src/protocol/rynk/payload/system.rs`.
 
 ## 7. Behavior
