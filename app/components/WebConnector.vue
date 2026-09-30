@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { TransportInfo } from '~/rynk'
+import DeviceDialog from '~/components/DeviceDialog.vue'
 import { canUseWebHid, canUseWebSerial, requestHidDevice, requestSerialPort } from '~/rynk'
 import { describeKeyboardError } from '~/stores/keyboard/errors'
 
 const store = useDeviceStore()
-const scanError = ref<string | null>(null)
-const pickError = ref<string | null>(null)
+const toast = useToast()
+const showDevice = ref(false)
 
 const status = computed(() => {
   const conn = store.connection
@@ -17,20 +18,31 @@ const status = computed(() => {
 
 onMounted(refresh)
 
+watch(() => store.connection, (conn) => {
+  if (!conn) return
+  if (conn.phase === 'connected') {
+    toast.success(`Connected to ${conn.label}`)
+  } else if (conn.phase === 'disconnected') {
+    toast.info(`Disconnected from ${conn.label}`)
+  } else if (conn.phase === 'error') {
+    const cause = conn.cause ? describeKeyboardError(conn.cause) : undefined
+    toast.error('Connection error', [conn.label, cause].filter(Boolean).join(' — ') || undefined)
+  }
+})
+
 async function refresh() {
   const result = await store.scan()
-  scanError.value = result.isErr() ? describeKeyboardError(result.error) : null
+  if (result.isErr()) toast.error('Scan failed', describeKeyboardError(result.error))
 }
 
 async function add(kind: 'hid' | 'serial') {
-  pickError.value = null
   try {
     const picked = kind === 'hid' ? await requestHidDevice() : await requestSerialPort()
     if (picked) await store.connectHandle(picked)
   } catch (e) {
     // Picker cancel surfaces as NotFoundError; anything else is a real failure.
     if (e instanceof DOMException && e.name === 'NotFoundError') return
-    pickError.value = e instanceof DOMException || e instanceof Error ? e.message : String(e)
+    toast.error('Could not open the device picker', e instanceof Error ? e.message : String(e))
   }
 }
 
@@ -42,12 +54,6 @@ function label(info: TransportInfo): string {
 <template>
   <section>
     <p>status: {{ status }}</p>
-    <p v-if="scanError">
-      scan failed: {{ scanError }}
-    </p>
-    <p v-if="pickError">
-      pick failed: {{ pickError }}
-    </p>
     <div>
       <button v-if="canUseWebHid()" :disabled="store.connecting" @click="add('hid')">
         Add HID device
@@ -57,6 +63,9 @@ function label(info: TransportInfo): string {
       </button>
       <button :disabled="store.scanning" @click="refresh">
         {{ store.scanning ? 'scanning…' : 'Refresh' }}
+      </button>
+      <button v-if="store.connection?.phase === 'connected'" @click="showDevice = true">
+        Device
       </button>
       <button v-if="store.connection?.phase === 'connected'" @click="store.disconnect()">
         Disconnect
@@ -73,5 +82,6 @@ function label(info: TransportInfo): string {
         </button>
       </li>
     </ul>
+    <DeviceDialog v-model:open="showDevice" />
   </section>
 </template>

@@ -17,6 +17,10 @@ export default withNuxt(
     name: 'global-rule-overrides',
     rules: {
       'antfu/if-newline': 'off',
+      'better-tailwindcss/enforce-consistent-line-wrapping': ['warn', {
+        preferSingleLine: true,
+        printWidth: 100,
+      }],
       'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
     },
   },

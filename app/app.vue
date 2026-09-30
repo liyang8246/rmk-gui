@@ -5,8 +5,12 @@ const isDesktop = isTauri()
 </script>
 
 <template>
-  <main>
-    <TauriConnector v-if="isDesktop" />
-    <WebConnector v-else />
-  </main>
+  <div class="isolate">
+    <main>
+      <TauriConnector v-if="isDesktop" />
+      <WebConnector v-else />
+      <DebugPanel />
+    </main>
+    <Toaster />
+  </div>
 </template>
