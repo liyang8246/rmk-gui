@@ -90,6 +90,12 @@ describe('explainKeyboardError', () => {
     }
   })
 
+  it('explains a protocol version mismatch with rynk\'s message', () => {
+    const message = 'protocol version mismatch: firmware speaks v0.1, this tool speaks v0.2. Update the firmware or the tool so both speak the same version.'
+    const help = explainKeyboardError(toKeyboardError(named('VersionMismatch', message)))
+    expect(help).toEqual({ title: 'Firmware and app versions don’t match', hint: message })
+  })
+
   it('falls back to the raw message as the hint', () => {
     const help = explainKeyboardError({ type: 'unknown', cause: new Error('boom') })
     expect(help).toEqual({ title: 'Connection failed', hint: 'boom' })

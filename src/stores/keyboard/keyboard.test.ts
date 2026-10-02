@@ -1,4 +1,4 @@
-import type { ConnectedDevice, DeviceCapabilities, EncoderAction, Fork, KeyAction, Morse, RynkClient, StorageResetMode, TopicEvent } from '../../rynk'
+import type { ConnectedDevice, DeviceCapabilities, EncoderAction, Fork, KeyAction, MacroOp, Morse, RynkClient, StorageResetMode, TopicEvent } from '../../rynk'
 import type { KeyboardConfig } from './types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -14,7 +14,9 @@ const CAPS: DeviceCapabilities = {
   num_encoders: 0,
   max_combos: 0,
   max_combo_keys: 4,
-  macro_space_size: 0,
+  max_macros: 0,
+  macro_max_size: 32,
+  macros_writable: true,
   max_morse: 0,
   max_patterns_per_key: 4,
   max_forks: 0,
@@ -27,7 +29,6 @@ const CAPS: DeviceCapabilities = {
   max_payload_size: 64,
   max_bulk_keys: 16,
   max_bulk_items: 4,
-  macro_chunk_size: 28,
   bulk_transfer_supported: true,
 }
 
@@ -102,6 +103,15 @@ class FakeClient {
   morses: Morse[] = []
   forks: Fork[] = []
   encoders: EncoderAction[] = []
+  macros: MacroOp[][] = []
+  failSetMacro: Error | null = null
+  read_macro(index: number) { return this.log(`read_macro ${index}`, this.macros[index] ?? []) }
+  async write_macro(index: number, ops: MacroOp[]) {
+    this.calls.push(`write_macro ${index}`)
+    if (this.failSetMacro) throw this.failSetMacro
+    this.macros[index] = ops
+  }
+
   defaultLayer = 0
   matrixReads = 0
   bleProfile = 0
@@ -700,5 +710,33 @@ describe('disconnect', () => {
     await connected()
     await keyboardStore.resetStore()
     expect(keyboardStore.connection).toBeNull()
+  })
+})
+
+describe('native macros', () => {
+  it('replaces only the selected slot and rolls back a rejected write', async () => {
+    const client = new FakeClient()
+    client.caps = { ...CAPS, max_macros: 2 }
+    client.macros = [[{ Char: 65 }], [{ Char: 66 }]]
+    await connected(client)
+    expect(keyboardStore.config?.macros).toEqual(client.macros)
+    expect((await keyboardStore.setMacro(0, [{ Char: 67 }])).isOk()).toBe(true)
+    expect(keyboardStore.config?.macros).toEqual([[{ Char: 67 }], [{ Char: 66 }]])
+    client.failSetMacro = rejection('Rejected', 'device rejected StorageFault')
+    expect((await keyboardStore.setMacro(0, [])).isErr()).toBe(true)
+    expect(keyboardStore.config?.macros).toEqual([[{ Char: 67 }], [{ Char: 66 }]])
+    expect(client.calls.filter(c => c.startsWith('write_macro'))).toEqual(['write_macro 0', 'write_macro 0'])
+  })
+  it('rejects read-only, oversized, and nested macros before sending', async () => {
+    const client = new FakeClient()
+    client.caps = { ...CAPS, max_macros: 1, macro_max_size: 1 }
+    await connected(client)
+    expect((await keyboardStore.setMacro(0, [{ Char: 65 }, { Char: 66 }])).isErr()).toBe(true)
+    expect((await keyboardStore.setMacro(0, [{ Tap: { TriggerMacro: 0 } }])).isErr()).toBe(true)
+    await keyboardStore.disconnect()
+    client.caps = { ...client.caps, macros_writable: false }
+    await connected(client)
+    expect((await keyboardStore.setMacro(0, [])).isErr()).toBe(true)
+    expect(client.calls.filter(c => c.startsWith('write_macro'))).toEqual([])
   })
 })

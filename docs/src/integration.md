@@ -232,10 +232,10 @@ keymap grid.
 
 ## Macro Handling
 
-`get_macro(offset)` always returns exactly `macro_chunk_size` bytes,
-zero-filled past the end of macro space. There is never a short final chunk
-to signal end-of-data — parse the macro encoding itself for termination, and
-iterate `offset` by `macro_chunk_size` until the encoding signals end.
+`read_macro(index)` returns one whole macro as a `MacroOp[]`, empty for an
+unset slot; iterate `index` below `max_macros`. `write_macro(index, ops)`
+replaces it with at most `macro_max_size` ops, and is refused when
+`macros_writable` is false.
 
 ## Reference Implementation
 

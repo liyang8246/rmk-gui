@@ -5,20 +5,21 @@
   import Icon from '@iconify/svelte'
   import { RadioGroup } from 'bits-ui'
   import { catalog } from '../lib/catalog.svelte'
-  import { actionCatalog } from '../lib/keycatalog'
+  import { actionCatalog, asAction } from '../lib/keycatalog'
   import { capLegend } from '../lib/legend'
   import { BOARD_CODES } from '../lib/picker-layout'
   import { keyboardStore } from '../stores'
-  import HoldTapBuilder from './HoldTapBuilder.svelte'
+  import AdvancedBuilder from './AdvancedBuilder.svelte'
   import KeyboardBasic from './KeyboardBasic.svelte'
   import MiniKey from './MiniKey.svelte'
+  import Segmented from './ui/Segmented.svelte'
 
   interface Props {
     caps: DeviceCapabilities | undefined
     onpick: (action: KeyAction) => void
-    /// Restricts the picker to plain HID keys, for callers like the macro
-    /// editor whose wire format cannot hold anything richer.
+    /// Restricts the picker to plain HID keys.
     hidOnly?: boolean
+    macroOnly?: boolean
     /// Draws the picker as its own panel. The keymap editor needs it to lift
     /// the keys off the ruled canvas; inside a dialog it would just box a box.
     panel?: boolean
@@ -26,22 +27,17 @@
     rightSlot?: Snippet
   }
 
-  const { caps, onpick, hidOnly = false, panel = false, rightSlot }: Props = $props()
+  const { caps, onpick, hidOnly = false, macroOnly = false, panel = false, rightSlot }: Props = $props()
 
-  const HOLD_TAP = 'Hold-Tap'
-
-  const GROUP_ICONS: Record<string, string> = {
-    Basic: 'lucide:keyboard',
-    Media: 'lucide:volume-2',
-    Layer: 'lucide:layers',
-    Control: 'lucide:cpu',
-    Mouse: 'lucide:mouse',
-    Advanced: 'lucide:sparkles',
-    Wireless: 'lucide:bluetooth',
-    Light: 'lucide:lightbulb',
-    Other: 'lucide:layout-grid',
-    [HOLD_TAP]: 'lucide:command',
-  }
+  /// Tabs gather catalog groups into sections, so a tab can stay broad while
+  /// search keeps reporting the finer group a hit came from.
+  const TABS = [
+    { name: 'Basic', icon: 'lucide:keyboard', sections: ['Basic', 'Other'] },
+    { name: 'Media', icon: 'lucide:volume-2', sections: ['Media', 'Mouse', 'System'] },
+    { name: 'Layer', icon: 'lucide:layers', sections: ['Layer'] },
+    { name: 'Advanced', icon: 'lucide:sparkles', sections: ['Advanced'] },
+    { name: 'Device', icon: 'lucide:cpu', sections: ['Control', 'Wireless', 'Light'] },
+  ] as const
 
   /// Slightly wider than a board key, because these legends are words rather
   /// than single glyphs — but one width for all of them.
@@ -49,6 +45,8 @@
 
   let group = $state('Basic')
   let query = $state('')
+  /// Advanced lists the ready-made keys, or builds one around a plain key.
+  let mode = $state<'keys' | 'MK' | 'LT' | 'MT'>('keys')
 
   /// The live table length, not `caps.max_morse`: that is only capacity, and
   /// the firmware rejects a `Morse n` past the actual table.
@@ -56,19 +54,33 @@
 
   const groups = $derived.by(() => {
     const all = actionCatalog(caps, catalog.hid, morseSlots)
+    if (macroOnly) {
+      return all
+        .map(g => ({ ...g, entries: g.entries.filter((e) => {
+          const action = asAction(e.action)
+          return action !== null && !(typeof action === 'object' && 'TriggerMacro' in action)
+        }) }))
+        .filter(g => g.entries.length > 0)
+    }
     if (!hidOnly) return all
     return all
       .map(g => ({ ...g, entries: g.entries.filter(e => e.hid !== undefined) }))
       .filter(g => g.entries.length > 0)
   })
-  const tabs = $derived(hidOnly ? groups.map(g => g.name) : [...groups.map(g => g.name), HOLD_TAP])
+  const tabs = $derived(TABS.filter(t => t.sections.some(name => groups.some(g => g.name === name))))
+  /// The macro picker records plain keys, so it gets no builders.
+  const builders = $derived(!hidOnly && !macroOnly)
+  const sections = $derived(
+    (TABS.find(t => t.name === group)?.sections ?? [])
+      .flatMap(name => groups.filter(g => g.name === name)),
+  )
   const basic = $derived(groups.find(g => g.name === 'Basic')?.entries ?? [])
 
   const needle = $derived(query.trim().toLowerCase())
-  /// Hold-Tap has no list to search: the box filters its tap keys instead, so
+  /// A builder has no list to search: the box filters its keys instead, so
   /// typing must not unpin the tab.
-  const holdTap = $derived(group === HOLD_TAP)
-  const searching = $derived(needle !== '' && !holdTap)
+  const building = $derived(group === 'Advanced' && builders && mode !== 'keys')
+  const searching = $derived(needle !== '' && !building)
 
   /// Basic's chip grid stands down while the board is drawn, but the entries the
   /// board has no place for still need somewhere to live.
@@ -77,10 +89,7 @@
   /// A search spans every group, so its hits stay grouped: a flat wall of chips
   /// says nothing about whether a hit is a plain key, a layer op or a macro.
   const shown = $derived.by<CatalogGroup[]>(() => {
-    if (!searching) {
-      const current = groups.find(g => g.name === group)
-      return current ? [current] : []
-    }
+    if (!searching) return sections
     return groups
       .map(g => ({ name: g.name, entries: g.entries.filter(e => matches(e, needle)) }))
       .filter(g => g.entries.length > 0)
@@ -102,6 +111,40 @@
   }
 </script>
 
+{#snippet chips(list: CatalogGroup[], headed: boolean)}
+  <div class='flex flex-col gap-3.5'>
+    {#each list as section (section.name)}
+      <div class='flex flex-col gap-1.5'>
+        {#if headed}
+          <div class='flex items-center gap-1.5 text-muted-foreground'>
+            <span class='text-[10px] font-bold tracking-[0.06em] uppercase'>
+              {section.name}
+            </span>
+            <span class='text-[10px] font-semibold opacity-70'>
+              {section.entries.length}
+            </span>
+            <span class='h-px flex-1 bg-border'></span>
+          </div>
+        {/if}
+        <div class='flex flex-wrap content-start gap-1'>
+          {#each section.entries as entry (entry.id)}
+            <MiniKey
+              label={entry.label}
+              sub={entry.sub}
+              w={CHIP_UNITS}
+              tint={capLegend(entry.action).tint}
+              title={entry.title ?? entry.label}
+              action={entry.action}
+              highlight={searching ? needle : undefined}
+              onpick={() => onpick(entry.action)}
+            />
+          {/each}
+        </div>
+      </div>
+    {/each}
+  </div>
+{/snippet}
+
 <div
   class={[
     'flex min-h-0 w-full flex-col overflow-hidden',
@@ -121,7 +164,7 @@
       orientation='horizontal'
       bind:value={() => (searching ? '' : group), selectGroup}
     >
-      {#each tabs as name (name)}
+      {#each tabs as { name, icon } (name)}
         {@const on = name === group && !searching}
         <RadioGroup.Item
           class={[
@@ -139,7 +182,7 @@
           ]}
           value={name}
         >
-          <Icon icon={GROUP_ICONS[name] ?? 'lucide:layout-grid'} width={15} height={15} />
+          <Icon {icon} width={15} height={15} />
           {name}
         </RadioGroup.Item>
       {/each}
@@ -158,8 +201,8 @@
           text-[12.5px] text-foreground transition-colors outline-none
           focus:border-brand
         `}
-        placeholder={holdTap ? 'Find tap key…' : 'Search keycodes…'}
-        aria-label={holdTap ? 'Search tap keys' : 'Search keycodes'}
+        placeholder={building ? 'Find key…' : 'Search keycodes…'}
+        aria-label={building ? 'Search keys' : 'Search keycodes'}
         bind:value={query}
       />
       {#if needle}
@@ -194,61 +237,53 @@
   >
     {#if catalog.hid.length === 0}
       <p class='p-2 text-[13px] text-muted-foreground'>Loading keycodes…</p>
-    {:else if holdTap}
-      <HoldTapBuilder
-        taps={basic}
-        layerCount={caps?.num_layers ?? 1}
-        morseCount={morseSlots}
-        query={needle}
-        {onpick}
-      />
+    {:else if group === 'Advanced' && builders && !searching}
+      <div class='flex h-full flex-col gap-2.5'>
+        <div class='flex flex-none'>
+          <Segmented
+            items={[
+              { value: 'keys', label: 'Keys' },
+              { value: 'MK', label: 'Mod+Key' },
+              { value: 'LT', label: 'Layer-Tap' },
+              { value: 'MT', label: 'Mod-Tap' },
+            ]}
+            value={mode}
+            height={28}
+            onchange={v => (mode = v)}
+          />
+        </div>
+        {#if mode === 'keys'}
+          {@render chips(shown, shown.length > 1)}
+        {:else}
+          <div class='min-h-0 flex-1'>
+            <AdvancedBuilder
+              kind={mode}
+              keys={basic}
+              layerCount={caps?.num_layers ?? 1}
+              morseCount={morseSlots}
+              query={needle}
+              {onpick}
+            />
+          </div>
+        {/if}
+      </div>
     {:else if group === 'Basic' && !searching}
       <KeyboardBasic
         extras={offBoard}
         onpick={pickHid}
         onpickentry={entry => onpick(entry.action)}
       />
+      {#if shown.length > 1}
+        <div class='mt-3.5'>
+          {@render chips(shown.slice(1), true)}
+        </div>
+      {/if}
     {:else if found === 0}
       <p class='p-2 text-[13px] text-muted-foreground'>
         {searching ? `No keycodes match “${query.trim()}”.` : 'This group is empty.'}
       </p>
     {:else}
-      <div class='flex flex-col gap-3.5'>
-        {#each shown as section (section.name)}
-          <div class='flex flex-col gap-1.5'>
-            {#if searching}
-              <div class='flex items-center gap-1.5 text-muted-foreground'>
-                <Icon
-                  icon={GROUP_ICONS[section.name] ?? 'lucide:layout-grid'}
-                  width={12}
-                  height={12}
-                />
-                <span class='text-[10px] font-bold tracking-[0.06em] uppercase'>
-                  {section.name}
-                </span>
-                <span class='text-[10px] font-semibold opacity-70'>
-                  {section.entries.length}
-                </span>
-                <span class='h-px flex-1 bg-border'></span>
-              </div>
-            {/if}
-            <div class='flex flex-wrap content-start gap-1'>
-              {#each section.entries as entry (entry.id)}
-                <MiniKey
-                  label={entry.label}
-                  sub={entry.sub}
-                  w={CHIP_UNITS}
-                  tint={capLegend(entry.action).tint}
-                  title={entry.title ?? entry.label}
-                  action={entry.action}
-                  highlight={searching ? needle : undefined}
-                  onpick={() => onpick(entry.action)}
-                />
-              {/each}
-            </div>
-          </div>
-        {/each}
-      </div>
+      {@render chips(shown, searching || shown.length > 1)}
     {/if}
   </div>
 </div>

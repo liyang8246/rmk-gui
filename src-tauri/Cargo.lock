@@ -3062,8 +3062,8 @@ dependencies = [
 
 [[package]]
 name = "rmk-config"
-version = "0.6.1"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+version = "0.8.0"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=933b0630a23393961e5b3bfa7a176a68d9bb8b8c#933b0630a23393961e5b3bfa7a176a68d9bb8b8c"
 dependencies = [
  "config",
  "miniz_oxide 0.9.1",
@@ -3094,8 +3094,8 @@ dependencies = [
 
 [[package]]
 name = "rmk-types"
-version = "0.2.2"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+version = "0.4.0"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=933b0630a23393961e5b3bfa7a176a68d9bb8b8c#933b0630a23393961e5b3bfa7a176a68d9bb8b8c"
 dependencies = [
  "bitfield-struct",
  "cobs",
@@ -3167,8 +3167,8 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "rynk"
-version = "0.1.0"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+version = "0.3.0"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=933b0630a23393961e5b3bfa7a176a68d9bb8b8c#933b0630a23393961e5b3bfa7a176a68d9bb8b8c"
 dependencies = [
  "critical-section",
  "embassy-futures",
@@ -3185,8 +3185,8 @@ dependencies = [
 
 [[package]]
 name = "rynk-ble"
-version = "0.1.0"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+version = "0.3.0"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=933b0630a23393961e5b3bfa7a176a68d9bb8b8c#933b0630a23393961e5b3bfa7a176a68d9bb8b8c"
 dependencies = [
  "async-stream",
  "bluest",
@@ -3198,8 +3198,8 @@ dependencies = [
 
 [[package]]
 name = "rynk-usb"
-version = "0.1.0"
-source = "git+https://github.com/rmk-rs/rmk.git?rev=2ca24ad65bd15ee73073df84d47f4a3a17f91fbb#2ca24ad65bd15ee73073df84d47f4a3a17f91fbb"
+version = "0.3.0"
+source = "git+https://github.com/rmk-rs/rmk.git?rev=933b0630a23393961e5b3bfa7a176a68d9bb8b8c#933b0630a23393961e5b3bfa7a176a68d9bb8b8c"
 dependencies = [
  "embedded-io-adapters",
  "nusb",

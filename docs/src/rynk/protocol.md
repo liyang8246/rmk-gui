@@ -185,7 +185,7 @@ encodes the domain; the low byte encodes the command within that domain.
 
 | Cmd      | Value    | Request           | Response    | Notes |
 |----------|----------|-------------------|-------------|-------|
-| GetMacro | `0x0201` | `GetMacroRequest` | `MacroData` |       |
+| GetMacro | `0x0201` | `u8`              | `Macro`     |       |
 | SetMacro | `0x0202` | `SetMacroRequest` | `()`        |       |
 
 #### Combo (`0x03xx`)

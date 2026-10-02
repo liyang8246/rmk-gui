@@ -58,8 +58,8 @@ Ok(RynkClient { client, driver: Mutex::new(driver) })
 `label` is a required string property (WebHID `productName`, or a page-derived
 string); see [JS Byte Link Implementations](./js-byte-link.md).
 
-The handshake negotiates the protocol version (rejecting on major mismatch;
-same-major minors connect) and caches the device capabilities in the client.
+The handshake negotiates the protocol version (exact match on 0.x; from 1.0,
+rejecting on major mismatch while same-major minors connect) and caches the device capabilities in the client.
 See [Lifecycle & Dead States](./lifecycle.md) for the full connect flow
 including the optional version probe.
 
@@ -198,8 +198,8 @@ count), and a failed write leaves the earlier pages applied.
 | `set_morse` | `(index: u8, config: Morse)` | `()` |
 | `get_morse_bulk` | `(start_index: u8)` | `GetMorseBulkResponse` |
 | `set_morse_bulk` | `(request: SetMorseBulkRequest)` | `()` |
-| `get_macro` | `(offset: u16)` | `MacroData` |
-| `set_macro` | `(offset: u16, data: MacroData)` | `()` |
+| `read_macro` | `(index: u8)` | `MacroOp[]` |
+| `write_macro` | `(index: u8, ops: MacroOp[])` | `()` |
 
 ### Behavior
 

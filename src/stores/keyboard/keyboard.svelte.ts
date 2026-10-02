@@ -9,6 +9,7 @@ import type {
   Fork,
   KeyAction,
   LockStatus,
+  MacroOp,
   MatrixState,
   Morse,
   PeripheralStatus,
@@ -19,6 +20,7 @@ import type { KeyboardError } from './errors'
 import type { ConnectionState, KeyboardConfig, KeyboardDevice, KeyboardStatus } from './types'
 import { err, errAsync, ResultAsync } from 'neverthrow'
 import { match, P } from 'ts-pattern'
+import { validateMacro } from '../../lib/macro-editor'
 import { toast } from '../../lib/toast.svelte'
 import { connectClient } from '../../rynk'
 import { explainKeyboardError, toKeyboardError } from './errors'
@@ -134,16 +136,10 @@ async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise
   return forks
 }
 
-async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promise<number[]> {
-  // No upstream pager for macros: each chunk is exactly macro_chunk_size bytes,
-  // zero-filled past the end, so walk the whole space by chunk.
-  const out: number[] = []
-  while (out.length < caps.macro_space_size) {
-    const { data } = await client.get_macro(out.length)
-    if (!data.length) break
-    out.push(...data)
-  }
-  return out.slice(0, caps.macro_space_size)
+async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promise<MacroOp[][]> {
+  const macros: MacroOp[][] = []
+  for (let index = 0; index < caps.max_macros; index++) macros.push(await client.read_macro(index))
+  return macros
 }
 
 async function fetchConfig(client: RynkClient, caps: DeviceCapabilities): Promise<KeyboardConfig> {
@@ -219,8 +215,14 @@ function validateConfigShape(config: KeyboardConfig, caps: DeviceCapabilities, c
     return `encoders: ${config.encoders.length}, expected ${caps.num_encoders}`
   if (config.encoders.some(layers => layers.length !== caps.num_layers))
     return `encoders: every encoder needs ${caps.num_layers} layers`
-  if (config.macros.length !== caps.macro_space_size)
-    return `macros: ${config.macros.length} bytes, expected ${caps.macro_space_size}`
+  if (config.macros.length !== caps.max_macros)
+    return `macros: ${config.macros.length} slots, expected ${caps.max_macros}`
+  for (const ops of config.macros) {
+    const error = validateMacro(ops, caps.macro_max_size)
+    if (error) return error
+  }
+  if (!caps.macros_writable && JSON.stringify(config.macros) !== JSON.stringify(current.macros))
+    return 'Macros are read-only on this keyboard'
   if (config.defaultLayer < 0 || config.defaultLayer >= caps.num_layers)
     return `default layer ${config.defaultLayer} out of range`
   return null
@@ -480,28 +482,21 @@ class KeyboardStoreClass {
     })
   }
 
-  /// Replace the whole macro region. Macros are one packed byte run with no
-  /// per-slot addressing, so editing any of them rewrites all of them; the
-  /// chunked writes share a chain slot to keep that atomic from the UI's side.
-  setMacroRegion(bytes: number[]): ResultAsync<void, KeyboardError> {
+  setMacro(index: number, ops: MacroOp[]): ResultAsync<void, KeyboardError> {
     const caps = this.#device?.capabilities
     if (!this.#config || !caps) return invalid('not connected')
-    if (bytes.length !== caps.macro_space_size)
-      return invalid(`macros: ${bytes.length} bytes, expected ${caps.macro_space_size}`)
-
+    if (!caps.macros_writable) return invalid('Macros are read-only on this keyboard')
+    if (!Number.isInteger(index) || index < 0 || index >= caps.max_macros) return invalid('Macro index out of range')
+    const error = validateMacro(ops, caps.macro_max_size)
+    if (error) return invalid(error)
     return runMutation({
       push: () => {
-        const snapshot = this.#config!.macros
-        this.#config!.macros = bytes
+        const snapshot = this.#config!.macros[index]!
+        this.#config!.macros[index] = ops
         return snapshot
       },
-      call: async (c) => {
-        const chunk = Math.max(1, caps.macro_chunk_size)
-        for (let offset = 0; offset < bytes.length; offset += chunk) {
-          await c.set_macro(offset, { data: bytes.slice(offset, offset + chunk) })
-        }
-      },
-      undo: (snapshot) => { if (this.#config) this.#config.macros = snapshot },
+      call: c => c.write_macro(index, ops),
+      undo: (snapshot) => { if (this.#config) this.#config.macros[index] = snapshot },
     })
   }
 
@@ -573,9 +568,8 @@ class KeyboardStoreClass {
       for (const [e, layers] of config.encoders.entries()) {
         for (const [l, action] of layers.entries()) await c.set_encoder(e, l, action)
       }
-      const chunk = Math.max(1, caps.macro_chunk_size)
-      for (let offset = 0; offset < config.macros.length; offset += chunk) {
-        await c.set_macro(offset, { data: config.macros.slice(offset, offset + chunk) })
+      if (caps.macros_writable) {
+        for (const [index, ops] of config.macros.entries()) await c.write_macro(index, ops)
       }
       this.#config = await fetchConfig(c, caps)
     })

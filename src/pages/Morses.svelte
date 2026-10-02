@@ -1,17 +1,16 @@
 <script lang='ts'>
   import type { MorseStep } from '../lib/morse'
-  import type { Action, KeyAction, Morse, MorseMode, MorseProfile } from '../rynk'
+  import type { Action, KeyAction, Morse, MorseProfile } from '../rynk'
   import Icon from '@iconify/svelte'
   import KeycodeSelect from '../components/KeycodeSelect.svelte'
+  import MorseProfileFields from '../components/MorseProfileFields.svelte'
   import AddChip from '../components/ui/AddChip.svelte'
   import Button from '../components/ui/Button.svelte'
   import EmptyCard from '../components/ui/EmptyCard.svelte'
-  import FieldRow from '../components/ui/FieldRow.svelte'
   import IconBtn from '../components/ui/IconBtn.svelte'
   import KeyChip from '../components/ui/KeyChip.svelte'
   import Overlay from '../components/ui/Overlay.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
-  import Select from '../components/ui/Select.svelte'
   import SlotCard from '../components/ui/SlotCard.svelte'
   import { asAction } from '../lib/keycatalog'
   import { actionLabel } from '../lib/keycode'
@@ -124,37 +123,6 @@
     save(slot, { ...morse, profile: { ...morse.profile, ...patch } })
   }
 
-  function timeout(slot: number, field: 'hold_timeout_ms' | 'gap_timeout_ms' | 'quick_tap_timeout_ms', raw: string) {
-    const n = raw === '' ? undefined : Math.max(0, Math.min(8191, Number(raw) || 0))
-    setProfile(slot, { [field]: n })
-  }
-
-  const TRI = [
-    { value: 'default', label: 'default' },
-    { value: 'on', label: 'on' },
-    { value: 'off', label: 'off' },
-  ]
-
-  function triValue(v: boolean | undefined): string {
-    return v === undefined ? 'default' : v ? 'on' : 'off'
-  }
-
-  function triSet(v: string): boolean | undefined {
-    return v === 'default' ? undefined : v === 'on'
-  }
-
-  const MODES = [
-    { value: 'default', label: 'default' },
-    { value: 'PermissiveHold', label: 'Permissive hold' },
-    { value: 'HoldOnOtherPress', label: 'Hold on other press' },
-    { value: 'Normal', label: 'On timeout' },
-  ]
-
-  const TIMEOUTS = [
-    { field: 'hold_timeout_ms', label: 'Hold timeout', hint: 'Held longer counts as a hold.' },
-    { field: 'gap_timeout_ms', label: 'Gap timeout', hint: 'A longer pause ends the sequence.' },
-    { field: 'quick_tap_timeout_ms', label: 'Quick tap', hint: 'Retapping within this repeats the tap.' },
-  ] as const
 </script>
 
 {#snippet patternChips(pattern: number)}
@@ -294,48 +262,7 @@
           </div>
 
           {#snippet advanced()}
-            <FieldRow label='Decision mode' hint='How a press picks tap or hold.'>
-              <Select
-                items={MODES}
-                value={morse.profile.mode ?? 'default'}
-                label='Decision mode'
-                onchange={v => setProfile(entry.slot, { mode: v === 'default' ? undefined : v as MorseMode })}
-              />
-            </FieldRow>
-            {#each TIMEOUTS as t (t.field)}
-              <FieldRow label={t.label} hint={t.hint}>
-                <input
-                  class={`
-                    h-8 w-24 rounded-md border border-input bg-background px-2.5
-                    font-mono text-[12.5px] text-foreground outline-none
-                  `}
-                  type='number'
-                  min='0'
-                  max='8191'
-                  placeholder='default'
-                  aria-label={t.label}
-                  value={morse.profile[t.field] ?? ''}
-                  onchange={e => timeout(entry.slot, t.field, e.currentTarget.value)}
-                />
-                <span class='text-xs text-muted-foreground'>ms</span>
-              </FieldRow>
-            {/each}
-            <FieldRow label='Unilateral tap' hint='A same-hand key after this one forces a tap.'>
-              <Select
-                items={TRI}
-                value={triValue(morse.profile.unilateral_tap)}
-                label='Unilateral tap'
-                onchange={v => setProfile(entry.slot, { unilateral_tap: triSet(v) })}
-              />
-            </FieldRow>
-            <FieldRow label='Flow tap' hint='Fast typing resolves this key as a tap.'>
-              <Select
-                items={TRI}
-                value={triValue(morse.profile.enable_flow_tap)}
-                label='Flow tap'
-                onchange={v => setProfile(entry.slot, { enable_flow_tap: triSet(v) })}
-              />
-            </FieldRow>
+            <MorseProfileFields profile={morse.profile} onchange={patch => setProfile(entry.slot, patch)} />
           {/snippet}
         </SlotCard>
       {/each}
@@ -346,7 +273,7 @@
     </div>
 
     <p class='mt-3.5 text-xs text-muted-foreground'>
-      Timing left at “default” follows the keyboard-wide values.
+      Timing left at “default” follows the keyboard-wide profile on the Behavior page.
     </p>
   {/if}
 </ScreenScroll>

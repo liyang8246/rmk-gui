@@ -23,7 +23,9 @@ const HID = [
 const CAPS = {
   num_layers: 2,
   max_morse: 4,
-  macro_space_size: 256,
+  max_macros: 32,
+  macro_max_size: 32,
+  macros_writable: true,
   lighting_enabled: true,
 } as DeviceCapabilities
 
@@ -43,7 +45,7 @@ describe('actionCatalog', () => {
   })
 
   it('drops what the firmware left out', () => {
-    const bare = actionCatalog({ ...CAPS, max_morse: 0, macro_space_size: 0, lighting_enabled: false }, HID)
+    const bare = actionCatalog({ ...CAPS, max_morse: 0, max_macros: 0, lighting_enabled: false }, HID)
     expect(bare.map(g => g.name)).not.toContain('Light')
     const advanced = bare.find(g => g.name === 'Advanced')!.entries.map(e => e.id)
     expect(advanced.some(id => id.startsWith('Morse'))).toBe(false)
@@ -65,9 +67,9 @@ describe('actionCatalog', () => {
     expect(layer.entries.filter(e => e.label.startsWith('MO '))).toHaveLength(2)
   })
 
-  it('lays the eight groups out in one order', () => {
+  it('lays the nine groups out in one order', () => {
     const names = actionCatalog(CAPS, ['A', 'KbVolumeUp', 'MouseBtn1', 'WwwHome', 'Execute']).map(g => g.name)
-    expect(names).toEqual(['Basic', 'Media', 'Layer', 'Control', 'Mouse', 'Advanced', 'Light', 'Other'])
+    expect(names).toEqual(['Basic', 'Media', 'Mouse', 'System', 'Layer', 'Advanced', 'Control', 'Light', 'Other'])
   })
 
   it('keeps the whole keyboard page in Basic, clearing included', () => {
@@ -83,12 +85,12 @@ describe('actionCatalog', () => {
   it('does not let a family regex overreach', () => {
     const groups = actionCatalog(CAPS, ['NumLock', 'SystemPower', 'SystemRequest'])
     const basic = groups.find(g => g.name === 'Basic')!.entries.map(e => e.id)
-    const control = groups.find(g => g.name === 'Control')!.entries.map(e => e.id)
+    const system = groups.find(g => g.name === 'System')!.entries.map(e => e.id)
     // NumLock lives with the keypad it locks; SysRq is a keyboard key, not a
     // way to control the computer.
     expect(basic).toContain('NumLock')
-    expect(control).toContain('SystemPower')
-    expect(control).not.toContain('SystemRequest')
+    expect(system).toContain('SystemPower')
+    expect(system).not.toContain('SystemRequest')
   })
 
   it('matches families by name, so a new one needs no edit', () => {

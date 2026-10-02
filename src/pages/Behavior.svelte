@@ -1,6 +1,8 @@
 <script lang='ts'>
+  import type { MorseProfile } from '../rynk'
   import type { NumericBehaviorField } from '../stores'
   import Icon from '@iconify/svelte'
+  import MorseProfileFields from '../components/MorseProfileFields.svelte'
   import Card from '../components/ui/Card.svelte'
   import ScreenScroll from '../components/ui/ScreenScroll.svelte'
   import Slider from '../components/ui/Slider.svelte'
@@ -16,7 +18,7 @@
     step: number
   }
 
-  /// Every global timing the protocol exposes, in the order they take effect:
+  /// Global timings, in the order they take effect:
   /// how a tap is emitted, then how long the keyboard waits for a second input.
   const SETTINGS: Setting[] = [
     {
@@ -51,15 +53,19 @@
       max: 5000,
       step: 100,
     },
+    {
+      field: 'morse_prior_idle_time_ms',
+      title: 'Flow tap window',
+      desc: 'A flow-tap key pressed this soon after another key resolves as a tap.',
+      min: 0,
+      max: 500,
+      step: 10,
+    },
   ]
 
   /// Settings a configurator would normally offer that this protocol has no
   /// global home for. Listed rather than drawn as dead sliders.
   const ELSEWHERE = [
-    {
-      title: 'Tapping term, permissive hold, quick tap, hold-on-other-key-press, tap dance term',
-      where: 'Per key, on its morse profile.',
-    },
     {
       title: 'One-shot retap to hold',
       where: 'Not implemented by the firmware.',
@@ -78,6 +84,13 @@
     if (!behavior) return
     void keyboardStore
       .setBehavior({ ...behavior, [field]: value })
+      .mapErr(e => toast.error(describeKeyboardError(e)))
+  }
+
+  function updateProfile(patch: Partial<MorseProfile>) {
+    if (!behavior) return
+    void keyboardStore
+      .setBehavior({ ...behavior, morse_default_profile: { ...behavior.morse_default_profile, ...patch } })
       .mapErr(e => toast.error(describeKeyboardError(e)))
   }
 </script>
@@ -112,6 +125,16 @@
       </div>
     {/each}
   </Card>
+
+  {#if behavior}
+    <h2 class='mt-6 mb-1 text-[13.5px] font-semibold text-foreground'>Tap-hold and morse defaults</h2>
+    <p class='mb-2.5 text-xs text-muted-foreground'>
+      Applies to every tap-hold and morse key; a key's own profile overrides it.
+    </p>
+    <Card class='flex flex-col gap-3'>
+      <MorseProfileFields profile={behavior.morse_default_profile} onchange={updateProfile} />
+    </Card>
+  {/if}
 
   <div class='mt-4'>
     <button

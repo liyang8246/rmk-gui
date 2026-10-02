@@ -23,9 +23,10 @@ The protocol is:
 - **Typed** — a shared command table (`rmk-types`) binds each command to its
   request/response payload types, so the firmware and host can never disagree
   about a message's shape.
-- **Versioned** — a `GetVersion` handshake establishes compatibility; major
-  mismatches are hard-rejected, same-major minors connect (a newer firmware
-  minor just logs a note).
+- **Versioned** — a `GetVersion` handshake establishes compatibility. While
+  the major is 0 the protocol is unstable and versions must match exactly;
+  from 1.0, major mismatches are rejected and same-major minors connect (a
+  newer firmware minor just logs a note).
 - **Transport-agnostic** — the same `Client` + `Driver` pair drives raw USB,
   BLE GATT, and browser (WebUSB / WebHID) transports through common
   `embedded-io-async` `Read`/`Write` byte links.

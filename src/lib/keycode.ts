@@ -186,7 +186,7 @@ export function hidLabel(code: HidKeyCode): string {
   return hidLegend(code).label
 }
 
-const MOD_FLAGS = [
+export const MOD_FLAGS = [
   ['left_ctrl', 'LC'],
   ['left_shift', 'LS'],
   ['left_alt', 'LA'],

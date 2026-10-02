@@ -1,39 +1,38 @@
 #!/usr/bin/env python3
-import io, os, shutil, subprocess, sys, tarfile, tempfile, urllib.request
+import os, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
-# Keep VERSION in step with the rynk versions in qemu/Cargo.toml and
-# src-tauri/Cargo.toml — firmware and wasm client must come from one protocol
-# release (all rynk crates of a release train share a version).
-VERSION = "0.3.0"
+# Keep REV in step with the rmk pins in qemu/Cargo.toml and src-tauri/Cargo.toml —
+# firmware and wasm client must come from one protocol commit.
+URL, REV = "https://github.com/rmk-rs/rmk.git", "933b0630a23393961e5b3bfa7a176a68d9bb8b8c"
 ROOT = Path(__file__).resolve().parent.parent
 WASM_OUT = ROOT / "src" / "rynk" / "wasm"
 
 def has_rynk(repo):
     return (repo / "rynk" / "rynk-wasm" / "Cargo.toml").is_file()
 
-# Prefer a local checkout so edits to rynk land here without a push; CI has
-# none and builds the published crates.io source.
-def resolve_src():
+# Prefer a local checkout so edits to rynk land here without a push; CI has neither and clones.
+def resolve_repo():
     env = os.environ.get("RMK_REPO")
     if env:
         repo = Path(env).expanduser().resolve()
         if not has_rynk(repo):
             sys.exit(f"RMK_REPO={repo} has no rynk/rynk-wasm/Cargo.toml")
-        return repo / "rynk" / "rynk-wasm", None
+        return repo, False
     sibling = ROOT.parent / "rmk"
     if has_rynk(sibling):
-        return sibling / "rynk" / "rynk-wasm", None
-    work = Path(tempfile.mkdtemp(prefix="rynk-wasm-"))
-    url = f"https://static.crates.io/crates/rynk-wasm/rynk-wasm-{VERSION}.crate"
-    with urllib.request.urlopen(url) as resp:
-        tarfile.open(fileobj=io.BytesIO(resp.read()), mode="r:gz").extractall(work, filter="data")
-    return work / f"rynk-wasm-{VERSION}", work
+        return sibling, False
+    work = Path(tempfile.mkdtemp(prefix="rmk-wasm-"))
+    # fetch, not clone: `clone --branch` takes a ref, never a sha.
+    subprocess.run(["git", "init", "-q", str(work)], check=True)
+    subprocess.run(["git", "-C", str(work), "fetch", "-q", "--depth", "1", URL, REV], check=True)
+    subprocess.run(["git", "-C", str(work), "checkout", "-q", "FETCH_HEAD"], check=True)
+    return work, True
 
-src, work = resolve_src()
-print(f"building rynk-wasm from {src}")
-subprocess.run(["wasm-pack", "build", "--target", "web", "--release", str(src)], check=True)
+repo, temporary = resolve_repo()
+print(f"building rynk-wasm from {repo}")
+subprocess.run(["wasm-pack", "build", "--target", "web", "--release", str(repo / "rynk" / "rynk-wasm")], check=True)
 shutil.rmtree(WASM_OUT, ignore_errors=True)
-shutil.copytree(src / "pkg", WASM_OUT)
-if work:
-    shutil.rmtree(work, ignore_errors=True)
+shutil.copytree(repo / "rynk" / "rynk-wasm" / "pkg", WASM_OUT)
+if temporary:
+    shutil.rmtree(repo, ignore_errors=True)

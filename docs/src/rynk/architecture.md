@@ -140,9 +140,10 @@ handshake rides the normal pumps, and topics arriving meanwhile queue up for
    concurrently (they each take an in-flight slot), so the whole handshake
    costs one round trip. The version gate still runs before the capabilities
    are released.
-2. **Version gate** — `GetVersion` is frozen across all protocol majors. If
-   `version.major != ProtocolVersion::CURRENT.major`, connect returns
-   `RynkHostError::VersionMismatch`. A newer minor logs a note but connects.
+2. **Version gate** — `GetVersion` is frozen across all protocol majors.
+   Connect returns `RynkHostError::VersionMismatch` when the major differs
+   from `ProtocolVersion::CURRENT`, or, while the major is 0, when the minor
+   differs. From 1.0 a newer minor logs a note but connects.
 3. **Capability snapshot** — the `DeviceCapabilities` response is cached on
    the `Client` before it is shared; it drives capability gating
    (`RynkHostError::Unsupported`), outgoing request size limits

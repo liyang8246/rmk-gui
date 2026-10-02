@@ -101,6 +101,9 @@ export function explainKeyboardError(e: KeyboardError): KeyboardErrorHelp {
     .with({ type: 'invalid' }, x => ({ title: x.cause }))
     .with({ type: 'unknown' }, (x): KeyboardErrorHelp => {
       if (!(x.cause instanceof Error)) return { title: 'Connection failed' }
+      if (x.cause.name === 'VersionMismatch') {
+        return { title: 'Firmware and app versions don’t match', hint: x.cause.message }
+      }
       if (OPEN_FAILED_NAMES.includes(x.cause.name) || OPEN_FAILED_RE.test(x.cause.message)) {
         return {
           title: 'Couldn’t open the device',
