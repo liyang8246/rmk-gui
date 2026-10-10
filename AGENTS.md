@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Rules
+
+- Avoid unnecessary secondary labels and descriptions. Let the layout do the explaining.
+
 ## Svelte Task Workflow
 
 Before any Svelte task: load the `svelte` skill from `.agents/skills/svelte/`.

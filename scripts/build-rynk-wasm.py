@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Keep REV in step with the rmk pins in qemu/Cargo.toml and src-tauri/Cargo.toml —
 # firmware and wasm client must come from one protocol commit.
-URL, REV = "https://github.com/rmk-rs/rmk.git", "933b0630a23393961e5b3bfa7a176a68d9bb8b8c"
+URL, REV = "https://github.com/rmk-rs/rmk.git", "bb74f53c5c2407f0051337e8cf0ea62b06e643f7"
 ROOT = Path(__file__).resolve().parent.parent
 WASM_OUT = ROOT / "src" / "rynk" / "wasm"
 

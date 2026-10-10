@@ -488,19 +488,20 @@ Source: `Client::get_combo` … `Client::write_macro` in `rynk/src/api.rs`.
 
 ### Macros
 
-Each call moves one whole macro: a list of at most `macro_max_size`
-`MacroOp`s (`Tap`, `Press`, `Release`, `Delay`, `Char`, `PauseForRelease`),
-at an index below `max_macros`. An unset slot reads as an empty list.
+Each call moves one whole macro: a list of `MacroOp`s (`Tap`, `Press`,
+`Release`, `Delay`, `Char`, `PauseForRelease`), at an index below `max_macros`.
+All slots share `macro_space_size` bytes; a macro takes its encoding plus one
+or two bytes for its length. An unset slot reads as an empty list.
 
 `write_macro` fails with `RynkHostError::Encode` before sending when the list
-does not fit. The firmware answers `Invalid` for a macro it cannot run (a
-nested `TriggerMacro`, two `PauseForRelease`s, a non-ASCII `Char`) and
-`Unimplemented` when `macros_writable` is false, as on a firmware without
-storage, which serves its compiled-in macros read-only.
+encodes to more than 8192 bytes. The firmware answers `Invalid` for a macro
+that doesn't fit beside the other slots, and `Unimplemented` when
+`macros_writable` is false, as on a firmware without storage, which serves its
+compiled-in macros read-only.
 
 Source: `Client::get_macro` / `Client::write_macro` in `rynk/src/api.rs`,
 `MacroOp` in `rmk-types/src/keyboard_macros.rs`,
-`DeviceCapabilities::{max_macros, macro_max_size, macros_writable}` in
+`DeviceCapabilities::{max_macros, macro_space_size, macros_writable}` in
 `rmk-types/src/protocol/rynk/payload/system.rs`.
 
 ## 7. Behavior
