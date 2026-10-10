@@ -1,5 +1,6 @@
 <script lang='ts'>
   import Icon from '@iconify/svelte'
+  import FirmwareUpdate from '../components/FirmwareUpdate.svelte'
   import Button from '../components/ui/Button.svelte'
   import Card from '../components/ui/Card.svelte'
   import ConfirmOverlay from '../components/ui/ConfirmOverlay.svelte'
@@ -27,6 +28,7 @@
   const onDongle = $derived(activeProfile === dongleSlot(caps))
 
   let confirming = $state<'reset' | null>(null)
+  let updating = $state(false)
 
   function bootloader() {
     void keyboardStore.bootloaderJump().match(
@@ -168,9 +170,11 @@
           {device?.version.major}.{device?.version.minor}
         </div>
       </div>
-      <!-- There is no firmware-transfer endpoint in the protocol. -->
-      <Button disabled title='The protocol has no firmware-transfer endpoint'>
-        Check for updates
+      <!-- The protocol carries no firmware; the image goes to the bootloader
+           over USB DFU, so the flow starts here and ends on the next connect. -->
+      <Button onclick={() => (updating = true)}>
+        <Icon icon='lucide:upload' width={14} height={14} />
+        Update firmware…
       </Button>
     </div>
 
@@ -289,6 +293,10 @@
     {/if}
   </Card>
 </ScreenScroll>
+
+{#if updating}
+  <FirmwareUpdate onclose={() => (updating = false)} />
+{/if}
 
 {#if confirming === 'reset'}
   <ConfirmOverlay

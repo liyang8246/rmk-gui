@@ -6,14 +6,13 @@ describe('native macro editor', () => {
   it('preserves actions, ASCII controls, maximum delays, and release pauses', () => {
     const ops: MacroOp[] = [{ Char: 0 }, { Char: 65 }, { Press: { LayerOn: 1 } }, 'PauseForRelease', { Release: { LayerOn: 1 } }, { Delay: 65535 }]
     expect(fromSteps(toSteps(ops))).toEqual(ops)
-    expect(validateMacro(ops, 32)).toBeNull()
+    expect(validateMacro(ops)).toBeNull()
   })
-  it('rejects invalid content and checks expanded text length', () => {
-    expect(validateMacro(fromSteps([{ kind: 'text', value: '你好' }]), 32)).not.toBeNull()
-    expect(validateMacro(fromSteps([{ kind: 'text', value: 'abc' }]), 2)).not.toBeNull()
-    expect(validateMacro(['PauseForRelease', 'PauseForRelease'], 32)).not.toBeNull()
-    expect(validateMacro([{ Tap: { TriggerMacro: 0 } }], 32)).not.toBeNull()
-    expect(validateMacro([{ Delay: 65536 }], 32)).not.toBeNull()
+  it('rejects invalid content', () => {
+    expect(validateMacro(fromSteps([{ kind: 'text', value: '你好' }]))).not.toBeNull()
+    expect(validateMacro(['PauseForRelease', 'PauseForRelease'])).not.toBeNull()
+    expect(validateMacro([{ Tap: { TriggerMacro: 0 } }])).not.toBeNull()
+    expect(validateMacro([{ Delay: 65536 }])).not.toBeNull()
   })
   it('keys steps by content so a move keeps each key', () => {
     const steps = toSteps([{ Tap: { Key: { Hid: 'A' } } }, { Delay: 5 }, { Tap: { Key: { Hid: 'A' } } }])

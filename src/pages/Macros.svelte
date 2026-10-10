@@ -44,20 +44,20 @@
   let dropAt = $state<number | null>(null)
 
   const caps = $derived(keyboardStore.device?.capabilities)
-  const capacity = $derived(caps?.macro_max_size ?? 0)
+  const space = $derived(caps?.max_macros ? caps.macro_space_size : 0)
+  const used = $derived(keyboardStore.macroBytes)
   const macros = $derived(keyboardStore.config?.macros ?? [])
   const slots = $derived(macros.map(toSteps))
   const locked = $derived(!caps?.macros_writable)
   const visible = $derived(slots.map((steps, slot) => ({ steps, slot }))
     .filter(e => e.steps.length > 0 || e.slot === draft))
   const firstFree = $derived(slots.findIndex(s => s.length === 0))
-  const usedSlots = $derived(slots.filter(s => s.length > 0).length)
-  const percent = $derived(slots.length ? Math.round(100 * usedSlots / slots.length) : 0)
+  const percent = $derived(space ? Math.min(100, Math.round(100 * used / space)) : 0)
   const newTitle = $derived(locked ? 'Macros are read-only on this keyboard' : firstFree < 0 ? 'Every slot is in use' : undefined)
 
   function update(slot: number, steps: MacroStep[]) {
     const ops = fromSteps(steps)
-    const error = validateMacro(ops, capacity)
+    const error = validateMacro(ops)
     if (error) {
       toast.warning(error)
       return
@@ -166,10 +166,10 @@
   desc='A sequence of keystrokes, text, and delays.'
 >
   {#snippet actions()}
-    {#if capacity > 0}
+    {#if space > 0}
       <div class='flex flex-col justify-center gap-1'>
         <span class='text-right text-xs font-bold text-muted-foreground'>
-          {usedSlots} / {slots.length} macros
+          {used} / {space} bytes
         </span>
         <div class='h-[5px] w-32 overflow-hidden rounded-full bg-base-200'>
           <div
@@ -190,7 +190,7 @@
     {/if}
   {/snippet}
 
-  {#if capacity === 0}
+  {#if space === 0}
     <EmptyCard>This firmware has no macro slots.</EmptyCard>
   {:else}
     {#if locked}
@@ -203,7 +203,7 @@
         {@const keys = stepKeys(steps)}
         <SlotCard
           label='Macro {entry.slot}'
-          hint='{macros[entry.slot]?.length ?? 0} / {capacity} operations · assign with Macro {entry.slot}'
+          hint='{macros[entry.slot]?.length ?? 0} operations · assign with Macro {entry.slot}'
           fresh={entry.slot === draft && steps.length === 0}
           deleteTitle='Delete macro'
           deleteDisabled={locked}
@@ -339,7 +339,7 @@
               <AddChip
                 label={kind.label}
                 title={`Add ${kind.label}`}
-                disabled={locked || (macros[entry.slot]?.length ?? 0) >= capacity || (kind.kind === 'pause' && steps.some(s => s.kind === 'pause'))}
+                disabled={locked || used >= space || (kind.kind === 'pause' && steps.some(s => s.kind === 'pause'))}
                 onclick={() => addStep(entry.slot, kind.kind)}
               />
             {/each}
@@ -353,7 +353,7 @@
     </div>
 
     <p class='mt-3.5 text-xs text-muted-foreground'>
-      Text accepts ASCII, including capitals and symbols. Each character uses one operation.
+      Text accepts ASCII, including capitals and symbols. All macros share the keyboard's macro memory; a character takes two bytes of it.
       Unpaired key and modifier presses are released when the macro ends.
     </p>
   {/if}

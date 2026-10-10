@@ -136,6 +136,14 @@ async function fetchForks(client: RynkClient, caps: DeviceCapabilities): Promise
   return forks
 }
 
+/// Bytes of the keyboard's macro memory `macros` take; the slots share `macro_space_size`.
+function macroBytes(macros: readonly MacroOp[][]): number {
+  const client = session.client
+  return client ? macros.reduce((sum, ops) => sum + client.macro_size(ops), 0) : 0
+}
+
+const MACRO_MEMORY_FULL = 'Not enough macro memory on this keyboard'
+
 async function fetchMacros(client: RynkClient, caps: DeviceCapabilities): Promise<MacroOp[][]> {
   const macros: MacroOp[][] = []
   for (let index = 0; index < caps.max_macros; index++) macros.push(await client.read_macro(index))
@@ -218,9 +226,10 @@ function validateConfigShape(config: KeyboardConfig, caps: DeviceCapabilities, c
   if (config.macros.length !== caps.max_macros)
     return `macros: ${config.macros.length} slots, expected ${caps.max_macros}`
   for (const ops of config.macros) {
-    const error = validateMacro(ops, caps.macro_max_size)
+    const error = validateMacro(ops)
     if (error) return error
   }
+  if (macroBytes(config.macros) > caps.macro_space_size) return MACRO_MEMORY_FULL
   if (!caps.macros_writable && JSON.stringify(config.macros) !== JSON.stringify(current.macros))
     return 'Macros are read-only on this keyboard'
   if (config.defaultLayer < 0 || config.defaultLayer >= caps.num_layers)
@@ -238,6 +247,8 @@ class KeyboardStoreClass {
   get device() { return this.#device }
   get config() { return this.#config }
   get status() { return this.#status }
+  /// Bytes the macros take of the keyboard's `macro_space_size`.
+  get macroBytes() { return this.#config ? macroBytes(this.#config.macros) : 0 }
 
   private async startTopicLoop(client: RynkClient): Promise<void> {
     try {
@@ -487,8 +498,10 @@ class KeyboardStoreClass {
     if (!this.#config || !caps) return invalid('not connected')
     if (!caps.macros_writable) return invalid('Macros are read-only on this keyboard')
     if (!Number.isInteger(index) || index < 0 || index >= caps.max_macros) return invalid('Macro index out of range')
-    const error = validateMacro(ops, caps.macro_max_size)
+    const error = validateMacro(ops)
     if (error) return invalid(error)
+    if (macroBytes(this.#config.macros.map((m, i) => (i === index ? ops : m))) > caps.macro_space_size)
+      return invalid(MACRO_MEMORY_FULL)
     return runMutation({
       push: () => {
         const snapshot = this.#config!.macros[index]!
@@ -557,6 +570,7 @@ class KeyboardStoreClass {
     if (!this.#config || !caps) return invalid('not connected')
     const shape = validateConfigShape(config, caps, this.#config)
     if (shape) return invalid(shape)
+    const current = this.#config
 
     return runCommand(async (c) => {
       await c.set_behavior(config.behavior)
@@ -569,7 +583,13 @@ class KeyboardStoreClass {
         for (const [l, action] of layers.entries()) await c.set_encoder(e, l, action)
       }
       if (caps.macros_writable) {
-        for (const [index, ops] of config.macros.entries()) await c.write_macro(index, ops)
+        // The slots share one memory: shrink before growing, so no write overflows it midway.
+        const growth = config.macros.map((ops, index) => ({
+          index,
+          ops,
+          by: c.macro_size(ops) - c.macro_size(current.macros[index] ?? []),
+        }))
+        for (const { index, ops } of growth.sort((a, b) => a.by - b.by)) await c.write_macro(index, ops)
       }
       this.#config = await fetchConfig(c, caps)
     })

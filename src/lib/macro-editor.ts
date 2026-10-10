@@ -9,8 +9,9 @@ export type MacroStep
 
 export const MAX_DELAY_MS = 65535
 
-export function validateMacro(ops: readonly MacroOp[], capacity: number): string | null {
-  if (!Array.isArray(ops) || ops.length > capacity) return `A macro can contain at most ${capacity} operations`
+/// The rules one macro answers to; whether the macros fit is the keyboard's memory to judge.
+export function validateMacro(ops: readonly MacroOp[]): string | null {
+  if (!Array.isArray(ops)) return 'Invalid macro operation'
   let paused = false
   for (const op of ops) {
     if (op === 'PauseForRelease') {

@@ -15,7 +15,7 @@ const CAPS: DeviceCapabilities = {
   max_combos: 0,
   max_combo_keys: 4,
   max_macros: 0,
-  macro_max_size: 32,
+  macro_space_size: 256,
   macros_writable: true,
   max_morse: 0,
   max_patterns_per_key: 4,
@@ -106,10 +106,15 @@ class FakeClient {
   macros: MacroOp[][] = []
   failSetMacro: Error | null = null
   read_macro(index: number) { return this.log(`read_macro ${index}`, this.macros[index] ?? []) }
+  /// A byte an op plus one for the slot: enough to model the shared memory.
+  macro_size(ops: MacroOp[]) { return ops.length + 1 }
   async write_macro(index: number, ops: MacroOp[]) {
     this.calls.push(`write_macro ${index}`)
     if (this.failSetMacro) throw this.failSetMacro
-    this.macros[index] = ops
+    const macros = this.macros.map((m, i) => (i === index ? ops : m))
+    if (macros.reduce((sum, m) => sum + this.macro_size(m), 0) > this.caps.macro_space_size)
+      throw rejection('Rejected', 'device rejected Invalid')
+    this.macros = macros
   }
 
   defaultLayer = 0
@@ -727,10 +732,24 @@ describe('native macros', () => {
     expect(keyboardStore.config?.macros).toEqual([[{ Char: 67 }], [{ Char: 66 }]])
     expect(client.calls.filter(c => c.startsWith('write_macro'))).toEqual(['write_macro 0', 'write_macro 0'])
   })
+  it('imports a macro that moves slots by writing the shrinking one first', async () => {
+    const client = new FakeClient()
+    client.caps = { ...CAPS, max_macros: 2, macro_space_size: 5 }
+    client.macros = [[], [{ Char: 65 }, { Char: 65 }, { Char: 65 }]]
+    await connected(client)
+    const config = JSON.parse(JSON.stringify(keyboardStore.config)) as KeyboardConfig
+    config.macros = [[{ Char: 66 }, { Char: 66 }, { Char: 66 }], []]
+    expect((await keyboardStore.importConfig(config)).isOk()).toBe(true)
+    expect(client.calls.filter(c => c.startsWith('write_macro'))).toEqual(['write_macro 1', 'write_macro 0'])
+    expect(keyboardStore.config?.macros).toEqual(config.macros)
+  })
   it('rejects read-only, oversized, and nested macros before sending', async () => {
     const client = new FakeClient()
-    client.caps = { ...CAPS, max_macros: 1, macro_max_size: 1 }
+    // Room for a one-op macro in each slot, not a two-op one beside another.
+    client.caps = { ...CAPS, max_macros: 2, macro_space_size: 4 }
+    client.macros = [[], [{ Char: 66 }]]
     await connected(client)
+    expect(keyboardStore.macroBytes).toBe(3)
     expect((await keyboardStore.setMacro(0, [{ Char: 65 }, { Char: 66 }])).isErr()).toBe(true)
     expect((await keyboardStore.setMacro(0, [{ Tap: { TriggerMacro: 0 } }])).isErr()).toBe(true)
     await keyboardStore.disconnect()

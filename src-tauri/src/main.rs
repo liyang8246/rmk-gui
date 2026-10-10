@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod dfu;
 mod transport;
 
 use std::collections::HashMap;
@@ -12,11 +13,14 @@ use transport::{Session, ble, tcp, usb};
 fn main() {
     Builder::default()
         .manage(Mutex::new(HashMap::<String, Session>::new()))
+        .manage(dfu::DfuSessions::default())
         .invoke_handler(tauri::generate_handler![
             usb::rynk_discover_usb, ble::rynk_discover_ble, tcp::rynk_discover_tcp,
             usb::rynk_connect_usb, ble::rynk_connect_ble, tcp::rynk_connect_tcp,
             transport::rynk_send, transport::rynk_recv, transport::rynk_close,
             transport::rynk_close_all,
+            dfu::dfu_discover, dfu::dfu_open, dfu::dfu_control_out, dfu::dfu_control_in,
+            dfu::dfu_reset, dfu::dfu_close,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

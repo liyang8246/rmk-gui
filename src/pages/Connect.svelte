@@ -3,6 +3,7 @@
   import Icon from '@iconify/svelte'
   import { isTauri } from '@tauri-apps/api/core'
   import logo from '../assets/img/logo.svg'
+  import FirmwareUpdate from '../components/FirmwareUpdate.svelte'
   import Card from '../components/ui/Card.svelte'
   import IconBtn from '../components/ui/IconBtn.svelte'
   import Pill from '../components/ui/Pill.svelte'
@@ -42,6 +43,9 @@
   const PICKS: Record<Method, 'usb' | 'hid'> = { usb: 'usb', ble: 'hid' }
 
   let method = $state<Method>('usb')
+  /// A device left in its bootloader has no Rynk session to reach this from
+  /// the Device screen, so the connect screen offers the way in too.
+  let updating = $state(false)
 
   const native = isTauri()
 
@@ -257,5 +261,24 @@
         </p>
       {/if}
     </Card>
+
+    {#if native || available.includes('usb')}
+      <button
+        class={`
+          flex cursor-pointer items-center gap-1.5 text-xs font-semibold
+          text-muted-foreground transition-colors
+          hover:text-foreground
+        `}
+        type='button'
+        onclick={() => (updating = true)}
+      >
+        <Icon icon='lucide:upload' width={13} height={13} />
+        Flash firmware to a device in bootloader mode…
+      </button>
+    {/if}
   </div>
 </div>
+
+{#if updating}
+  <FirmwareUpdate onclose={() => (updating = false)} />
+{/if}
