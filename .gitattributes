@@ -1,0 +1,2 @@
+# Windows checkouts default to core.autocrlf=true, which trips better-tailwindcss' unix lineBreakStyle.
+* text=auto eol=lf
