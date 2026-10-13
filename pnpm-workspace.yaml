@@ -1,7 +1,8 @@
 minimumReleaseAgeExcludePrune: true
 minimumReleaseAgeExclude: []
-
 trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 2880
+
 trustPolicyExclude:
   - 'semver@5.7.2 || 6.3.1'
   - chokidar@4.0.3

@@ -21,26 +21,26 @@
   "dependencies": {
     "@pinia/nuxt": "^1.0.2",
     "@tailwindcss/vite": "^4.3.3",
-    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/api": "^2.12.3",
     "neverthrow": "^8.2.0",
     "pinia": "^4.0.3",
-    "reka-ui": "^2.10.5",
+    "reka-ui": "^2.11.0",
     "tailwindcss": "^4.3.3",
     "ts-pattern": "^5.9.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.5.1",
     "@nuxt/eslint": "^1.17.0",
-    "@tauri-apps/cli": "^2.11.4",
-    "@types/node": "^26.1.1",
+    "@tauri-apps/cli": "^2.12.2",
+    "@types/node": "^26.6.5",
     "@types/w3c-web-hid": "^1.0.7",
     "@types/w3c-web-serial": "^1.0.8",
-    "eslint": "^10.7.0",
-    "eslint-plugin-better-tailwindcss": "^4.7.0",
-    "npm-run-all2": "^9.0.2",
-    "nuxt": "^4.5.2",
+    "eslint": "^10.12.0",
+    "eslint-plugin-better-tailwindcss": "^4.9.0",
+    "npm-run-all2": "^9.0.3",
+    "nuxt": "^4.6.1",
     "typescript": "^6.0.3",
-    "vue": "^3.5.0",
-    "vue-tsc": "^3.3.11"
+    "vue": "^3.5.43",
+    "vue-tsc": "^3.3.13"
   }
 }
