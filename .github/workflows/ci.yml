@@ -31,6 +31,11 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo binstall wasm-pack --no-confirm
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            # psm archives a prebuilt wasm object with the host `ar`; cctools' `ar` mangles it.
+            rustup component add llvm-tools
+            echo "AR=$(find "$(rustc --print sysroot)/lib/rustlib" -name llvm-ar -type f | head -1)" >> "$GITHUB_ENV"
+          fi
 
       - name: Install Linux deps
         if: startsWith(matrix.os, 'ubuntu')
