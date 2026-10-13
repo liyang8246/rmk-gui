@@ -12,7 +12,7 @@ WASM_OUT = ROOT / "app" / "rynk" / "wasm"
 work = Path(tempfile.mkdtemp(prefix="rmk-wasm-"))
 try:
     subprocess.run(["git", "clone", "--depth", "1", "--branch", BRANCH, URL, str(work)], check=True)
-    subprocess.run(["wasm-pack", "build", "--target", "web", "--release", str(work / "rynk" / "rynk-wasm")], check=True)
+    subprocess.run(["wasm-pack", "build", "--target", "bundler", "--release", str(work / "rynk" / "rynk-wasm")], check=True)
     shutil.rmtree(WASM_OUT, ignore_errors=True)
     shutil.copytree(work / "rynk" / "rynk-wasm" / "pkg", WASM_OUT)
     keep = {"package.json", "README.md", ".gitignore"}
