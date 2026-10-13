@@ -7,7 +7,6 @@ export interface JsByteLink {
 
 export async function connect(link: JsByteLink) {
   const core = await import('./wasm/rynk_wasm.js')
-  await core.default()
   return core.connect(link)
 }
 

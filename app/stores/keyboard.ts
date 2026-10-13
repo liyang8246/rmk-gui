@@ -8,7 +8,7 @@ import type {
   Fork,
   KeyAction,
   LockStatus,
-  MacroData,
+  MacroOp,
   MatrixState,
   Morse,
   PeripheralStatus,
@@ -108,14 +108,12 @@ async function fetchForks(c: RynkClient, caps: DeviceCapabilities): Promise<Fork
   return forks
 }
 
-async function fetchMacros(c: RynkClient, caps: DeviceCapabilities): Promise<number[]> {
-  const out: number[] = []
-  while (out.length < caps.macro_space_size) {
-    const { data } = await c.get_macro(out.length)
-    if (!data.length) break
-    out.push(...data)
+async function fetchMacros(c: RynkClient, caps: DeviceCapabilities): Promise<MacroOp[][]> {
+  const out: MacroOp[][] = []
+  for (let i = 0; i < caps.max_macros; i++) {
+    out.push(await c.read_macro(i))
   }
-  return out.slice(0, caps.macro_space_size)
+  return out
 }
 
 async function fetchConfig(c: RynkClient, caps: DeviceCapabilities): Promise<KeyboardConfig> {
@@ -365,46 +363,36 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     })
   }
 
-  function setMacro(offset: number, data: MacroData): ResultAsync<void, KeyboardError> {
+  function setMacro(index: number, ops: MacroOp[]): ResultAsync<void, KeyboardError> {
     if (!config.value) return invalid('not connected')
-    const bytes = data.data
-    if (offset < 0 || offset + bytes.length > config.value.macros.length)
-      return invalid(`macro offset ${offset}+${bytes.length} out of range`)
+    if (index < 0 || index >= config.value.macros.length) return invalid(`macro ${index} out of range`)
 
     return runMutation({
       push: () => {
-        const snapshot = bytes.map((_, i) => config.value!.macros[offset + i]!)
-        bytes.forEach((b, i) => {
-          config.value!.macros[offset + i] = b
-        })
+        const snapshot = config.value!.macros[index]!
+        config.value!.macros[index] = ops
         return snapshot
       },
-      call: c => c.set_macro(offset, data),
-      undo: (snapshot) => {
-        if (!config.value) return
-        snapshot.forEach((old, i) => {
-          config.value!.macros[offset + i] = old
-        })
-      },
+      call: c => c.write_macro(index, ops),
+      undo: (snapshot) => { if (config.value) config.value.macros[index] = snapshot },
     })
   }
 
-  function setMacroRegion(bytes: number[]): ResultAsync<void, KeyboardError> {
+  function setMacros(macros: MacroOp[][]): ResultAsync<void, KeyboardError> {
     const caps = device.value?.capabilities
     if (!config.value || !caps) return invalid('not connected')
-    if (bytes.length !== caps.macro_space_size)
-      return invalid(`macros: ${bytes.length} bytes, expected ${caps.macro_space_size}`)
+    if (macros.length !== caps.max_macros)
+      return invalid(`macros: ${macros.length} slots, expected ${caps.max_macros}`)
 
     return runMutation({
       push: () => {
         const snapshot = config.value!.macros
-        config.value!.macros = bytes
+        config.value!.macros = macros
         return snapshot
       },
       call: async (c) => {
-        const chunk = Math.max(1, caps.macro_chunk_size)
-        for (let offset = 0; offset < bytes.length; offset += chunk) {
-          await c.set_macro(offset, { data: bytes.slice(offset, offset + chunk) })
+        for (let i = 0; i < macros.length; i++) {
+          await c.write_macro(i, macros[i]!)
         }
       },
       undo: (snapshot) => { if (config.value) config.value.macros = snapshot },
@@ -548,7 +536,7 @@ export const useKeyboardStore = defineStore('keyboard', () => {
     setKey,
     setKeymap,
     setMacro,
-    setMacroRegion,
+    setMacros,
     setMorse,
     setMorses,
     status,
