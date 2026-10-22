@@ -1,15 +1,15 @@
 # AGENTS.md
 
-## Frontend Checks
+## Checks
 
-After completing any frontend task under `app/`, run these checks and fix all issues before considering the task done:
+After completing any task, run the checks for the code you touched and fix all issues before considering the task done:
 
 ```bash
-pnpm typecheck
-CI=true pnpm lint:ts
+CI=true pnpm lint:ts   # frontend
+pnpm lint:rs           # rust backend
 ```
 
-Both must pass with zero errors and zero warnings.
+All must pass with zero errors and zero warnings.
 
 ## Error Handling: neverthrow
 

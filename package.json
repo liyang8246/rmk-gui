@@ -11,7 +11,7 @@
     "build:wasm": "python3 scripts/build-rynk-wasm.py",
     "qemu": "uv run scripts/run-qemu.py",
     "lint": "run-s lint:ts lint:rs",
-    "lint:ts": "eslint .",
+    "lint:ts": "nuxt typecheck && eslint .",
     "lint:rs": "cd src-tauri && cargo clippy --all-targets -- -D warnings",
     "lint:fix": "run-s lint:fix:ts lint:fix:rs",
     "lint:fix:ts": "eslint . --fix",
