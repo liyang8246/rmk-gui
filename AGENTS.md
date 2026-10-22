@@ -11,6 +11,12 @@ pnpm lint:rs           # rust backend
 
 All must pass with zero errors and zero warnings.
 
+## Frontend UI
+
+- As few Tailwind classes and containers as possible per page.
+- No arbitrary values (`w-[13px]`), no obscure Tailwind classes — standard scale utilities only.
+- Style reka-ui components instead of hand-writing logic/compat code.
+
 ## Error Handling: neverthrow
 
 Fallible code returns `Result` / `ResultAsync` (details in `.agents/skills/neverthrow`).
