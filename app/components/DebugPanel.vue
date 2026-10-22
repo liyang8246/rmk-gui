@@ -5,7 +5,7 @@ const isDev = import.meta.dev
 const showModal = ref(false)
 const showDevice = ref(false)
 
-const BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900'
+const BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-base-content/70 ring-1 ring-base-content/20 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content'
 
 function burst() {
   for (let i = 1; i <= 6; i++) toast.info(`Toast ${i}`)
@@ -13,8 +13,10 @@ function burst() {
 </script>
 
 <template>
-  <section v-if="isDev" class="mt-8 max-w-md rounded-lg border border-dashed border-neutral-300 p-4">
-    <h2 class="text-xs font-medium tracking-wide text-neutral-400 uppercase">
+  <section
+    v-if="isDev" class="mt-8 max-w-md rounded-lg border border-dashed border-base-content/20 p-4"
+  >
+    <h2 class="text-xs font-medium tracking-wide text-base-content/40 uppercase">
       Debug
     </h2>
 
@@ -51,7 +53,7 @@ function burst() {
       title="Sample modal"
       description="Declarative usage of the Modal base component."
     >
-      <p class="text-sm text-neutral-600">
+      <p class="text-sm text-base-content/60">
         Body content goes in the default slot. Esc, the close button and a backdrop click all dismiss.
       </p>
       <template #footer>

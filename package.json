@@ -19,6 +19,8 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@iconify-json/lucide": "^1.2.147",
+    "@nuxt/icon": "^2.5.1",
     "@pinia/nuxt": "^1.0.2",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/api": "^2.12.3",

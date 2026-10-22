@@ -12,21 +12,21 @@ const open = defineModel<boolean>('open', { default: false })
 <template>
   <DialogRoot :open="open" @update:open="open = $event">
     <DialogPortal>
-      <DialogOverlay data-slot="overlay" class="fixed inset-0 z-50 bg-black/40" />
+      <DialogOverlay data-slot="overlay" class="fixed inset-0 z-50 bg-neutral/40" />
       <DialogContent
         data-slot="content"
         class="
           fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-md
-          -translate-1/2 flex-col rounded-lg bg-white shadow-xl ring-1 ring-black/10
+          -translate-1/2 flex-col rounded-lg bg-base-100 shadow-xl ring-1 ring-base-content/10
           focus:outline-none
         "
       >
         <header class="flex shrink-0 items-start justify-between gap-4 px-6 pt-5">
           <div class="min-w-0">
-            <DialogTitle class="text-base font-semibold text-neutral-900">
+            <DialogTitle class="text-base font-semibold text-base-content">
               {{ title }}
             </DialogTitle>
-            <DialogDescription v-if="description" class="mt-1 text-sm text-neutral-500">
+            <DialogDescription v-if="description" class="mt-1 text-sm text-base-content/50">
               {{ description }}
             </DialogDescription>
             <DialogDescription v-else class="sr-only" />
@@ -34,10 +34,10 @@ const open = defineModel<boolean>('open', { default: false })
           <DialogClose
             aria-label="Close"
             class="
-              -m-1 shrink-0 rounded-sm p-1 text-neutral-400
-              hover:text-neutral-700
+              -m-1 shrink-0 rounded-sm p-1 text-base-content/40
+              hover:text-base-content/70
               focus-visible:outline-2 focus-visible:outline-offset-2
-              focus-visible:outline-neutral-900
+              focus-visible:outline-base-content
             "
           >
             <svg
@@ -56,7 +56,7 @@ const open = defineModel<boolean>('open', { default: false })
 
         <footer
           v-if="$slots.footer" class="
-            flex shrink-0 justify-end gap-2 border-t border-neutral-100 px-6 py-4
+            flex shrink-0 justify-end gap-2 border-t border-base-content/10 px-6 py-4
           "
         >
           <slot name="footer" />

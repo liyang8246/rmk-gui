@@ -5,8 +5,8 @@ import { describeKeyboardError } from '~/stores/keyboard/errors'
 
 const open = defineModel<boolean>('open', { default: false })
 
-const DANGER_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-red-700 ring-1 ring-red-200 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600'
-const SECONDARY_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900'
+const DANGER_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-error ring-1 ring-error/30 hover:bg-error/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error'
+const SECONDARY_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-base-content/70 ring-1 ring-base-content/20 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content'
 
 const keyboard = useKeyboardStore()
 const toast = useToast()
@@ -128,15 +128,15 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
     description="Connected keyboard"
   >
     <section>
-      <h3 class="text-xs font-medium tracking-wide text-neutral-400 uppercase">
+      <h3 class="text-xs font-medium tracking-wide text-base-content/40 uppercase">
         Identity
       </h3>
       <dl class="mt-2 grid grid-cols-[8rem_1fr] gap-x-4 gap-y-1 text-sm">
         <template v-for="row in identity" :key="row.label">
-          <dt class="text-neutral-500">
+          <dt class="text-base-content/50">
             {{ row.label }}
           </dt>
-          <dd class="truncate text-neutral-900">
+          <dd class="truncate text-base-content">
             {{ row.value }}
           </dd>
         </template>
@@ -144,26 +144,26 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
     </section>
 
     <section class="mt-6">
-      <h3 class="text-xs font-medium tracking-wide text-neutral-400 uppercase">
+      <h3 class="text-xs font-medium tracking-wide text-base-content/40 uppercase">
         Capabilities
       </h3>
       <ul class="mt-2 flex flex-wrap gap-1.5">
         <li
           v-for="feature in features"
           :key="feature"
-          class="rounded-full bg-neutral-100 px-2.5 py-1 text-xs text-neutral-600"
+          class="rounded-full bg-base-200 px-2.5 py-1 text-xs text-base-content/60"
         >
           {{ feature }}
         </li>
       </ul>
     </section>
 
-    <section class="mt-6 rounded-lg ring-1 ring-red-200">
-      <div class="border-b border-red-100 px-4 py-3">
-        <h3 class="text-sm font-medium text-red-700">
+    <section class="mt-6 rounded-lg ring-1 ring-error/30">
+      <div class="border-b border-error/20 px-4 py-3">
+        <h3 class="text-sm font-medium text-error">
           Danger zone
         </h3>
-        <p class="mt-0.5 text-xs text-neutral-500">
+        <p class="mt-0.5 text-xs text-base-content/50">
           These commands interrupt or erase the keyboard state.
         </p>
       </div>
@@ -229,9 +229,9 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
       <button
         type="button"
         class="
-          rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white
-          hover:bg-red-700
-          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600
+          rounded-md bg-error px-3 py-1.5 text-sm font-medium text-error-content
+          hover:bg-error/80
+          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error
         "
         @click="runPending"
       >
