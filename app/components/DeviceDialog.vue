@@ -6,7 +6,7 @@ import { describeKeyboardError } from '~/stores/keyboard/errors'
 const open = defineModel<boolean>('open', { default: false })
 
 const DANGER_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-error ring-1 ring-error/30 hover:bg-error/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error'
-const SECONDARY_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-base-content/70 ring-1 ring-base-content/20 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content'
+const SECONDARY_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-outline hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
 
 const keyboard = useKeyboardStore()
 const toast = useToast()
@@ -128,15 +128,15 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
     description="Connected keyboard"
   >
     <section>
-      <h3 class="text-xs font-medium tracking-wide text-base-content/40 uppercase">
+      <h3 class="text-xs font-medium tracking-wide text-content-faint uppercase">
         Identity
       </h3>
       <dl class="mt-2 grid grid-cols-[8rem_1fr] gap-x-4 gap-y-1 text-sm">
         <template v-for="row in identity" :key="row.label">
-          <dt class="text-base-content/50">
+          <dt class="text-content-faint">
             {{ row.label }}
           </dt>
-          <dd class="truncate text-base-content">
+          <dd class="truncate text-content">
             {{ row.value }}
           </dd>
         </template>
@@ -144,14 +144,14 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
     </section>
 
     <section class="mt-6">
-      <h3 class="text-xs font-medium tracking-wide text-base-content/40 uppercase">
+      <h3 class="text-xs font-medium tracking-wide text-content-faint uppercase">
         Capabilities
       </h3>
       <ul class="mt-2 flex flex-wrap gap-1.5">
         <li
           v-for="feature in features"
           :key="feature"
-          class="rounded-full bg-base-200 px-2.5 py-1 text-xs text-base-content/60"
+          class="rounded-full bg-base-200 px-2.5 py-1 text-xs text-content-muted"
         >
           {{ feature }}
         </li>
@@ -163,7 +163,7 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
         <h3 class="text-sm font-medium text-error">
           Danger zone
         </h3>
-        <p class="mt-0.5 text-xs text-base-content/50">
+        <p class="mt-0.5 text-xs text-content-faint">
           These commands interrupt or erase the keyboard state.
         </p>
       </div>

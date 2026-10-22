@@ -17,16 +17,16 @@ const open = defineModel<boolean>('open', { default: false })
         data-slot="content"
         class="
           fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-md
-          -translate-1/2 flex-col rounded-lg bg-base-100 shadow-xl ring-1 ring-base-content/10
+          -translate-1/2 flex-col rounded-lg bg-base-100 shadow-xl ring-1 ring-hairline
           focus:outline-none
         "
       >
         <header class="flex shrink-0 items-start justify-between gap-4 px-6 pt-5">
           <div class="min-w-0">
-            <DialogTitle class="text-base font-semibold text-base-content">
+            <DialogTitle class="text-base font-semibold text-content">
               {{ title }}
             </DialogTitle>
-            <DialogDescription v-if="description" class="mt-1 text-sm text-base-content/50">
+            <DialogDescription v-if="description" class="mt-1 text-sm text-content-faint">
               {{ description }}
             </DialogDescription>
             <DialogDescription v-else class="sr-only" />
@@ -34,10 +34,9 @@ const open = defineModel<boolean>('open', { default: false })
           <DialogClose
             aria-label="Close"
             class="
-              -m-1 shrink-0 rounded-sm p-1 text-base-content/40
-              hover:text-base-content/70
-              focus-visible:outline-2 focus-visible:outline-offset-2
-              focus-visible:outline-base-content
+              -m-1 shrink-0 rounded-sm p-1 text-content-faint
+              hover:text-content-muted
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content
             "
           >
             <svg
@@ -56,7 +55,7 @@ const open = defineModel<boolean>('open', { default: false })
 
         <footer
           v-if="$slots.footer" class="
-            flex shrink-0 justify-end gap-2 border-t border-base-content/10 px-6 py-4
+            flex shrink-0 justify-end gap-2 border-t border-hairline px-6 py-4
           "
         >
           <slot name="footer" />

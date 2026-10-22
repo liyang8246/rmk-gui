@@ -22,6 +22,11 @@
   --color-warning-content: oklch(41% 0.112 45.904);
   --color-error: oklch(71% 0.194 13.428);
   --color-error-content: oklch(27% 0.105 12.094);
+  --color-content: var(--color-base-content);
+  --color-content-muted: color-mix(in oklab, var(--color-base-content) 62%, transparent);
+  --color-content-faint: color-mix(in oklab, var(--color-base-content) 42%, transparent);
+  --color-hairline: color-mix(in oklab, var(--color-base-content) 12%, transparent);
+  --color-outline: color-mix(in oklab, var(--color-base-content) 25%, transparent);
 }
 
 :root {

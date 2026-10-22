@@ -32,7 +32,7 @@ const VARIANTS: Record<ToastVariant, { accent: string, icon: string }> = {
       force-mount
       class="
         pointer-events-auto flex w-full items-start gap-3 rounded-lg bg-base-100 p-4 shadow-lg
-        ring-1 ring-base-content/10 transition-opacity duration-150
+        ring-1 ring-hairline transition-opacity duration-150
         data-[state=closed]:opacity-0
         starting:opacity-0
       "
@@ -49,11 +49,11 @@ const VARIANTS: Record<ToastVariant, { accent: string, icon: string }> = {
       </span>
 
       <div class="min-w-0 flex-1">
-        <ToastTitle class="text-sm font-medium text-base-content">
+        <ToastTitle class="text-sm font-medium text-content">
           {{ toast.title }}
         </ToastTitle>
         <ToastDescription
-          v-if="toast.description" class="mt-1 text-sm wrap-break-word text-base-content/50"
+          v-if="toast.description" class="mt-1 text-sm wrap-break-word text-content-faint"
         >
           {{ toast.description }}
         </ToastDescription>
@@ -62,9 +62,9 @@ const VARIANTS: Record<ToastVariant, { accent: string, icon: string }> = {
       <ToastClose
         aria-label="Dismiss"
         class="
-          -m-1 shrink-0 rounded-sm p-1 text-base-content/40
-          hover:text-base-content/70
-          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content
+          -m-1 shrink-0 rounded-sm p-1 text-content-faint
+          hover:text-content-muted
+          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content
         "
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4" aria-hidden="true">

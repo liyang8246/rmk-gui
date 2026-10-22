@@ -1,5 +1,5 @@
 <template>
-  <p class="text-sm text-base-content/40">
+  <p class="text-sm text-content-faint">
     Fork
   </p>
 </template>

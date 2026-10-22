@@ -69,8 +69,8 @@ const currentKb = ref<MockKeyboard>(keyboards[0]!)
 
 function menuClass(id: string) {
   return route.path === `/${id}`
-    ? 'bg-base-300/70 font-medium text-base-content'
-    : 'text-base-content/60 hover:bg-base-300/60 hover:text-base-content'
+    ? 'bg-base-300/70 font-medium text-content'
+    : 'text-content-muted hover:bg-base-300/60 hover:text-content'
 }
 
 const wpmSamples = [28, 34, 30, 48, 62, 55, 71, 64, 78, 74, 85, 68]
@@ -84,25 +84,25 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
 </script>
 
 <template>
-  <div class="isolate flex h-screen bg-base-300 p-2.5 text-base-content select-none">
+  <div class="isolate flex h-screen bg-base-300 p-2.5 text-content select-none">
     <aside
       class="
-        flex w-64 shrink-0 flex-col rounded-xl bg-base-200/80 p-3 ring-1 ring-base-content/10
+        flex w-64 shrink-0 flex-col rounded-xl bg-base-200/80 p-3 ring-1 ring-hairline
         backdrop-blur-xl
       "
     >
       <div class="mb-5 flex items-center justify-between px-1.5 pt-0.5">
         <div class="flex items-center gap-2" aria-hidden="true">
-          <span class="size-3 rounded-full bg-[#ff5f57] inset-ring-1 inset-ring-base-content/10" />
-          <span class="size-3 rounded-full bg-[#febc2e] inset-ring-1 inset-ring-base-content/10" />
-          <span class="size-3 rounded-full bg-[#28c840] inset-ring-1 inset-ring-base-content/10" />
+          <span class="size-3 rounded-full bg-[#ff5f57] inset-ring-1 inset-ring-hairline" />
+          <span class="size-3 rounded-full bg-[#febc2e] inset-ring-1 inset-ring-hairline" />
+          <span class="size-3 rounded-full bg-[#28c840] inset-ring-1 inset-ring-hairline" />
         </div>
-        <span class="text-xs font-semibold tracking-tight text-base-content/50">Rynk GUI</span>
+        <span class="text-xs font-semibold tracking-tight text-content-faint">Rynk GUI</span>
       </div>
 
       <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto">
         <template v-for="(group, gIdx) in menuGroups" :key="gIdx">
-          <div v-if="gIdx > 0" class="my-2 border-t border-base-content/10" />
+          <div v-if="gIdx > 0" class="my-2 border-t border-hairline" />
           <NuxtLink
             v-for="item in group"
             :key="item.id"
@@ -113,7 +113,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             <span
               class="
                 flex size-6 shrink-0 items-center justify-center rounded-md bg-base-100/90
-                text-base-content/70 shadow-2xs ring-1 ring-base-content/10
+                text-content-muted shadow-2xs ring-1 ring-hairline
               "
             >
               <Icon :name="item.icon" class="size-4" />
@@ -124,13 +124,13 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
       </nav>
 
       <div class="mt-3 px-0.5">
-        <div class="text-xs font-medium tracking-wide text-base-content/40 uppercase tabular-nums">
+        <div class="text-xs font-medium tracking-wide text-content-faint uppercase tabular-nums">
           WPM {{ wpmSamples[wpmSamples.length - 1] }}
         </div>
         <svg
           viewBox="0 0 232 36"
           preserveAspectRatio="none"
-          class="mt-1 h-9 w-full overflow-visible text-base-content"
+          class="mt-1 h-9 w-full overflow-visible text-content"
         >
           <defs>
             <linearGradient id="wpm-fill" x1="0" y1="0" x2="0" y2="1">
@@ -151,7 +151,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
         </svg>
       </div>
 
-      <div class="mt-2 rounded-xl bg-base-100/85 p-3 shadow-2xs ring-1 ring-base-content/10">
+      <div class="mt-2 rounded-xl bg-base-100/85 p-3 shadow-2xs ring-1 ring-hairline">
         <DropdownMenuRoot>
           <DropdownMenuTrigger
             class="
@@ -161,9 +161,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
           >
             <span class="flex min-w-0 items-center gap-2">
               <svg
-                viewBox="890 695 488 558" aria-hidden="true" class="
-                  size-4 shrink-0 text-base-content
-                "
+                viewBox="890 695 488 558" aria-hidden="true" class="size-4 shrink-0 text-content"
               >
                 <polygon fill="currentColor" points="901.07 1107.36 1134.05 1245.1 1134.05 1173.22 901.07 1035.47 901.07 1107.36" />
                 <polygon fill="currentColor" points="901.07 941.18 1134.05 1078.92 1134.05 1007.04 901.07 869.29 901.07 941.18" />
@@ -172,16 +170,16 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
                 <polygon fill="#999" points="1305.15 861.13 1305.15 1072.06 1305.15 1143.94 1367.03 1107.36 1367.03 1035.47 1367.03 824.55 1305.15 861.13" />
                 <polygon fill="#999" points="1264.67 1095.99 1134.05 1173.22 1134.05 1245.1 1264.67 1167.87 1264.67 1095.99" />
               </svg>
-              <span class="truncate text-sm font-semibold text-base-content">{{ currentKb.name }}</span>
+              <span class="truncate text-sm font-semibold text-content">{{ currentKb.name }}</span>
             </span>
-            <Icon name="lucide:chevrons-up-down" class="size-4 shrink-0 text-base-content/40" />
+            <Icon name="lucide:chevrons-up-down" class="size-4 shrink-0 text-content-faint" />
           </DropdownMenuTrigger>
 
           <DropdownMenuPortal>
             <DropdownMenuContent
               align="start"
               side="top"
-              class="min-w-52 rounded-xl bg-base-100 p-1.5 shadow-lg ring-1 ring-base-content/10"
+              class="min-w-52 rounded-xl bg-base-100 p-1.5 shadow-lg ring-1 ring-hairline"
             >
               <DropdownMenuItem
                 v-for="kb in keyboards"
@@ -192,17 +190,17 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
                 "
                 @select="currentKb = kb"
               >
-                <span class="truncate font-medium text-base-content/80">{{ kb.name }}</span>
-                <span class="ml-2 shrink-0 text-base-content/40">
+                <span class="truncate font-medium text-content">{{ kb.name }}</span>
+                <span class="ml-2 shrink-0 text-content-faint">
                   {{ kb.connection }}{{ kb.bleSlot ? ` ${kb.bleSlot}` : '' }}
                 </span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator class="my-1 border-t border-base-content/10" />
+              <DropdownMenuSeparator class="my-1 border-t border-hairline" />
               <DropdownMenuItem
                 class="
                   flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium
-                  text-base-content/60
-                  hover:bg-base-200 hover:text-base-content
+                  text-content-muted
+                  hover:bg-base-200 hover:text-content
                 "
               >
                 <Icon name="lucide:plus" class="size-3.5" />
@@ -215,18 +213,18 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
         <div class="mt-2 flex items-center justify-between">
           <div class="flex items-center gap-1">
             <span
-              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-base-content/60"
+              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-content-muted"
             >
               {{ currentKb.connection }}
             </span>
             <span
               v-if="currentKb.bleSlot"
-              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-base-content/50"
+              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-content-faint"
             >
               Slot {{ currentKb.bleSlot }}
             </span>
             <span
-              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-base-content/50"
+              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-content-faint"
             >
               {{ currentKb.state }}
             </span>
@@ -245,7 +243,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
 
         <div
           :class="currentKb.batteries.length > 1 ? 'grid-cols-2' : 'grid-cols-1'"
-          class="mt-2.5 grid gap-2 border-t border-base-content/10 pt-2.5"
+          class="mt-2.5 grid gap-2 border-t border-hairline pt-2.5"
         >
           <div
             v-for="(bat, idx) in currentKb.batteries"
@@ -253,8 +251,8 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             class="flex flex-col gap-1"
           >
             <div class="flex items-center justify-between text-xs">
-              <span class="font-medium text-base-content/40">{{ bat.label ?? 'Battery' }}</span>
-              <span class="flex items-center gap-0.5 font-medium text-base-content/70 tabular-nums">
+              <span class="font-medium text-content-faint">{{ bat.label ?? 'Battery' }}</span>
+              <span class="flex items-center gap-0.5 font-medium text-content-muted tabular-nums">
                 <Icon
                   v-if="bat.charging"
                   name="lucide:zap"
@@ -276,8 +274,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
 
     <main
       class="
-        ml-2.5 flex flex-1 items-center justify-center rounded-xl bg-base-100 ring-1
-        ring-base-content/10
+        ml-2.5 flex flex-1 items-center justify-center rounded-xl bg-base-100 ring-1 ring-hairline
       "
     >
       <NuxtPage />
