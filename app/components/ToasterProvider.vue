@@ -53,7 +53,7 @@ const VARIANTS: Record<ToastVariant, { accent: string, icon: string }> = {
           {{ toast.title }}
         </ToastTitle>
         <ToastDescription
-          v-if="toast.description" class="mt-1 text-sm wrap-break-word text-content-faint"
+          v-if="toast.description" class="mt-1 text-sm wrap-break-word text-content-muted"
         >
           {{ toast.description }}
         </ToastDescription>
@@ -62,7 +62,7 @@ const VARIANTS: Record<ToastVariant, { accent: string, icon: string }> = {
       <ToastClose
         aria-label="Dismiss"
         class="
-          -m-1 shrink-0 rounded-sm p-1 text-content-faint
+          -m-1 shrink-0 rounded-sm p-1 text-content-muted
           hover:text-content-muted
           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content
         "

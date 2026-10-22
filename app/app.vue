@@ -67,6 +67,18 @@ const ledNames = ['Num Lock', 'Caps Lock', 'Scroll Lock']
 const route = useRoute()
 const currentKb = ref<MockKeyboard>(keyboards[0]!)
 
+const colorMode = useColorMode()
+const themeIcons: Record<string, string> = {
+  light: 'lucide:sun',
+  dark: 'lucide:moon',
+  system: 'lucide:monitor',
+}
+
+function cycleTheme() {
+  const modes = ['light', 'dark', 'system']
+  colorMode.preference = modes[(modes.indexOf(colorMode.preference) + 1) % modes.length]!
+}
+
 function menuClass(id: string) {
   return route.path === `/${id}`
     ? 'bg-base-300/70 font-medium text-content'
@@ -97,7 +109,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
           <span class="size-3 rounded-full bg-[#febc2e] inset-ring-1 inset-ring-hairline" />
           <span class="size-3 rounded-full bg-[#28c840] inset-ring-1 inset-ring-hairline" />
         </div>
-        <span class="text-xs font-semibold tracking-tight text-content-faint">Rynk GUI</span>
+        <span class="text-xs font-semibold tracking-tight text-content-muted">Rynk GUI</span>
       </div>
 
       <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto">
@@ -124,7 +136,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
       </nav>
 
       <div class="mt-3 px-0.5">
-        <div class="text-xs font-medium tracking-wide text-content-faint uppercase tabular-nums">
+        <div class="text-xs font-medium tracking-wide text-content-muted uppercase tabular-nums">
           WPM {{ wpmSamples[wpmSamples.length - 1] }}
         </div>
         <svg
@@ -172,7 +184,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
               </svg>
               <span class="truncate text-sm font-semibold text-content">{{ currentKb.name }}</span>
             </span>
-            <Icon name="lucide:chevrons-up-down" class="size-4 shrink-0 text-content-faint" />
+            <Icon name="lucide:chevrons-up-down" class="size-4 shrink-0 text-content-muted" />
           </DropdownMenuTrigger>
 
           <DropdownMenuPortal>
@@ -191,7 +203,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
                 @select="currentKb = kb"
               >
                 <span class="truncate font-medium text-content">{{ kb.name }}</span>
-                <span class="ml-2 shrink-0 text-content-faint">
+                <span class="ml-2 shrink-0 text-content-muted">
                   {{ kb.connection }}{{ kb.bleSlot ? ` ${kb.bleSlot}` : '' }}
                 </span>
               </DropdownMenuItem>
@@ -219,12 +231,12 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             </span>
             <span
               v-if="currentKb.bleSlot"
-              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-content-faint"
+              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-content-muted"
             >
               Slot {{ currentKb.bleSlot }}
             </span>
             <span
-              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-content-faint"
+              class="rounded-md bg-base-200 px-1.5 py-0.5 text-xs font-medium text-content-muted"
             >
               {{ currentKb.state }}
             </span>
@@ -251,7 +263,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             class="flex flex-col gap-1"
           >
             <div class="flex items-center justify-between text-xs">
-              <span class="font-medium text-content-faint">{{ bat.label ?? 'Battery' }}</span>
+              <span class="font-medium text-content-muted">{{ bat.label ?? 'Battery' }}</span>
               <span class="flex items-center gap-0.5 font-medium text-content-muted tabular-nums">
                 <Icon
                   v-if="bat.charging"
@@ -269,6 +281,38 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="mt-2 flex items-center gap-1">
+        <NuxtLink
+          to="/settings"
+          :class="menuClass('settings')"
+          class="
+            flex flex-1 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-base transition-colors
+          "
+        >
+          <span
+            class="
+              flex size-6 shrink-0 items-center justify-center rounded-md bg-base-100/90
+              text-content-muted shadow-2xs ring-1 ring-hairline
+            "
+          >
+            <Icon name="lucide:settings" class="size-4" />
+          </span>
+          <span class="truncate">App Settings</span>
+        </NuxtLink>
+        <button
+          type="button"
+          :title="`Theme: ${colorMode.preference}`"
+          :aria-label="`Theme: ${colorMode.preference}, click to switch`"
+          class="
+            flex size-8 shrink-0 items-center justify-center rounded-lg text-content-muted
+            hover:bg-base-300/60 hover:text-content
+          "
+          @click="cycleTheme"
+        >
+          <Icon :name="themeIcons[colorMode.preference]!" class="size-4" />
+        </button>
       </div>
     </aside>
 

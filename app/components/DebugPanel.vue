@@ -5,7 +5,7 @@ const isDev = import.meta.dev
 const showModal = ref(false)
 const showDevice = ref(false)
 
-const BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-outline hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
+const BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-hairline hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
 
 function burst() {
   for (let i = 1; i <= 6; i++) toast.info(`Toast ${i}`)
@@ -14,9 +14,9 @@ function burst() {
 
 <template>
   <section
-    v-if="isDev" class="mt-8 max-w-md rounded-lg border border-dashed border-outline p-4"
+    v-if="isDev" class="mt-8 max-w-md rounded-lg border border-dashed border-hairline p-4"
   >
-    <h2 class="text-xs font-medium tracking-wide text-content-faint uppercase">
+    <h2 class="text-xs font-medium tracking-wide text-content-muted uppercase">
       Debug
     </h2>
 

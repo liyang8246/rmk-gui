@@ -6,7 +6,7 @@ import { describeKeyboardError } from '~/stores/keyboard/errors'
 const open = defineModel<boolean>('open', { default: false })
 
 const DANGER_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-error ring-1 ring-error/30 hover:bg-error/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error'
-const SECONDARY_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-outline hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
+const SECONDARY_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-hairline hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
 
 const keyboard = useKeyboardStore()
 const toast = useToast()
@@ -128,12 +128,12 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
     description="Connected keyboard"
   >
     <section>
-      <h3 class="text-xs font-medium tracking-wide text-content-faint uppercase">
+      <h3 class="text-xs font-medium tracking-wide text-content-muted uppercase">
         Identity
       </h3>
       <dl class="mt-2 grid grid-cols-[8rem_1fr] gap-x-4 gap-y-1 text-sm">
         <template v-for="row in identity" :key="row.label">
-          <dt class="text-content-faint">
+          <dt class="text-content-muted">
             {{ row.label }}
           </dt>
           <dd class="truncate text-content">
@@ -144,7 +144,7 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
     </section>
 
     <section class="mt-6">
-      <h3 class="text-xs font-medium tracking-wide text-content-faint uppercase">
+      <h3 class="text-xs font-medium tracking-wide text-content-muted uppercase">
         Capabilities
       </h3>
       <ul class="mt-2 flex flex-wrap gap-1.5">
@@ -163,7 +163,7 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
         <h3 class="text-sm font-medium text-error">
           Danger zone
         </h3>
-        <p class="mt-0.5 text-xs text-content-faint">
+        <p class="mt-0.5 text-xs text-content-muted">
           These commands interrupt or erase the keyboard state.
         </p>
       </div>

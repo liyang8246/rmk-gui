@@ -26,7 +26,7 @@ const open = defineModel<boolean>('open', { default: false })
             <DialogTitle class="text-base font-semibold text-content">
               {{ title }}
             </DialogTitle>
-            <DialogDescription v-if="description" class="mt-1 text-sm text-content-faint">
+            <DialogDescription v-if="description" class="mt-1 text-sm text-content-muted">
               {{ description }}
             </DialogDescription>
             <DialogDescription v-else class="sr-only" />
@@ -34,7 +34,7 @@ const open = defineModel<boolean>('open', { default: false })
           <DialogClose
             aria-label="Close"
             class="
-              -m-1 shrink-0 rounded-sm p-1 text-content-faint
+              -m-1 shrink-0 rounded-sm p-1 text-content-muted
               hover:text-content-muted
               focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content
             "
