@@ -93,9 +93,9 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
     >
       <div class="mb-5 flex items-center justify-between px-1.5 pt-0.5">
         <div class="flex items-center gap-2" aria-hidden="true">
-          <span class="size-3 rounded-full bg-[#ff5f57] ring-1 ring-base-content/10 ring-inset" />
-          <span class="size-3 rounded-full bg-[#febc2e] ring-1 ring-base-content/10 ring-inset" />
-          <span class="size-3 rounded-full bg-[#28c840] ring-1 ring-base-content/10 ring-inset" />
+          <span class="size-3 rounded-full bg-[#ff5f57] inset-ring-1 inset-ring-base-content/10" />
+          <span class="size-3 rounded-full bg-[#febc2e] inset-ring-1 inset-ring-base-content/10" />
+          <span class="size-3 rounded-full bg-[#28c840] inset-ring-1 inset-ring-base-content/10" />
         </div>
         <span class="text-xs font-semibold tracking-tight text-base-content/50">Rynk GUI</span>
       </div>
