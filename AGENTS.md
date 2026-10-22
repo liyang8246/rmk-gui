@@ -16,6 +16,7 @@ All must pass with zero errors and zero warnings.
 - As few Tailwind classes and containers as possible per page.
 - No arbitrary values (`w-[13px]`), no obscure Tailwind classes — standard scale utilities only.
 - Style reka-ui components instead of hand-writing logic/compat code.
+- Colors: only the tokens in `app/assets/css/main.css`. If a hardcoded color seems needed, stop and ask the user.
 
 ## Error Handling: neverthrow
 
