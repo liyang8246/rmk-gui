@@ -122,12 +122,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             :class="menuClass(item.id)"
             class="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-base transition-colors"
           >
-            <span
-              class="
-                flex size-6 shrink-0 items-center justify-center rounded-md bg-base-100/90
-                text-content-muted shadow-2xs ring-1 ring-hairline
-              "
-            >
+            <span class="flex size-6 shrink-0 items-center justify-center">
               <Icon :name="item.icon" class="size-4" />
             </span>
             <span class="truncate">{{ item.label }}</span>
@@ -291,12 +286,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             flex flex-1 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-base transition-colors
           "
         >
-          <span
-            class="
-              flex size-6 shrink-0 items-center justify-center rounded-md bg-base-100/90
-              text-content-muted shadow-2xs ring-1 ring-hairline
-            "
-          >
+          <span class="flex size-6 shrink-0 items-center justify-center">
             <Icon name="lucide:settings" class="size-4" />
           </span>
           <span class="truncate">App Settings</span>
