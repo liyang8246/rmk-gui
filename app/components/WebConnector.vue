@@ -23,7 +23,7 @@ watch(() => store.connection, (conn) => {
   if (conn.phase === 'connected') {
     toast.success(`Connected to ${conn.label}`)
   } else if (conn.phase === 'disconnected') {
-    toast.info(`Disconnected from ${conn.label}`)
+    toast.add({ title: `Disconnected from ${conn.label}` })
   } else if (conn.phase === 'error') {
     const cause = conn.cause ? describeKeyboardError(conn.cause) : undefined
     toast.error('Connection error', [conn.label, cause].filter(Boolean).join(' — ') || undefined)

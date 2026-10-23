@@ -1,4 +1,4 @@
-export type ToastVariant = 'error' | 'info' | 'success'
+export type ToastVariant = 'error' | 'success'
 
 export interface ToastOptions {
   title: string
@@ -12,7 +12,7 @@ export interface Toast {
   id: number
   title: string
   description?: string
-  variant: ToastVariant
+  variant?: ToastVariant
   duration: number
 }
 
@@ -34,7 +34,7 @@ function add(options: ToastOptions): number {
     id,
     title: options.title,
     description: options.description,
-    variant: options.variant ?? 'info',
+    variant: options.variant,
     duration: options.duration ?? (options.variant === 'error' ? ERROR_DURATION : DEFAULT_DURATION),
   })
   return id
@@ -52,7 +52,6 @@ export function useToast() {
     add,
     dismiss,
     error: (title: string, description?: string) => add({ title, description, variant: 'error' }),
-    info: (title: string, description?: string) => add({ title, description, variant: 'info' }),
     success: (title: string, description?: string) => add({ title, description, variant: 'success' }),
   }
 }

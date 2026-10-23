@@ -6,7 +6,7 @@ import { describeKeyboardError } from '~/stores/keyboard/errors'
 const open = defineModel<boolean>('open', { default: false })
 
 const DANGER_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-error ring-1 ring-error/30 hover:bg-error/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error'
-const SECONDARY_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-hairline hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
+const SECONDARY_BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-border hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
 
 const keyboard = useKeyboardStore()
 const toast = useToast()
@@ -228,11 +228,7 @@ function resetStorage(mode: 'Full' | 'LayoutOnly') {
       </button>
       <button
         type="button"
-        class="
-          rounded-md bg-error px-3 py-1.5 text-sm font-medium text-error-content
-          hover:bg-error/80
-          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error
-        "
+        :class="DANGER_BUTTON"
         @click="runPending"
       >
         {{ pending?.confirmText }}

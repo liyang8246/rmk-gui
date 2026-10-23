@@ -5,16 +5,16 @@ const isDev = import.meta.dev
 const showModal = ref(false)
 const showDevice = ref(false)
 
-const BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-hairline hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
+const BUTTON = 'rounded-md px-3 py-1.5 text-sm font-medium text-content-muted ring-1 ring-border hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content'
 
 function burst() {
-  for (let i = 1; i <= 6; i++) toast.info(`Toast ${i}`)
+  for (let i = 1; i <= 6; i++) toast.add({ title: `Toast ${i}` })
 }
 </script>
 
 <template>
   <section
-    v-if="isDev" class="mt-8 max-w-md rounded-lg border border-dashed border-hairline p-4"
+    v-if="isDev" class="mt-8 max-w-md rounded-lg border border-dashed border-border p-4"
   >
     <h2 class="text-xs font-medium tracking-wide text-content-muted uppercase">
       Debug
@@ -27,13 +27,13 @@ function burst() {
       <button type="button" :class="BUTTON" @click="toast.error('Scan failed', 'link lost')">
         Error
       </button>
-      <button type="button" :class="BUTTON" @click="toast.info('Scanning for devices…')">
+      <button type="button" :class="BUTTON" @click="toast.add({ title: 'Scanning for devices…' })">
         Info
       </button>
       <button
         type="button"
         :class="BUTTON"
-        @click="toast.add({ title: 'Tap a key to test', description: 'Stays until dismissed', variant: 'info', duration: 0 })"
+        @click="toast.add({ title: 'Tap a key to test', description: 'Stays until dismissed', duration: 0 })"
       >
         Persistent
       </button>

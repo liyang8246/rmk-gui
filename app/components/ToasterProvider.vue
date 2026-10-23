@@ -4,19 +4,24 @@ import { ToastClose, ToastDescription, ToastPortal, ToastProvider, ToastRoot, To
 
 const { toasts, dismiss } = useToast()
 
-const VARIANTS: Record<ToastVariant, { accent: string, icon: string }> = {
+const NEUTRAL = {
+  accent: 'text-content-muted',
+  icon: 'm11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z',
+}
+
+const VARIANTS: Record<ToastVariant, typeof NEUTRAL> = {
   error: {
     accent: 'bg-error/10 text-error',
     icon: 'm9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
-  },
-  info: {
-    accent: 'bg-info/10 text-info',
-    icon: 'm11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z',
   },
   success: {
     accent: 'bg-success/10 text-success',
     icon: 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
   },
+}
+
+function variantStyle(variant?: ToastVariant) {
+  return variant ? VARIANTS[variant] : NEUTRAL
 }
 </script>
 
@@ -32,19 +37,19 @@ const VARIANTS: Record<ToastVariant, { accent: string, icon: string }> = {
       force-mount
       class="
         pointer-events-auto flex w-full items-start gap-3 rounded-lg bg-base-100 p-4 shadow-lg
-        ring-1 ring-hairline transition-opacity duration-150
+        ring-1 ring-border transition-opacity duration-150
         data-[state=closed]:opacity-0
         starting:opacity-0
       "
       @update:open="(value: boolean) => { if (!value) dismiss(toast.id) }"
     >
       <span
-        :class="VARIANTS[toast.variant].accent" class="
+        :class="variantStyle(toast.variant).accent" class="
           flex size-6 shrink-0 items-center justify-center rounded-full
         " aria-hidden="true"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
-          <path stroke-linecap="round" stroke-linejoin="round" :d="VARIANTS[toast.variant].icon" />
+          <path stroke-linecap="round" stroke-linejoin="round" :d="variantStyle(toast.variant).icon" />
         </svg>
       </span>
 

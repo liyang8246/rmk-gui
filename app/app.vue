@@ -81,8 +81,8 @@ function cycleTheme() {
 
 function menuClass(id: string) {
   return route.path === `/${id}`
-    ? 'bg-base-300/70 font-medium text-content'
-    : 'text-content-muted hover:bg-base-300/60 hover:text-content'
+    ? 'bg-content/10 text-content-highlighted'
+    : 'text-content-muted hover:bg-content/5 hover:text-content-highlighted'
 }
 
 const wpmSamples = [28, 34, 30, 48, 62, 55, 71, 64, 78, 74, 85, 68]
@@ -99,22 +99,22 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
   <div class="isolate flex h-screen bg-base-300 p-2.5 text-content select-none">
     <aside
       class="
-        flex w-64 shrink-0 flex-col rounded-xl bg-base-200/80 p-3 ring-1 ring-hairline
+        flex w-64 shrink-0 flex-col rounded-xl bg-base-200/80 p-3 ring-1 ring-border
         backdrop-blur-xl
       "
     >
       <div class="mb-5 flex items-center justify-between px-1.5 pt-0.5">
         <div class="flex items-center gap-2" aria-hidden="true">
-          <span class="size-3 rounded-full bg-[#ff5f57] inset-ring-1 inset-ring-hairline" />
-          <span class="size-3 rounded-full bg-[#febc2e] inset-ring-1 inset-ring-hairline" />
-          <span class="size-3 rounded-full bg-[#28c840] inset-ring-1 inset-ring-hairline" />
+          <span class="size-3 rounded-full bg-[#ff5f57] inset-ring-1 inset-ring-border" />
+          <span class="size-3 rounded-full bg-[#febc2e] inset-ring-1 inset-ring-border" />
+          <span class="size-3 rounded-full bg-[#28c840] inset-ring-1 inset-ring-border" />
         </div>
         <span class="text-xs font-semibold tracking-tight text-content-muted">Rynk GUI</span>
       </div>
 
       <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto">
         <template v-for="(group, gIdx) in menuGroups" :key="gIdx">
-          <div v-if="gIdx > 0" class="my-2 border-t border-hairline" />
+          <div v-if="gIdx > 0" class="my-2 border-t border-border" />
           <NuxtLink
             v-for="item in group"
             :key="item.id"
@@ -158,7 +158,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
         </svg>
       </div>
 
-      <div class="mt-2 rounded-xl bg-base-100/85 p-3 shadow-2xs ring-1 ring-hairline">
+      <div class="mt-2 rounded-xl bg-base-100/85 p-3 shadow-2xs ring-1 ring-border">
         <DropdownMenuRoot>
           <DropdownMenuTrigger
             class="
@@ -186,7 +186,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             <DropdownMenuContent
               align="start"
               side="top"
-              class="min-w-52 rounded-xl bg-base-100 p-1.5 shadow-lg ring-1 ring-hairline"
+              class="min-w-52 rounded-xl bg-base-100 p-1.5 shadow-lg ring-1 ring-border"
             >
               <DropdownMenuItem
                 v-for="kb in keyboards"
@@ -202,12 +202,12 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
                   {{ kb.connection }}{{ kb.bleSlot ? ` ${kb.bleSlot}` : '' }}
                 </span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator class="my-1 border-t border-hairline" />
+              <DropdownMenuSeparator class="my-1 border-t border-border" />
               <DropdownMenuItem
                 class="
                   flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium
                   text-content-muted
-                  hover:bg-base-200 hover:text-content
+                  hover:bg-base-200 hover:text-content-highlighted
                 "
               >
                 <Icon name="lucide:plus" class="size-3.5" />
@@ -242,7 +242,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
               v-for="(on, idx) in currentKb.leds"
               :key="idx"
               :title="ledNames[idx]"
-              :class="on ? 'bg-neutral' : 'bg-base-300'"
+              :class="on ? 'bg-accent' : 'bg-base-300'"
               class="size-1.5 rounded-full transition-colors"
             />
           </div>
@@ -250,7 +250,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
 
         <div
           :class="currentKb.batteries.length > 1 ? 'grid-cols-2' : 'grid-cols-1'"
-          class="mt-2.5 grid gap-2 border-t border-hairline pt-2.5"
+          class="mt-2.5 grid gap-2 border-t border-border pt-2.5"
         >
           <div
             v-for="(bat, idx) in currentKb.batteries"
@@ -270,7 +270,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
             </div>
             <div class="h-1 w-full overflow-hidden rounded-full bg-base-300">
               <div
-                class="h-full rounded-full bg-neutral transition-all"
+                class="h-full rounded-full bg-accent transition-all"
                 :style="{ width: `${bat.level}%` }"
               />
             </div>
@@ -297,7 +297,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
           :aria-label="`Theme: ${colorMode.preference}, click to switch`"
           class="
             flex size-8 shrink-0 items-center justify-center rounded-lg text-content-muted
-            hover:bg-base-300/60 hover:text-content
+            hover:bg-base-300/60 hover:text-content-highlighted
           "
           @click="cycleTheme"
         >
@@ -308,7 +308,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
 
     <main
       class="
-        ml-2.5 flex flex-1 items-center justify-center rounded-xl bg-base-100 ring-1 ring-hairline
+        ml-2.5 flex flex-1 items-center justify-center rounded-xl bg-base-100 ring-1 ring-border
       "
     >
       <NuxtPage />
