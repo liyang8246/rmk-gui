@@ -11,12 +11,12 @@ const open = defineModel<boolean>('open', { default: false })
 
 <template>
   <DialogRoot :open="open" @update:open="open = $event">
-    <DialogPortal>
-      <DialogOverlay data-slot="overlay" class="fixed inset-0 z-50 bg-accent/40" />
+    <DialogPortal to="#modal-provider">
+      <DialogOverlay data-slot="overlay" class="fixed inset-0 bg-accent/40" />
       <DialogContent
         data-slot="content"
         class="
-          fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-md
+          fixed top-1/2 left-1/2 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-md
           -translate-1/2 flex-col rounded-lg bg-base-100 shadow-xl ring-1 ring-border
           focus:outline-none
         "

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ToastVariant } from '~/composables/useToast'
-import { ToastClose, ToastDescription, ToastPortal, ToastProvider, ToastRoot, ToastTitle, ToastViewport } from 'reka-ui'
+import { ToastClose, ToastDescription, ToastProvider, ToastRoot, ToastTitle, ToastViewport } from 'reka-ui'
 
 const { toasts, dismiss } = useToast()
 
@@ -78,13 +78,11 @@ function variantStyle(variant?: ToastVariant) {
       </ToastClose>
     </ToastRoot>
 
-    <ToastPortal>
-      <ToastViewport
-        class="
-          pointer-events-none fixed right-4 bottom-4 z-100 flex w-[min(24rem,calc(100vw-2rem))]
-          flex-col gap-2 p-0 outline-none
-        "
-      />
-    </ToastPortal>
+    <ToastViewport
+      class="
+        pointer-events-none fixed right-4 bottom-4 flex w-[min(24rem,calc(100vw-2rem))] flex-col
+        gap-2 p-0 outline-none
+      "
+    />
   </ToastProvider>
 </template>

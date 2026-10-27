@@ -314,6 +314,7 @@ const wpmArea = computed(() => `0,36 ${wpmPoints.value} 232,36`)
       <NuxtPage />
     </main>
 
+    <div id="modal-provider" />
     <ToasterProvider />
   </div>
 </template>
