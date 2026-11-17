@@ -24,7 +24,7 @@ const CAPS = {
   num_layers: 2,
   max_morse: 4,
   max_macros: 32,
-  macro_max_size: 32,
+  macro_space_size: 256,
   macros_writable: true,
   lighting_enabled: true,
 } as DeviceCapabilities

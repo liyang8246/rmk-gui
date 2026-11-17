@@ -28,14 +28,6 @@
 
   let confirming = $state<'reset' | null>(null)
 
-  function bootloader() {
-    void keyboardStore.bootloaderJump().match(
-      // Not `success`: the jump ends the session, it does not complete a change.
-      () => toast.info('Rebooting into bootloader…'),
-      e => toast.error(describeKeyboardError(e)),
-    )
-  }
-
   function reboot() {
     void keyboardStore.reboot().match(
       () => toast.info('Rebooting…'),
@@ -168,20 +160,6 @@
           {device?.version.major}.{device?.version.minor}
         </div>
       </div>
-      <!-- There is no firmware-transfer endpoint in the protocol. -->
-      <Button disabled title='The protocol has no firmware-transfer endpoint'>
-        Check for updates
-      </Button>
-    </div>
-
-    <div class='mt-3.5 flex items-center gap-3.5 border-t border-border pt-3.5'>
-      <div>
-        <div class='text-[13.5px] font-semibold text-foreground'>Bootloader mode</div>
-        <div class='text-xs text-muted-foreground'>
-          Enter DFU to flash new firmware. Ends the session.
-        </div>
-      </div>
-      <Button class='ml-auto' onclick={bootloader}>Enter bootloader</Button>
     </div>
 
     <div class='mt-3.5 flex items-center gap-3.5 border-t border-border pt-3.5'>

@@ -234,8 +234,9 @@ keymap grid.
 
 `read_macro(index)` returns one whole macro as a `MacroOp[]`, empty for an
 unset slot; iterate `index` below `max_macros`. `write_macro(index, ops)`
-replaces it with at most `macro_max_size` ops, and is refused when
-`macros_writable` is false.
+replaces it. All slots share `macro_space_size` bytes, and `macro_size(ops)`
+gives one macro's share; a write that doesn't fit is refused, as is any write
+when `macros_writable` is false.
 
 ## Reference Implementation
 
